@@ -27,6 +27,7 @@ import {
 
 import { useConversations } from "../hooks/useConversations";
 import { useAIChat } from "../hooks/useAIChat";
+import { useSettings } from "../hooks/useSettings";
 
 /* =========================================================
    CHANNEL STYLES
@@ -46,6 +47,7 @@ const channelStyles = {
 const Inbox = () => {
   const {
     conversations,
+    setConversations,
     loading,
     error,
     refetch,
@@ -58,6 +60,11 @@ const Inbox = () => {
   } = useConversations();
 
   const { sendToAI, loading: aiLoading } = useAIChat();
+  const { settings } = useSettings();
+  const currency = settings?.general?.currency || "GHS";
+  const timezone = settings?.general?.timezone || "Africa/Accra";
+  const aiEnabled = settings?.ai?.enabled ?? true;
+  const autoReply = settings?.ai?.autoReply ?? true;
 
   const [selectedId, setSelectedId] = useState(null);
 
@@ -89,6 +96,15 @@ const Inbox = () => {
       (conversation) =>
         conversation.id === selectedId
     );
+
+  // Auto-select first conversation when loaded
+  useEffect(() => {
+    if (conversations.length > 0 && !selectedId) {
+      const firstId = conversations[0].id;
+      setSelectedId(firstId);
+      selectConversation(firstId);
+    }
+  }, [conversations, selectedId, selectConversation]);
 
   /* =======================================================
      FILTER CONVERSATIONS
@@ -172,52 +188,14 @@ const Inbox = () => {
   const handleSendMessage = async (event) => {
     event.preventDefault();
 
-    const trimmedMessage =
-      message.trim();
+    const trimmedMessage = message.trim();
 
-    if (
-      !trimmedMessage ||
-      !selectedConversation
-    ) {
+    if (!trimmedMessage || !selectedConversation) {
       return;
     }
 
-    const newMessage = {
-      id: Date.now(),
-      sender: "human",
-      content: trimmedMessage,
-      time: new Date().toLocaleTimeString(
-        [],
-        {
-          hour: "numeric",
-          minute: "2-digit",
-        }
-      ),
-    };
-
-    // Optimistic update
-    setConversations((current) =>
-      current.map((conversation) =>
-        conversation.id === selectedId
-          ? {
-              ...conversation,
-              mode: "human",
-              conversationStatus: "open",
-              lastMessage:
-                trimmedMessage,
-              time: "now",
-              messages: [
-                ...conversation.messages,
-                newMessage,
-              ],
-            }
-          : conversation
-      )
-    );
-
     setMessage("");
 
-    // Send to API
     try {
       await apiSendMessage(selectedConversation.id, trimmedMessage);
     } catch (err) {
@@ -230,20 +208,9 @@ const Inbox = () => {
   ======================================================= */
 
   const handleTakeOver = async () => {
-    setConversations((current) =>
-      current.map((conversation) =>
-        conversation.id === selectedId
-          ? {
-              ...conversation,
-              mode: "human",
-              conversationStatus: "open",
-            }
-          : conversation
-      )
-    );
-
+    if (!selectedId) return;
     try {
-      await apiTakeOver(selectedConversation.id);
+      await apiTakeOver(selectedId);
     } catch (err) {
       console.error('Failed to take over:', err);
     }
@@ -254,20 +221,9 @@ const Inbox = () => {
   ======================================================= */
 
   const handleReturnToAI = async () => {
-    setConversations((current) =>
-      current.map((conversation) =>
-        conversation.id === selectedId
-          ? {
-              ...conversation,
-              mode: "ai",
-              conversationStatus: "open",
-            }
-          : conversation
-      )
-    );
-
+    if (!selectedId) return;
     try {
-      await apiReturnToAI(selectedConversation.id);
+      await apiReturnToAI(selectedId);
     } catch (err) {
       console.error('Failed to return to AI:', err);
     }
@@ -278,21 +234,9 @@ const Inbox = () => {
   ======================================================= */
 
   const handleMarkResolved = async () => {
-    setConversations((current) =>
-      current.map((conversation) =>
-        conversation.id === selectedId
-          ? {
-              ...conversation,
-              conversationStatus:
-                "resolved",
-              unread: 0,
-            }
-          : conversation
-      )
-    );
-
+    if (!selectedId) return;
     try {
-      await apiMarkResolved(selectedConversation.id);
+      await apiMarkResolved(selectedId);
     } catch (err) {
       console.error('Failed to mark resolved:', err);
     }
@@ -303,19 +247,9 @@ const Inbox = () => {
   ======================================================= */
 
   const handleReopenConversation = async () => {
-    setConversations((current) =>
-      current.map((conversation) =>
-        conversation.id === selectedId
-          ? {
-              ...conversation,
-              conversationStatus: "open",
-            }
-          : conversation
-      )
-    );
-
+    if (!selectedId) return;
     try {
-      await apiReopenConversation(selectedConversation.id);
+      await apiReopenConversation(selectedId);
     } catch (err) {
       console.error('Failed to reopen:', err);
     }
@@ -325,8 +259,10 @@ const Inbox = () => {
      AI RESPONSE HANDLING
   ======================================================= */
 
-  // Trigger AI response when conversation is in AI mode and last message is from customer
+  // Trigger AI response when conversation is in AI mode and last message is from customer - respects AI settings
   useEffect(() => {
+    // Respect Enable AI and Automatic replies - single source of truth is settings.ai
+    if (!aiEnabled || !autoReply) return;
     if (
       selectedConversation &&
       selectedConversation.mode === 'ai' &&
@@ -370,7 +306,7 @@ const Inbox = () => {
                   id: Date.now(),
                   sender: 'ai',
                   content: aiResponse.response,
-                  time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+                  time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: timezone }),
                 };
                 
                 setConversations((current) =>
@@ -393,7 +329,7 @@ const Inbox = () => {
         }
       }
     }
-  }, [selectedConversation?.messages, selectedConversation?.mode, selectedId, sendToAI]);
+  }, [selectedConversation?.messages, selectedConversation?.mode, selectedId, sendToAI, aiEnabled, autoReply]);
 
   /* =======================================================
      EMPTY STATE
@@ -401,14 +337,14 @@ const Inbox = () => {
 
   if (!selectedConversation) {
     return (
-      <div className="flex h-full min-h-0 w-full items-center justify-center overflow-hidden bg-gray-50">
+      <div className="flex h-full min-h-0 w-full items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-800">
         <div className="text-center">
           <MessageSquare
             className="mx-auto mb-3 text-gray-400"
             size={32}
           />
 
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             No conversation selected
           </h2>
         </div>
@@ -485,7 +421,7 @@ const Inbox = () => {
           {/* Title */}
           <div className="mb-3 flex items-center justify-between gap-2 sm:mb-4">
             <div className="min-w-0">
-              <h1 className="truncate text-base font-semibold text-gray-900 sm:text-lg">
+              <h1 className="truncate text-base font-semibold text-gray-900 dark:text-gray-100 sm:text-lg">
                 Inbox
               </h1>
 
@@ -497,7 +433,7 @@ const Inbox = () => {
 
             <button
               type="button"
-              className="shrink-0 rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
+              className="shrink-0 rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 dark:bg-gray-800 hover:text-gray-900 dark:text-gray-100"
             >
               <MoreHorizontal size={18} />
             </button>
@@ -651,7 +587,7 @@ const Inbox = () => {
                     key={conversation.id}
                     type="button"
                     onClick={() =>
-                      selectConversation(
+                      handleSelectConversation(
                         conversation.id
                       )
                     }
@@ -719,7 +655,7 @@ const Inbox = () => {
                       {/* Conversation details */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="min-w-0 truncate text-sm font-semibold text-gray-900">
+                          <p className="min-w-0 truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
                             {
                               conversation.name
                             }
@@ -947,7 +883,7 @@ const Inbox = () => {
             {/* Customer info */}
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h2 className="truncate text-sm font-semibold text-gray-900">
+                <h2 className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
                   {
                     selectedConversation.name
                   }
@@ -1054,7 +990,7 @@ const Inbox = () => {
 
             <button
               type="button"
-              className="rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
+              className="rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 dark:bg-gray-800 hover:text-gray-900 dark:text-gray-100"
             >
               <MoreHorizontal size={17} />
             </button>
@@ -1065,12 +1001,26 @@ const Inbox = () => {
             AI STATUS
         ================================================== */}
 
-        <div className="shrink-0 border-b border-gray-200 bg-white px-3 py-2 sm:px-5">
-          {selectedConversation.mode ===
+        <div className="shrink-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 sm:px-5">
+          {!aiEnabled ? (
+            <div className="flex items-center gap-2 text-[11px] text-gray-500 sm:text-xs">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+                <Bot size={13} className="text-gray-400" />
+              </span>
+              <span>AI assistant is disabled</span>
+            </div>
+          ) : !autoReply ? (
+            <div className="flex items-center gap-2 text-[11px] text-gray-500 sm:text-xs">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+                <Bot size={13} className="text-gray-400" />
+              </span>
+              <span>Automatic replies are disabled</span>
+            </div>
+          ) : selectedConversation.mode ===
             "ai" && (
             <div className="flex items-center justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2 text-[11px] text-gray-600 sm:text-xs">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
                   <Bot
                     size={13}
                     className="text-gray-700"
@@ -1078,13 +1028,14 @@ const Inbox = () => {
                 </span>
 
                 <span className="truncate">
-                  <strong className="font-semibold text-gray-900">
+                  <strong className="font-semibold text-gray-900 dark:text-gray-100">
                     AI is handling
                   </strong>{" "}
                   this conversation
                 </span>
               </div>
 
+              {settings?.ai?.humanHandoff !== false && (
               <button
                 type="button"
                 onClick={handleTakeOver}
@@ -1106,6 +1057,7 @@ const Inbox = () => {
               >
                 Take over
               </button>
+              )}
             </div>
           )}
 
@@ -1113,7 +1065,7 @@ const Inbox = () => {
             "human" && (
             <div className="flex items-center justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2 text-[11px] text-gray-600 sm:text-xs">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
                   <User
                     size={13}
                     className="text-gray-700"
@@ -1121,7 +1073,7 @@ const Inbox = () => {
                 </span>
 
                 <span className="truncate">
-                  <strong className="font-semibold text-gray-900">
+                  <strong className="font-semibold text-gray-900 dark:text-gray-100">
                     You are handling
                   </strong>{" "}
                   this conversation
@@ -1164,13 +1116,14 @@ const Inbox = () => {
                 </span>
 
                 <span className="truncate">
-                  <strong className="font-semibold text-gray-900">
+                  <strong className="font-semibold text-gray-900 dark:text-gray-100">
                     Human requested
                   </strong>{" "}
                   — this conversation needs attention.
                 </span>
               </div>
 
+              {settings?.ai?.humanHandoff !== false && (
               <button
                 type="button"
                 onClick={handleTakeOver}
@@ -1190,13 +1143,14 @@ const Inbox = () => {
                 "
               >
                 Take over
-              </button>
-            </div>
+                </button>
+                )}
+              </div>
           )}
-        </div>
+          </div>
 
         {/* =================================================
-            MESSAGES — ONLY THIS SCROLLS
+            MESSAGE COMPOSER — FIXED
         ================================================== */}
 
         <div
@@ -1214,7 +1168,7 @@ const Inbox = () => {
           <div className="mx-auto w-full max-w-3xl space-y-5">
             {/* Date */}
             <div className="flex justify-center">
-              <span className="rounded-full bg-white px-3 py-1 text-[10px] font-medium text-gray-400 shadow-sm">
+              <span className="rounded-full bg-white dark:bg-gray-900 px-3 py-1 text-[10px] font-medium text-gray-400 shadow-sm">
                 Today
               </span>
             </div>
@@ -1308,12 +1262,13 @@ const Inbox = () => {
             )}
 
             {/* =================================================
-                AI INSIGHT
+                AI INSIGHT - respects Product recommendations setting
             ================================================== */}
 
-            <div className="ml-auto w-full max-w-[94%] rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:max-w-[78%] sm:p-4">
+            {settings?.ai?.productRecommendations !== false && (
+            <div className="ml-auto w-full max-w-[94%] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 shadow-sm sm:max-w-[78%] sm:p-4">
               <div className="mb-3 flex items-center gap-2">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gray-100">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
                   <Sparkles
                     size={14}
                     className="text-gray-700"
@@ -1321,7 +1276,7 @@ const Inbox = () => {
                 </span>
 
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-gray-900">
+                  <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">
                     AI insight
                   </p>
 
@@ -1331,7 +1286,7 @@ const Inbox = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 rounded-lg bg-gray-50 p-3">
+              <div className="flex items-center gap-3 rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gray-200 sm:h-12 sm:w-12">
                   <ShoppingBag
                     size={17}
@@ -1340,15 +1295,16 @@ const Inbox = () => {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-semibold text-gray-900">
+                  <p className="truncate text-xs font-semibold text-gray-900 dark:text-gray-100">
                     Black Evening Dress
                   </p>
 
                   <p className="text-[10px] text-gray-500 sm:text-xs">
-                    GHS 450 • Size M
+                    {currency} 450 • Size M
                   </p>
                 </div>
 
+                {settings?.ai?.orderAssistance !== false && (
                 <button
                   type="button"
                   className="
@@ -1366,8 +1322,10 @@ const Inbox = () => {
                 >
                   Create Order
                 </button>
+                )}
               </div>
             </div>
+          )}
           </div>
         </div>
 
@@ -1375,10 +1333,10 @@ const Inbox = () => {
             MESSAGE COMPOSER — FIXED
         ================================================== */}
 
-        <div className="shrink-0 border-t border-gray-200 bg-white p-3 sm:p-4">
+        <div className="shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 sm:p-4">
           {selectedConversation.conversationStatus ===
             "resolved" && (
-            <div className="mb-3 flex items-center justify-between gap-2 rounded-lg bg-gray-50 px-3 py-2.5">
+            <div className="mb-3 flex items-center justify-between gap-2 rounded-lg bg-gray-50 dark:bg-gray-800 px-3 py-2.5">
               <div className="flex items-center gap-2 text-[11px] text-gray-500 sm:text-xs">
                 <CheckCheck size={14} />
 
@@ -1388,7 +1346,7 @@ const Inbox = () => {
               <button
                 type="button"
                 onClick={handleReopenConversation}
-                className="shrink-0 text-[11px] font-medium text-gray-900 hover:underline sm:text-xs"
+                className="shrink-0 text-[11px] font-medium text-gray-900 dark:text-gray-100 hover:underline sm:text-xs"
               >
                 Reopen
               </button>
@@ -1399,7 +1357,7 @@ const Inbox = () => {
             onSubmit={handleSendMessage}
             className="mx-auto w-full max-w-3xl"
           >
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
               <textarea
                 value={message}
                 onChange={(event) =>
@@ -1438,14 +1396,14 @@ const Inbox = () => {
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
-                    className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                    className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 dark:bg-gray-800 hover:text-gray-700"
                   >
                     <Paperclip size={16} />
                   </button>
 
                   <button
                     type="button"
-                    className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                    className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 dark:bg-gray-800 hover:text-gray-700"
                   >
                     <Smile size={16} />
                   </button>
@@ -1554,7 +1512,7 @@ const Inbox = () => {
             "
           >
             <div className="min-w-0">
-              <h3 className="truncate text-sm font-semibold text-gray-900">
+              <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
                 Customer details
               </h3>
 
@@ -1600,7 +1558,7 @@ const Inbox = () => {
                 }
               </div>
 
-              <h4 className="mt-3 text-sm font-semibold text-gray-900">
+              <h4 className="mt-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {
                   selectedConversation.name
                 }
@@ -1672,7 +1630,7 @@ const Inbox = () => {
             {/* STATS */}
             <div className="grid grid-cols-2 border-b border-gray-100">
               <div className="border-r border-gray-100 px-4 py-4 text-center">
-                <p className="text-lg font-semibold text-gray-900">
+                <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   {
                     selectedConversation
                       .orders.length
@@ -1685,7 +1643,7 @@ const Inbox = () => {
               </div>
 
               <div className="px-4 py-4 text-center">
-                <p className="text-lg font-semibold text-gray-900">
+                <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   {
                     selectedConversation
                       .productsDiscussed
@@ -1714,7 +1672,7 @@ const Inbox = () => {
 
               {selectedConversation.orders
                 .length === 0 ? (
-                <div className="rounded-lg bg-gray-50 px-3 py-4 text-center">
+                <div className="rounded-lg bg-gray-50 dark:bg-gray-800 px-3 py-4 text-center">
                   <ShoppingBag
                     size={18}
                     className="mx-auto mb-2 text-gray-300"
@@ -1734,7 +1692,7 @@ const Inbox = () => {
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <p className="truncate text-xs font-semibold text-gray-900">
+                            <p className="truncate text-xs font-semibold text-gray-900 dark:text-gray-100">
                               {
                                 order.product
                               }
@@ -1745,7 +1703,7 @@ const Inbox = () => {
                             </p>
                           </div>
 
-                          <span className="shrink-0 text-xs font-semibold text-gray-900">
+                          <span className="shrink-0 text-xs font-semibold text-gray-900 dark:text-gray-100">
                             {
                               order.amount
                             }
@@ -1791,7 +1749,7 @@ const Inbox = () => {
                   (product) => (
                     <div
                       key={product}
-                      className="flex items-center gap-3 rounded-lg bg-gray-50 p-3"
+                      className="flex items-center gap-3 rounded-lg bg-gray-50 dark:bg-gray-800 p-3"
                     >
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-200">
                         <ShoppingBag
@@ -1818,13 +1776,13 @@ const Inbox = () => {
 
                 <button
                   type="button"
-                  className="text-[10px] font-medium text-gray-600 transition hover:text-gray-900"
+                  className="text-[10px] font-medium text-gray-600 transition hover:text-gray-900 dark:text-gray-100"
                 >
                   + Add
                 </button>
               </div>
 
-              <div className="rounded-lg border border-dashed border-gray-200 px-3 py-4 text-center">
+              <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-700 px-3 py-4 text-center">
                 <UserRound
                   size={18}
                   className="mx-auto mb-2 text-gray-300"

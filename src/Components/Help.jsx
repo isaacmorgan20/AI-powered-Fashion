@@ -1110,12 +1110,12 @@ const Help = () => {
   ======================================================= */
 
   return (
-    <div className="h-full min-h-0 w-full overflow-y-auto bg-gray-50">
+    <div className="h-full min-h-0 w-full overflow-y-auto bg-gray-50 dark:bg-gray-800">
       {/* =================================================
           HEADER
       ================================================== */}
 
-      <header className="border-b border-gray-200 bg-white px-4 py-4 sm:px-6 lg:px-8">
+      <header className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-4 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-900">
@@ -1126,7 +1126,7 @@ const Help = () => {
             </div>
 
             <div className="min-w-0">
-              <h1 className="truncate text-lg font-semibold text-gray-900">
+              <h1 className="truncate text-lg font-semibold text-gray-900 dark:text-gray-100">
                 Help & Docs
               </h1>
 
@@ -1142,13 +1142,13 @@ const Help = () => {
           HERO / SEARCH
       ================================================== */}
 
-      <section className="border-b border-gray-200 bg-white px-4 py-10 sm:px-6 lg:px-8">
+      <section className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
             Documentation
           </p>
 
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 sm:text-3xl">
             How can we help?
           </h2>
 
@@ -1170,14 +1170,14 @@ const Help = () => {
                 setSearch(event.target.value)
               }
               placeholder="Search documentation..."
-              className="h-12 w-full rounded-xl border border-gray-200 bg-gray-50 pl-11 pr-10 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-300 focus:bg-white focus:ring-2 focus:ring-gray-100"
+              className="h-12 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 pl-11 pr-10 text-sm text-gray-900 dark:text-gray-100 outline-none transition placeholder:text-gray-400 focus:border-gray-300 focus:bg-white dark:bg-gray-900 focus:ring-2 focus:ring-gray-100"
             />
 
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:bg-gray-800 hover:text-gray-700"
               >
                 <X size={15} />
               </button>
@@ -1198,7 +1198,7 @@ const Help = () => {
         {!search && (
           <section>
             <div>
-              <h2 className="text-sm font-semibold text-gray-900">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 Popular documentation
               </h2>
 
@@ -1224,10 +1224,10 @@ const Help = () => {
                         openArticle(found);
                       }
                     }}
-                    className="group rounded-xl border border-gray-200 bg-white p-4 text-left transition hover:border-gray-300 hover:shadow-sm"
+                    className="group rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 text-left transition hover:border-gray-300 hover:shadow-sm"
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
                         <Icon
                           size={16}
                           className="text-gray-600"
@@ -1237,7 +1237,7 @@ const Help = () => {
                       <ArrowRightIcon />
                     </div>
 
-                    <h3 className="mt-4 text-xs font-semibold text-gray-900">
+                    <h3 className="mt-4 text-xs font-semibold text-gray-900 dark:text-gray-100">
                       {article.title}
                     </h3>
 
@@ -1257,7 +1257,7 @@ const Help = () => {
 
         <section className={search ? "" : "mt-10"}>
           <div className="mb-4">
-            <h2 className="text-sm font-semibold text-gray-900">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
               Browse documentation
             </h2>
 
@@ -1280,17 +1280,17 @@ const Help = () => {
                 return (
                   <div
                     key={category.id}
-                    className="overflow-hidden rounded-xl border border-gray-200 bg-white"
+                    className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
                   >
                     <button
                       type="button"
                       onClick={() =>
                         handleCategoryToggle(category.id)
                       }
-                      className="flex w-full items-center justify-between gap-4 p-4 text-left transition hover:bg-gray-50"
+                      className="flex w-full items-center justify-between gap-4 p-4 text-left transition hover:bg-gray-50 dark:bg-gray-800"
                     >
                       <div className="flex min-w-0 items-center gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
                           <Icon
                             size={16}
                             className="text-gray-600"
@@ -1298,7 +1298,7 @@ const Help = () => {
                         </div>
 
                         <div className="min-w-0">
-                          <h3 className="text-xs font-semibold text-gray-900">
+                          <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-100">
                             {category.title}
                           </h3>
 
@@ -1309,7 +1309,7 @@ const Help = () => {
                       </div>
 
                       <div className="flex shrink-0 items-center gap-3">
-                        <span className="hidden rounded-full bg-gray-100 px-2 py-1 text-[9px] font-medium text-gray-500 sm:inline-flex">
+                        <span className="hidden rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-1 text-[9px] font-medium text-gray-500 sm:inline-flex">
                           {category.articles.length}{" "}
                           {category.articles.length === 1
                             ? "article"
@@ -1344,7 +1344,7 @@ const Help = () => {
                                     category.title,
                                 })
                               }
-                              className={`flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition hover:bg-gray-50 ${
+                              className={`flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition hover:bg-gray-50 dark:bg-gray-800 ${
                                 index !==
                                 category.articles.length - 1
                                   ? "border-b border-gray-100"
@@ -1382,7 +1382,7 @@ const Help = () => {
         ================================================== */}
 
         <section className="mt-10">
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5 sm:p-6">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-start gap-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-900">
@@ -1393,7 +1393,7 @@ const Help = () => {
                 </div>
 
                 <div>
-                  <h2 className="text-sm font-semibold text-gray-900">
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                     Still need help?
                   </h2>
 
@@ -1415,7 +1415,7 @@ const Help = () => {
 
                 <button
                   type="button"
-                  className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 px-4 py-2.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50"
+                  className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50 dark:bg-gray-800"
                 >
                   <Mail size={14} />
                   Contact us
@@ -1509,17 +1509,17 @@ const ArticlePage = ({
   };
 
   return (
-    <div className="h-full min-h-0 w-full overflow-y-auto bg-gray-50">
+    <div className="h-full min-h-0 w-full overflow-y-auto bg-gray-50 dark:bg-gray-800">
       {/* =================================================
           ARTICLE HEADER
       ================================================== */}
 
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white/95 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
           <button
             type="button"
             onClick={onBack}
-            className="flex items-center gap-2 rounded-lg px-2 py-2 text-xs font-medium text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
+            className="flex items-center gap-2 rounded-lg px-2 py-2 text-xs font-medium text-gray-500 transition hover:bg-gray-100 dark:bg-gray-800 hover:text-gray-900 dark:text-gray-100"
           >
             <ArrowLeft size={15} />
             Back to Help & Docs
@@ -1528,7 +1528,7 @@ const ArticlePage = ({
           <button
             type="button"
             onClick={copyArticleLink}
-            className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
+            className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-xs font-medium text-gray-500 transition hover:bg-gray-50 dark:bg-gray-800 hover:text-gray-900 dark:text-gray-100"
           >
             {copied ? (
               <>
@@ -1609,7 +1609,7 @@ const ArticlePage = ({
           ================================================== */}
 
           <article className="min-w-0">
-            <div className="rounded-2xl border border-gray-200 bg-white px-5 py-7 shadow-sm sm:px-8 sm:py-9">
+            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-5 py-7 shadow-sm sm:px-8 sm:py-9">
               {/* Breadcrumb */}
 
               <div className="flex flex-wrap items-center gap-2 text-[10px] text-gray-400">
@@ -1620,7 +1620,7 @@ const ArticlePage = ({
 
               {/* Title */}
 
-              <h1 className="mt-5 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+              <h1 className="mt-5 text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:text-3xl">
                 {article.title}
               </h1>
 
@@ -1631,7 +1631,7 @@ const ArticlePage = ({
               {/* Intro */}
 
               {article.content?.intro && (
-                <div className="mt-7 rounded-xl bg-gray-50 p-4">
+                <div className="mt-7 rounded-xl bg-gray-50 dark:bg-gray-800 p-4">
                   <div className="flex gap-3">
                     <BookOpen
                       size={16}
@@ -1759,7 +1759,7 @@ const ArticlePage = ({
 const DocSection = ({ section }) => {
   return (
     <section className="mb-9 last:mb-0">
-      <h2 className="text-base font-semibold text-gray-900">
+      <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
         {section.title}
       </h2>
 
@@ -1809,7 +1809,7 @@ const ArticleNavigation = ({
     <button
       type="button"
       onClick={onClick}
-      className={`group rounded-xl border border-gray-200 p-4 text-left transition hover:border-gray-300 hover:bg-gray-50 ${
+      className={`group rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-left transition hover:border-gray-300 hover:bg-gray-50 dark:bg-gray-800 ${
         align === "right"
           ? "text-right"
           : "text-left"
@@ -1833,7 +1833,7 @@ const ArticleNavigation = ({
           />
         )}
 
-        <span className="text-xs font-semibold text-gray-700 group-hover:text-gray-900">
+        <span className="text-xs font-semibold text-gray-700 group-hover:text-gray-900 dark:text-gray-100">
           {article.title}
         </span>
 
@@ -1854,8 +1854,8 @@ const ArticleNavigation = ({
 
 const EmptySearch = ({ search }) => {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white px-6 py-14 text-center">
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+    <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-6 py-14 text-center">
+      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
         <Search size={20} className="text-gray-400" />
       </div>
 

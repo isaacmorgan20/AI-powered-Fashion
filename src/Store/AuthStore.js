@@ -7,6 +7,7 @@ import {
     signOut,  //logOut
     onAuthStateChanged, //keep session after refresh
 } from "firebase/auth";
+import useSettingsStore from "./settingsStore";
 
 const useAuthStore = create((set) => ({
     user: null,     // firebase auth user (uid, email)
@@ -35,6 +36,7 @@ const useAuthStore = create((set) => ({
 
         // 4) save to zustand for easy access in UI
         set({ user, profile: profileData });
+        try { useSettingsStore.getState().fetchSettings(); } catch {}
     },
 
     //LOGIN: 
@@ -49,12 +51,15 @@ const useAuthStore = create((set) => ({
 
         // 3) save to Zustand
         set({ user, profile: profileData });
+        try { useSettingsStore.getState().fetchSettings(); } catch {}
     },
 
     //Logout: signs out + clears state
     logout: async() => {
         await signOut(auth);
         set({user: null, profile: null});
+        try { useSettingsStore.getState().fetchSettings(); } catch {}
+        useSettingsStore.setState({ settings: null, loading: true, error: null });
     },
 
     // SESSION: runs on app load; keeps user logged in after refresh
@@ -63,6 +68,7 @@ const useAuthStore = create((set) => ({
             // if logged out
             if (!user) {
                 set({ user: null, profile: null, loading: false});
+                try { useSettingsStore.setState({ settings: null, loading: true, error: null }); } catch {}
                 return;
             }
             // if logged in, fetch profile too
@@ -70,6 +76,7 @@ const useAuthStore = create((set) => ({
             const profileData = snap.exists() ? snap.data() : null;
 
             set({user, profile: profileData, loading: false});
+            try { useSettingsStore.getState().fetchSettings(); } catch {}
         });
     },
 

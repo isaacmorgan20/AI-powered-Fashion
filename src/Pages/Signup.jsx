@@ -112,7 +112,7 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-800">
       <div className="flex min-h-screen">
 
         {/* =================================================
@@ -124,7 +124,7 @@ const Signup = () => {
           <div className="p-10">
             <div className="flex items-center gap-3">
 
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-sm font-bold text-gray-900">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white dark:bg-gray-900 text-sm font-bold text-gray-900 dark:text-gray-100">
                 T
               </div>
 
@@ -193,7 +193,7 @@ const Signup = () => {
                 </div>
 
                 <div>
-                  <h1 className="text-lg font-bold text-gray-900">
+                  <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">
                     ThreadOS AI
                   </h1>
 
@@ -214,7 +214,7 @@ const Signup = () => {
                 Seller portal
               </p>
 
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 sm:text-3xl">
                 Create your account
               </h2>
 
@@ -275,7 +275,7 @@ const Signup = () => {
                     value={formData.businessName}
                     onChange={handleChange}
                     placeholder="Your store name"
-                    className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
+                    className="h-11 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-10 pr-4 text-sm text-gray-900 dark:text-gray-100 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
                   />
 
                 </div>
@@ -308,7 +308,7 @@ const Signup = () => {
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="Your full name"
-                    className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
+                    className="h-11 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-10 pr-4 text-sm text-gray-900 dark:text-gray-100 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
                   />
 
                 </div>
@@ -341,7 +341,7 @@ const Signup = () => {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="you@yourbusiness.com"
-                    className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
+                    className="h-11 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-10 pr-4 text-sm text-gray-900 dark:text-gray-100 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
                   />
 
                 </div>
@@ -378,7 +378,7 @@ const Signup = () => {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="At least 8 characters"
-                    className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-11 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
+                    className="h-11 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-10 pr-11 text-sm text-gray-900 dark:text-gray-100 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
                   />
 
                   <button
@@ -393,7 +393,7 @@ const Signup = () => {
                         ? "Hide password"
                         : "Show password"
                     }
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-gray-400 transition hover:bg-gray-100 dark:bg-gray-800 hover:text-gray-700"
                   >
                     {showPassword ? (
                       <EyeOff size={16} />
@@ -436,7 +436,7 @@ const Signup = () => {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="Enter your password again"
-                    className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-11 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
+                    className="h-11 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-10 pr-11 text-sm text-gray-900 dark:text-gray-100 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
                   />
 
                   <button
@@ -451,7 +451,7 @@ const Signup = () => {
                         ? "Hide password"
                         : "Show password"
                     }
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-gray-400 transition hover:bg-gray-100 dark:bg-gray-800 hover:text-gray-700"
                   >
                     {showConfirmPassword ? (
                       <EyeOff size={16} />
@@ -476,21 +476,21 @@ const Signup = () => {
                       event.target.checked
                     )
                   }
-                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-gray-900 focus:ring-gray-200"
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-gray-900 dark:text-gray-100 focus:ring-gray-200"
                 />
 
                 <span className="text-xs leading-5 text-gray-500">
                   I agree to the{" "}
                   <button
                     type="button"
-                    className="font-medium text-gray-900 hover:underline"
+                    className="font-medium text-gray-900 dark:text-gray-100 hover:underline"
                   >
                     Terms of Service
                   </button>{" "}
                   and{" "}
                   <button
                     type="button"
-                    className="font-medium text-gray-900 hover:underline"
+                    className="font-medium text-gray-900 dark:text-gray-100 hover:underline"
                   >
                     Privacy Policy
                   </button>
@@ -525,14 +525,14 @@ const Signup = () => {
 
             {/* Login link */}
 
-            <div className="mt-7 border-t border-gray-200 pt-6 text-center">
+            <div className="mt-7 border-t border-gray-200 dark:border-gray-700 pt-6 text-center">
 
               <p className="text-xs text-gray-500">
                 Already have an account?{" "}
 
                 <Link
                   to="/login"
-                  className="font-semibold text-gray-900 hover:underline"
+                  className="font-semibold text-gray-900 dark:text-gray-100 hover:underline"
                 >
                   Sign in
                 </Link>

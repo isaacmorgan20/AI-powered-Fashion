@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../service/api';
+import { useSettings } from './useSettings';
 
 export function useConversations() {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { settings } = useSettings();
+  const timezone = settings?.general?.timezone || "Africa/Accra";
 
   const fetchConversations = useCallback(async () => {
     try {
@@ -37,7 +40,7 @@ export function useConversations() {
       id: Date.now(),
       sender: 'human',
       content,
-      time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+      time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: timezone }),
     };
 
     setConversations((current) =>
@@ -60,7 +63,7 @@ export function useConversations() {
     } catch (err) {
       console.error('Failed to send message:', err);
     }
-  }, []);
+  }, [timezone]);
 
   const takeOver = useCallback(async (conversationId) => {
     setConversations((current) =>
@@ -139,6 +142,7 @@ export function useConversations() {
 
   return {
     conversations,
+    setConversations,
     loading,
     error,
     refetch: fetchConversations,

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import SignOutButton from "./SignOutButton";
+import { useSettings } from "../hooks/useSettings";
 
 const SideBar = ({
   sidebarOpen,
@@ -50,6 +51,9 @@ const SideBar = ({
       icon: Settings,
     },
   ];
+  const { settings } = useSettings();
+  const businessName = settings?.general?.businessName || "ThreadOS AI";
+  const businessCategory = settings?.general?.businessCategory || "FASHION";
 
   return (
     <aside
@@ -99,7 +103,7 @@ const SideBar = ({
         {sidebarOpen ? (
           <div className="min-w-0">
             <h1 className="truncate text-xl font-bold tracking-tight text-gray-900 dark:text-white">
-              ThreadOS AI
+              {businessName}
             </h1>
 
             <div className="mt-1 flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
@@ -111,7 +115,7 @@ const SideBar = ({
                 •
               </span>
 
-              <span>FASHION</span>
+              <span className="uppercase">{businessCategory}</span>
             </div>
           </div>
         ) : (
@@ -130,9 +134,9 @@ const SideBar = ({
               dark:bg-white
               dark:text-gray-900
             "
-            title="ThreadOS AI"
+            title={businessName}
           >
-            T
+            {businessName.charAt(0).toUpperCase() || "T"}
           </div>
         )}
       </div>

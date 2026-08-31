@@ -76,7 +76,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-800">
       <div className="flex min-h-screen">
         {/* =================================================
             LEFT SIDE — BRAND
@@ -85,7 +85,7 @@ const Login = () => {
         <div className="hidden w-1/2 bg-gray-900 lg:flex lg:flex-col lg:justify-between">
           <div className="p-10">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-sm font-bold text-gray-900">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white dark:bg-gray-900 text-sm font-bold text-gray-900 dark:text-gray-100">
                 T
               </div>
 
@@ -141,7 +141,7 @@ const Login = () => {
                 </div>
 
                 <div>
-                  <h1 className="text-lg font-bold text-gray-900">
+                  <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">
                     ThreadOS AI
                   </h1>
 
@@ -159,7 +159,7 @@ const Login = () => {
                 Seller portal
               </p>
 
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 sm:text-3xl">
                 Welcome back
               </h2>
 
@@ -214,7 +214,7 @@ const Login = () => {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="you@yourbusiness.com"
-                    className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
+                    className="h-11 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-10 pr-4 text-sm text-gray-900 dark:text-gray-100 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
                   />
                 </div>
               </div>
@@ -232,7 +232,7 @@ const Login = () => {
 
                   <Link
                     to="/forgot-password"
-                    className="text-xs font-medium text-gray-500 transition hover:text-gray-900"
+                    className="text-xs font-medium text-gray-500 transition hover:text-gray-900 dark:text-gray-100"
                   >
                     Forgot password?
                   </Link>
@@ -256,7 +256,7 @@ const Login = () => {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Enter your password"
-                    className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-11 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
+                    className="h-11 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-10 pr-11 text-sm text-gray-900 dark:text-gray-100 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
                   />
 
                   <button
@@ -271,7 +271,7 @@ const Login = () => {
                         ? "Hide password"
                         : "Show password"
                     }
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-gray-400 transition hover:bg-gray-100 dark:bg-gray-800 hover:text-gray-700"
                   >
                     {showPassword ? (
                       <EyeOff size={16} />
@@ -305,12 +305,12 @@ const Login = () => {
 
             {/* Sign up */}
 
-            <div className="mt-8 border-t border-gray-200 pt-6 text-center">
+            <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6 text-center">
               <p className="text-xs text-gray-500">
                 Don't have an account?{" "}
                 <Link
                   to="/signup"
-                  className="font-semibold text-gray-900 hover:underline"
+                  className="font-semibold text-gray-900 dark:text-gray-100 hover:underline"
                 >
                   Create a seller account
                 </Link>

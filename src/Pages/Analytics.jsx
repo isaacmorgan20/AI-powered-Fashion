@@ -19,589 +19,11 @@ import {
   UserRound,
   Sparkles,
   Package,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
-
-/* =========================================================
-   DEMO ANALYTICS DATA
-========================================================= */
-
-const analyticsData = {
-  Today: {
-    conversations: 84,
-    conversationsChange: 8.4,
-    aiResolved: 69,
-    aiResolvedChange: 4.1,
-    responseTime: 31,
-    responseTimeChange: -12,
-    revenue: 1850,
-    revenueChange: 14.8,
-
-    conversationChart: [
-      12, 18, 14, 22, 19, 28, 24, 31, 27, 35, 32, 38,
-    ],
-
-    intents: [
-      { name: "Price", value: 34 },
-      { name: "Size", value: 22 },
-      { name: "Availability", value: 18 },
-      { name: "Delivery", value: 14 },
-      { name: "Order status", value: 8 },
-      { name: "Other", value: 4 },
-    ],
-
-    topProducts: [
-      {
-        name: "Black Evening Dress",
-        enquiries: 23,
-        orders: 8,
-        revenue: 3600,
-      },
-      {
-        name: "Silk Dress",
-        enquiries: 17,
-        orders: 6,
-        revenue: 5400,
-      },
-      {
-        name: "Gold Heels",
-        enquiries: 12,
-        orders: 4,
-        revenue: 2200,
-      },
-      {
-        name: "Blue Kaftan",
-        enquiries: 9,
-        orders: 3,
-        revenue: 1500,
-      },
-    ],
-
-    channels: [
-      {
-        name: "WhatsApp",
-        value: 52,
-        conversations: 44,
-        orders: 14,
-        revenue: 920,
-      },
-      {
-        name: "Instagram",
-        value: 28,
-        conversations: 24,
-        orders: 9,
-        revenue: 540,
-      },
-      {
-        name: "Website",
-        value: 15,
-        conversations: 12,
-        orders: 5,
-        revenue: 290,
-      },
-      {
-        name: "Facebook",
-        value: 5,
-        conversations: 4,
-        orders: 2,
-        revenue: 100,
-      },
-    ],
-
-    handoffs: 15,
-
-    handoffReasons: [
-      {
-        name: "Customer requested agent",
-        value: 5,
-      },
-      {
-        name: "Order problem",
-        value: 4,
-      },
-      {
-        name: "Complex question",
-        value: 3,
-      },
-      {
-        name: "Complaint",
-        value: 2,
-      },
-      {
-        name: "Other",
-        value: 1,
-      },
-    ],
-
-    knowledgeGaps: [
-      {
-        question: "What is the delivery fee to Kumasi?",
-        count: 8,
-      },
-      {
-        question:
-          "Do you accept returns after 7 days?",
-        count: 5,
-      },
-      {
-        question:
-          "When will size XL be available?",
-        count: 4,
-      },
-    ],
-
-    funnel: {
-      conversations: 84,
-      productInterest: 39,
-      orderAttempts: 23,
-      completedOrders: 18,
-    },
-
-    customers: {
-      new: 22,
-      returning: 14,
-      vip: 3,
-    },
-  },
-
-  "7 days": {
-    conversations: 612,
-    conversationsChange: 12.4,
-    aiResolved: 501,
-    aiResolvedChange: 5.8,
-    responseTime: 38,
-    responseTimeChange: -18,
-    revenue: 12480,
-    revenueChange: 21.2,
-
-    conversationChart: [
-      61, 74, 83, 72, 96, 108, 118,
-    ],
-
-    intents: [
-      { name: "Price", value: 31 },
-      { name: "Size", value: 24 },
-      { name: "Availability", value: 19 },
-      { name: "Delivery", value: 13 },
-      { name: "Order status", value: 8 },
-      { name: "Other", value: 5 },
-    ],
-
-    topProducts: [
-      {
-        name: "Black Evening Dress",
-        enquiries: 141,
-        orders: 39,
-        revenue: 17550,
-      },
-      {
-        name: "Silk Dress",
-        enquiries: 96,
-        orders: 31,
-        revenue: 27900,
-      },
-      {
-        name: "Gold Heels",
-        enquiries: 74,
-        orders: 22,
-        revenue: 12100,
-      },
-      {
-        name: "Blue Kaftan",
-        enquiries: 62,
-        orders: 18,
-        revenue: 9000,
-      },
-    ],
-
-    channels: [
-      {
-        name: "WhatsApp",
-        value: 52,
-        conversations: 318,
-        orders: 82,
-        revenue: 6240,
-      },
-      {
-        name: "Instagram",
-        value: 28,
-        conversations: 171,
-        orders: 51,
-        revenue: 3490,
-      },
-      {
-        name: "Website",
-        value: 15,
-        conversations: 92,
-        orders: 32,
-        revenue: 1950,
-      },
-      {
-        name: "Facebook",
-        value: 5,
-        conversations: 31,
-        orders: 11,
-        revenue: 800,
-      },
-    ],
-
-    handoffs: 111,
-
-    handoffReasons: [
-      {
-        name: "Customer requested agent",
-        value: 39,
-      },
-      {
-        name: "Order problem",
-        value: 28,
-      },
-      {
-        name: "Complex question",
-        value: 21,
-      },
-      {
-        name: "Complaint",
-        value: 15,
-      },
-      {
-        name: "Other",
-        value: 8,
-      },
-    ],
-
-    knowledgeGaps: [
-      {
-        question: "What is the delivery fee to Kumasi?",
-        count: 31,
-      },
-      {
-        question:
-          "Do you accept returns after 7 days?",
-        count: 21,
-      },
-      {
-        question:
-          "When will size XL be available?",
-        count: 17,
-      },
-      {
-        question:
-          "Do you offer custom measurements?",
-        count: 12,
-      },
-    ],
-
-    funnel: {
-      conversations: 612,
-      productInterest: 281,
-      orderAttempts: 174,
-      completedOrders: 143,
-    },
-
-    customers: {
-      new: 149,
-      returning: 71,
-      vip: 12,
-    },
-  },
-
-  "30 days": {
-    conversations: 2840,
-    conversationsChange: 18.6,
-    aiResolved: 2315,
-    aiResolvedChange: 8.2,
-    responseTime: 41,
-    responseTimeChange: -22,
-    revenue: 58340,
-    revenueChange: 27.4,
-
-    conversationChart: [
-      71, 84, 96, 88, 103, 112, 121, 132, 127, 141,
-      149, 154, 161, 173, 168, 181, 193, 187, 201,
-      214, 208, 221, 230, 227, 238, 249, 256, 267, 281,
-      294,
-    ],
-
-    intents: [
-      { name: "Price", value: 33 },
-      { name: "Size", value: 23 },
-      { name: "Availability", value: 18 },
-      { name: "Delivery", value: 13 },
-      { name: "Order status", value: 8 },
-      { name: "Other", value: 5 },
-    ],
-
-    topProducts: [
-      {
-        name: "Black Evening Dress",
-        enquiries: 542,
-        orders: 148,
-        revenue: 66600,
-      },
-      {
-        name: "Silk Dress",
-        enquiries: 416,
-        orders: 121,
-        revenue: 108900,
-      },
-      {
-        name: "Gold Heels",
-        enquiries: 321,
-        orders: 88,
-        revenue: 48400,
-      },
-      {
-        name: "Blue Kaftan",
-        enquiries: 274,
-        orders: 75,
-        revenue: 37500,
-      },
-    ],
-
-    channels: [
-      {
-        name: "WhatsApp",
-        value: 52,
-        conversations: 1477,
-        orders: 381,
-        revenue: 28340,
-      },
-      {
-        name: "Instagram",
-        value: 28,
-        conversations: 795,
-        orders: 223,
-        revenue: 14690,
-      },
-      {
-        name: "Website",
-        value: 15,
-        conversations: 426,
-        orders: 124,
-        revenue: 8970,
-      },
-      {
-        name: "Facebook",
-        value: 5,
-        conversations: 142,
-        orders: 47,
-        revenue: 6340,
-      },
-    ],
-
-    handoffs: 525,
-
-    handoffReasons: [
-      {
-        name: "Customer requested agent",
-        value: 182,
-      },
-      {
-        name: "Order problem",
-        value: 132,
-      },
-      {
-        name: "Complex question",
-        value: 104,
-      },
-      {
-        name: "Complaint",
-        value: 67,
-      },
-      {
-        name: "Other",
-        value: 40,
-      },
-    ],
-
-    knowledgeGaps: [
-      {
-        question: "What is the delivery fee to Kumasi?",
-        count: 94,
-      },
-      {
-        question:
-          "Do you accept returns after 7 days?",
-        count: 76,
-      },
-      {
-        question:
-          "When will size XL be available?",
-        count: 61,
-      },
-      {
-        question:
-          "Do you offer custom measurements?",
-        count: 47,
-      },
-      {
-        question: "Can I pay on delivery?",
-        count: 31,
-      },
-    ],
-
-    funnel: {
-      conversations: 2840,
-      productInterest: 1364,
-      orderAttempts: 841,
-      completedOrders: 702,
-    },
-
-    customers: {
-      new: 638,
-      returning: 319,
-      vip: 47,
-    },
-  },
-
-  "90 days": {
-    conversations: 8014,
-    conversationsChange: 24.1,
-    aiResolved: 6552,
-    aiResolvedChange: 10.7,
-    responseTime: 46,
-    responseTimeChange: -26,
-    revenue: 169850,
-    revenueChange: 33.9,
-
-    conversationChart: [
-      110, 128, 141, 157, 166, 178, 191, 205, 219, 231,
-      243, 255, 269, 281, 293, 308, 321, 337, 349, 365,
-      378, 394, 409, 425, 441, 458, 474, 491, 508, 528,
-    ],
-
-    intents: [
-      { name: "Price", value: 32 },
-      { name: "Size", value: 23 },
-      { name: "Availability", value: 19 },
-      { name: "Delivery", value: 13 },
-      { name: "Order status", value: 8 },
-      { name: "Other", value: 5 },
-    ],
-
-    topProducts: [
-      {
-        name: "Black Evening Dress",
-        enquiries: 1488,
-        orders: 422,
-        revenue: 189900,
-      },
-      {
-        name: "Silk Dress",
-        enquiries: 1218,
-        orders: 357,
-        revenue: 321300,
-      },
-      {
-        name: "Gold Heels",
-        enquiries: 927,
-        orders: 274,
-        revenue: 150700,
-      },
-      {
-        name: "Blue Kaftan",
-        enquiries: 816,
-        orders: 231,
-        revenue: 115500,
-      },
-    ],
-
-    channels: [
-      {
-        name: "WhatsApp",
-        value: 53,
-        conversations: 4247,
-        orders: 1081,
-        revenue: 80200,
-      },
-      {
-        name: "Instagram",
-        value: 27,
-        conversations: 2164,
-        orders: 593,
-        revenue: 39900,
-      },
-      {
-        name: "Website",
-        value: 14,
-        conversations: 1122,
-        orders: 331,
-        revenue: 25600,
-      },
-      {
-        name: "Facebook",
-        value: 6,
-        conversations: 481,
-        orders: 138,
-        revenue: 14150,
-      },
-    ],
-
-    handoffs: 1462,
-
-    handoffReasons: [
-      {
-        name: "Customer requested agent",
-        value: 508,
-      },
-      {
-        name: "Order problem",
-        value: 371,
-      },
-      {
-        name: "Complex question",
-        value: 284,
-      },
-      {
-        name: "Complaint",
-        value: 187,
-      },
-      {
-        name: "Other",
-        value: 112,
-      },
-    ],
-
-    knowledgeGaps: [
-      {
-        question: "What is the delivery fee to Kumasi?",
-        count: 312,
-      },
-      {
-        question:
-          "Do you accept returns after 7 days?",
-        count: 249,
-      },
-      {
-        question:
-          "When will size XL be available?",
-        count: 207,
-      },
-      {
-        question:
-          "Do you offer custom measurements?",
-        count: 181,
-      },
-      {
-        question: "Can I pay on delivery?",
-        count: 149,
-      },
-    ],
-
-    funnel: {
-      conversations: 8014,
-      productInterest: 3908,
-      orderAttempts: 2384,
-      completedOrders: 1961,
-    },
-
-    customers: {
-      new: 1821,
-      returning: 974,
-      vip: 148,
-    },
-  },
-};
+import { useAnalytics } from "../hooks/useAnalytics";
+import { useSettings } from "../hooks/useSettings";
 
 /* =========================================================
    CHANNEL ICON
@@ -642,7 +64,7 @@ const ChannelIcon = ({ name }) => {
   }
 
   return (
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
       <Globe2
         size={17}
         className="text-gray-600"
@@ -659,10 +81,12 @@ const Analytics = () => {
   const [range, setRange] = useState("30 days");
   const [showAllGaps, setShowAllGaps] = useState(false);
 
-  const data = analyticsData[range];
+  const { data, loading, error, refetch } = useAnalytics(range);
+  const { settings } = useSettings();
+  const currency = settings?.general?.currency || "GHS";
 
   const aiRate = useMemo(() => {
-    if (!data.conversations) return 0;
+    if (!data?.conversations) return 0;
 
     return (
       (data.aiResolved / data.conversations) *
@@ -678,7 +102,7 @@ const Analytics = () => {
   }, [aiRate]);
 
   const conversionRate = useMemo(() => {
-    if (!data.funnel.conversations) return 0;
+    if (!data?.funnel?.conversations) return 0;
 
     return (
       (data.funnel.completedOrders /
@@ -688,7 +112,7 @@ const Analytics = () => {
   }, [data]);
 
   const handoffRate = useMemo(() => {
-    if (!data.conversations) return 0;
+    if (!data?.conversations) return 0;
 
     return (
       (data.handoffs /
@@ -697,17 +121,52 @@ const Analytics = () => {
     ).toFixed(1);
   }, [data]);
 
-  const visibleKnowledgeGaps = showAllGaps
-    ? data.knowledgeGaps
-    : data.knowledgeGaps.slice(0, 3);
+  const visibleKnowledgeGaps = useMemo(() => {
+    if (!data?.knowledgeGaps) return [];
+    return showAllGaps
+      ? data.knowledgeGaps
+      : data.knowledgeGaps.slice(0, 3);
+  }, [data, showAllGaps]);
+
+  if (loading) {
+    return (
+      <div className="flex h-full min-h-0 w-full items-center justify-center bg-gray-50 dark:bg-gray-800">
+        <div className="text-center">
+          <Loader2 size={28} className="mx-auto animate-spin text-gray-300" />
+          <p className="mt-3 text-sm text-gray-500">Loading analytics...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-full min-h-0 w-full items-center justify-center bg-gray-50 dark:bg-gray-800 p-6">
+        <div className="max-w-sm text-center">
+          <AlertCircle size={28} className="mx-auto text-red-400" />
+          <h3 className="mt-3 text-sm font-semibold text-gray-700">Failed to load analytics</h3>
+          <p className="mt-1 text-xs text-gray-400">{error}</p>
+          <button onClick={refetch} className="mt-3 text-xs font-medium text-blue-600 hover:underline">Retry</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="flex h-full min-h-0 w-full items-center justify-center bg-gray-50 dark:bg-gray-800">
+        <p className="text-sm text-gray-500">No analytics data.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-gray-50">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-gray-50 dark:bg-gray-800">
       {/* ===================================================
           FIXED HEADER
       ==================================================== */}
 
-      <header className="shrink-0 border-b border-gray-200 bg-white px-4 py-4 sm:px-6">
+      <header className="shrink-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-4 sm:px-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -717,7 +176,7 @@ const Analytics = () => {
                 className="shrink-0 text-gray-700"
               />
 
-              <h1 className="truncate text-lg font-semibold text-gray-900">
+              <h1 className="truncate text-lg font-semibold text-gray-900 dark:text-gray-100">
                 Analytics
               </h1>
             </div>
@@ -804,7 +263,7 @@ const Analytics = () => {
             <MetricCard
               icon={CircleDollarSign}
               title="Revenue influenced"
-              value={`GHS ${data.revenue.toLocaleString()}`}
+              value={`${currency} ${data.revenue.toLocaleString()}`}
               change={data.revenueChange}
               positive={true}
               description="vs previous period"
@@ -817,10 +276,10 @@ const Analytics = () => {
 
           <div className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
             {/* Conversation trend */}
-            <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+            <section className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
               <div className="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-4">
                 <div className="min-w-0">
-                  <h2 className="text-sm font-semibold text-gray-900">
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                     Conversations
                   </h2>
 
@@ -829,7 +288,7 @@ const Analytics = () => {
                   </p>
                 </div>
 
-                <span className="shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-medium text-gray-600">
+                <span className="shrink-0 rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-1 text-[10px] font-medium text-gray-600">
                   {range}
                 </span>
               </div>
@@ -842,9 +301,9 @@ const Analytics = () => {
             </section>
 
             {/* Intent */}
-            <section className="rounded-2xl border border-gray-200 bg-white">
+            <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
               <div className="border-b border-gray-100 px-5 py-4">
-                <h2 className="text-sm font-semibold text-gray-900">
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                   Customer intent
                 </h2>
 
@@ -866,7 +325,7 @@ const Analytics = () => {
                       </span>
                     </div>
 
-                    <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                    <div className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                       <div
                         className="h-full rounded-full bg-gray-900 transition-all duration-500"
                         style={{
@@ -884,10 +343,10 @@ const Analytics = () => {
               SALES FUNNEL
           ================================================== */}
 
-          <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+          <section className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
             <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-sm font-semibold text-gray-900">
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                   Conversation → Purchase
                 </h2>
 
@@ -896,7 +355,7 @@ const Analytics = () => {
                 </p>
               </div>
 
-              <div className="w-fit rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700">
+              <div className="w-fit rounded-full bg-gray-100 dark:bg-gray-800 px-3 py-1.5 text-xs font-medium text-gray-700">
                 {conversionRate}% conversion
               </div>
             </div>
@@ -939,10 +398,10 @@ const Analytics = () => {
 
           <div className="grid gap-5 xl:grid-cols-2">
             {/* Products */}
-            <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+            <section className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
               <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
                 <div>
-                  <h2 className="text-sm font-semibold text-gray-900">
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                     Top products
                   </h2>
 
@@ -960,7 +419,7 @@ const Analytics = () => {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[520px]">
                   <thead>
-                    <tr className="border-b border-gray-100 bg-gray-50">
+                    <tr className="border-b border-gray-100 bg-gray-50 dark:bg-gray-800">
                       <th className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-400">
                         Product
                       </th>
@@ -984,16 +443,16 @@ const Analytics = () => {
                       (product, index) => (
                         <tr
                           key={product.name}
-                          className="transition hover:bg-gray-50"
+                          className="transition hover:bg-gray-50 dark:bg-gray-800"
                         >
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-xs font-semibold text-gray-600">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-xs font-semibold text-gray-600">
                                 {index + 1}
                               </div>
 
                               <div className="min-w-0">
-                                <p className="truncate text-xs font-semibold text-gray-900">
+                                <p className="truncate text-xs font-semibold text-gray-900 dark:text-gray-100">
                                   {product.name}
                                 </p>
 
@@ -1012,8 +471,8 @@ const Analytics = () => {
                             {product.orders.toLocaleString()}
                           </td>
 
-                          <td className="px-5 py-4 text-right text-xs font-semibold text-gray-900">
-                            GHS{" "}
+                          <td className="px-5 py-4 text-right text-xs font-semibold text-gray-900 dark:text-gray-100">
+                            {currency}{" "}
                             {product.revenue.toLocaleString()}
                           </td>
                         </tr>
@@ -1025,9 +484,9 @@ const Analytics = () => {
             </section>
 
             {/* Channels */}
-            <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+            <section className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
               <div className="border-b border-gray-100 px-5 py-4">
-                <h2 className="text-sm font-semibold text-gray-900">
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                   Channel performance
                 </h2>
 
@@ -1049,16 +508,16 @@ const Analytics = () => {
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-3">
-                          <p className="text-xs font-semibold text-gray-900">
+                          <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">
                             {channel.name}
                           </p>
 
-                          <p className="text-xs font-semibold text-gray-900">
+                          <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">
                             {channel.value}%
                           </p>
                         </div>
 
-                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-100">
+                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                           <div
                             className="h-full rounded-full bg-gray-900"
                             style={{
@@ -1079,7 +538,7 @@ const Analytics = () => {
                           </span>
 
                           <span>
-                            GHS{" "}
+                            {currency}{" "}
                             {channel.revenue.toLocaleString()}
                           </span>
                         </div>
@@ -1097,9 +556,9 @@ const Analytics = () => {
 
           <div className="grid gap-5 xl:grid-cols-2">
             {/* AI */}
-            <section className="rounded-2xl border border-gray-200 bg-white">
+            <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
               <div className="border-b border-gray-100 px-5 py-4">
-                <h2 className="text-sm font-semibold text-gray-900">
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                   AI performance
                 </h2>
 
@@ -1137,10 +596,10 @@ const Analytics = () => {
                 />
               </div>
 
-              <div className="mx-5 mb-5 rounded-xl bg-gray-50 p-4">
+              <div className="mx-5 mb-5 rounded-xl bg-gray-50 dark:bg-gray-800 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold text-gray-900">
+                    <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">
                       AI vs human
                     </p>
 
@@ -1184,9 +643,9 @@ const Analytics = () => {
             </section>
 
             {/* Customers */}
-            <section className="rounded-2xl border border-gray-200 bg-white">
+            <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
               <div className="border-b border-gray-100 px-5 py-4">
-                <h2 className="text-sm font-semibold text-gray-900">
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                   Customer activity
                 </h2>
 
@@ -1219,7 +678,7 @@ const Analytics = () => {
                 <div className="mt-5 rounded-xl border border-gray-100 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-xs font-semibold text-gray-900">
+                      <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">
                         Returning customer ratio
                       </p>
 
@@ -1235,7 +694,7 @@ const Analytics = () => {
                   </div>
 
                   <div className="mt-4 flex items-end gap-2">
-                    <p className="text-2xl font-semibold text-gray-900">
+                    <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                       {(
                         (data.customers.returning /
                           Math.max(
@@ -1262,10 +721,10 @@ const Analytics = () => {
 
           <div className="grid gap-5 xl:grid-cols-2">
             {/* Handoffs */}
-            <section className="rounded-2xl border border-gray-200 bg-white">
+            <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
               <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
                 <div>
-                  <h2 className="text-sm font-semibold text-gray-900">
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                     Human handoffs
                   </h2>
 
@@ -1274,7 +733,7 @@ const Analytics = () => {
                   </p>
                 </div>
 
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
                   <UserRound
                     size={16}
                     className="text-gray-600"
@@ -1285,7 +744,7 @@ const Analytics = () => {
               <div className="p-5">
                 <div className="flex items-end justify-between gap-4">
                   <div>
-                    <p className="text-2xl font-semibold text-gray-900">
+                    <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                       {data.handoffs.toLocaleString()}
                     </p>
 
@@ -1294,7 +753,7 @@ const Analytics = () => {
                     </p>
                   </div>
 
-                  <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-medium text-gray-600">
+                  <span className="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-1 text-[10px] font-medium text-gray-600">
                     {handoffRate}% of conversations
                   </span>
                 </div>
@@ -1327,7 +786,7 @@ const Analytics = () => {
                             </span>
                           </div>
 
-                          <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                          <div className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                             <div
                               className="h-full rounded-full bg-gray-900"
                               style={{
@@ -1344,10 +803,10 @@ const Analytics = () => {
             </section>
 
             {/* Knowledge gaps */}
-            <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+            <section className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
               <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
                 <div>
-                  <h2 className="text-sm font-semibold text-gray-900">
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                     AI knowledge gaps
                   </h2>
 
@@ -1371,7 +830,7 @@ const Analytics = () => {
                       key={gap.question}
                       className="flex items-start gap-3 px-5 py-4"
                     >
-                      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-100">
+                      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
                         <MessageSquare
                           size={13}
                           className="text-gray-500"
@@ -1409,7 +868,7 @@ const Analytics = () => {
                         (value) => !value
                       )
                     }
-                    className="text-xs font-medium text-gray-600 transition hover:text-gray-900"
+                    className="text-xs font-medium text-gray-600 transition hover:text-gray-900 dark:text-gray-100"
                   >
                     {showAllGaps
                       ? "Show less"
@@ -1438,9 +897,9 @@ const MetricCard = ({
   description,
 }) => {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
+    <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 sm:p-5">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
           <Icon
             size={17}
             className="text-gray-600"
@@ -1473,7 +932,7 @@ const MetricCard = ({
         {title}
       </p>
 
-      <p className="mt-1 truncate text-2xl font-semibold text-gray-900">
+      <p className="mt-1 truncate text-2xl font-semibold text-gray-900 dark:text-gray-100">
         {value}
       </p>
 
@@ -1641,7 +1100,7 @@ const FunnelStep = ({
         }
       `}
     >
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
         <Icon
           size={17}
           className="text-gray-600"
@@ -1659,7 +1118,7 @@ const FunnelStep = ({
           </p>
         </div>
 
-        <p className="mt-1 text-xl font-semibold text-gray-900">
+        <p className="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">
           {value.toLocaleString()}
         </p>
       </div>
@@ -1689,7 +1148,7 @@ const MiniMetric = ({
         </p>
       </div>
 
-      <p className="mt-3 text-lg font-semibold text-gray-900">
+      <p className="mt-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
         {value}
       </p>
     </div>
@@ -1706,15 +1165,15 @@ const CustomerMetric = ({
   value,
 }) => {
   return (
-    <div className="rounded-xl bg-gray-50 p-4 text-center">
-      <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-white">
+    <div className="rounded-xl bg-gray-50 dark:bg-gray-800 p-4 text-center">
+      <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-white dark:bg-gray-900">
         <Icon
           size={15}
           className="text-gray-500"
         />
       </div>
 
-      <p className="mt-3 text-lg font-semibold text-gray-900">
+      <p className="mt-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
         {value.toLocaleString()}
       </p>
 

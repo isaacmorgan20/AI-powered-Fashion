@@ -96,6 +96,37 @@ export const api = {
     }),
   },
 
+  // Orders
+  orders: {
+    list: () => fetchWithAuth('/orders'),
+    get: (id) => fetchWithAuth(`/orders/${encodeURIComponent(id)}`),
+    create: (data) => fetchWithAuth('/orders', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+    update: (id, data) => fetchWithAuth(`/orders/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+    delete: (id) => fetchWithAuth(`/orders/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
+  },
+
+  // Analytics
+  analytics: {
+    get: (range = '30 days') => fetchWithAuth(`/analytics?range=${encodeURIComponent(range)}`),
+  },
+
+  // Settings
+  settings: {
+    get: () => fetchWithAuth('/settings'),
+    update: (data) => fetchWithAuth('/settings', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  },
+
   // Business Info
   business: {
     getInfo: () => fetchWithAuth('/business/info'),

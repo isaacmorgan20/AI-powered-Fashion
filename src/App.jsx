@@ -18,10 +18,12 @@ import Help from "./Components/Help";
 import Login from "./Pages/Login";
 import Signup from "./Pages/SignUp";
 import useAuthStore from "./Store/AuthStore";
+import { useAppearance } from "./hooks/useAppearance";
 
 
 const App = () => {
   const listenToAuth = useAuthStore((state) => state.listenToAuth);
+  useAppearance();
 
   useEffect(() => {
     listenToAuth();

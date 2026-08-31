@@ -36,7 +36,13 @@ import {
   CircleDollarSign,
   Package,
   Share2,
+  Loader2,
+  X,
 } from "lucide-react";
+import { useSettings } from "../hooks/useSettings";
+import useAuthStore from "../Store/AuthStore";
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
+import { auth } from "../service/Firebase";
 
 /* =========================================================
    SETTINGS SECTIONS
@@ -110,27 +116,37 @@ const settingsSections = [
 ========================================================= */
 
 const Settings = () => {
+  const { settings, loading, error, saving, updateSettings, refetch } = useSettings();
+  const profile = useAuthStore((s) => s.profile);
+
   /* =======================================================
      GENERAL
   ======================================================= */
 
   const [general, setGeneral] = useState({
-    businessName: "ThreadOS Fashion",
+    businessName: "",
     businessCategory: "Fashion & Apparel",
     currency: "GHS",
     timezone: "Africa/Accra",
     language: "English",
-    businessEmail: "hello@threadosfashion.com",
-    businessPhone: "+233 24 000 0000",
+    businessEmail: "",
+    businessPhone: "",
   });
 
   /* =======================================================
-     APPEARANCE
+     APPEARANCE - Real Firebase-backed, single source of truth
   ======================================================= */
 
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem("threados-theme") || "system";
-  });
+  const theme = settings?.appearance?.theme || "system";
+  const compact = settings?.appearance?.compact || false;
+  const setTheme = (newTheme) => {
+    const currentCompact = settings?.appearance?.compact || false;
+    updateSettings({ appearance: { theme: newTheme, compact: currentCompact } });
+  };
+  const setCompact = (newCompact) => {
+    const currentTheme = settings?.appearance?.theme || "system";
+    updateSettings({ appearance: { theme: currentTheme, compact: newCompact } });
+  };
 
   /* =======================================================
      AI
@@ -152,10 +168,8 @@ const Settings = () => {
   ======================================================= */
 
   const [customerSettings, setCustomerSettings] = useState({
-    welcomeMessage:
-      "Hi! Welcome to our store. How can we help you today?",
-    orderConfirmation:
-      "Your order has been received and is being processed.",
+    welcomeMessage: "Hi! Welcome to our store. How can we help you today?",
+    orderConfirmation: "Your order has been received and is being processed.",
     showProductRecommendations: true,
     showAvailability: true,
     allowCustomerChat: true,
@@ -195,9 +209,8 @@ const Settings = () => {
 
   const [storefront, setStorefront] = useState({
     enabled: true,
-    storeName: "ThreadOS Fashion",
-    storeDescription:
-      "Discover quality fashion, dresses, shoes and accessories.",
+    storeName: "",
+    storeDescription: "Discover quality fashion, dresses, shoes and accessories.",
     showPrices: true,
     showStock: true,
     showCustomerChat: true,
@@ -224,22 +237,7 @@ const Settings = () => {
      TEAM
   ======================================================= */
 
-  const [teamMembers, setTeamMembers] = useState([
-    {
-      id: 1,
-      name: "Isaac Morgan",
-      email: "isaac@threadosfashion.com",
-      role: "Owner",
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Support Agent",
-      email: "support@threadosfashion.com",
-      role: "Agent",
-      status: "Active",
-    },
-  ]);
+  const [teamMembers, setTeamMembers] = useState([]);
 
   /* =======================================================
      SECURITY
@@ -251,18 +249,42 @@ const Settings = () => {
     sessionTimeout: "30 minutes",
   });
 
-  /* =======================================================
-     ACTIVE SECTION
-  ======================================================= */
+  // Load real seller settings from Firebase
+  useEffect(() => {
+    if (settings) {
+      if (settings.general) setGeneral((c) => ({ ...c, ...settings.general }));
+      if (settings.ai) setAiSettings((c) => ({ ...c, ...settings.ai }));
+      if (settings.customer) setCustomerSettings((c) => ({ ...c, ...settings.customer }));
+      if (settings.notifications) setNotifications((c) => ({ ...c, ...settings.notifications }));
+      if (settings.channels) setChannels((c) => ({ ...c, ...settings.channels }));
+      if (settings.storefront) setStorefront((c) => ({ ...c, ...settings.storefront }));
+      if (settings.knowledge) setKnowledge((c) => ({ ...c, ...settings.knowledge }));
+      if (settings.team) setTeamMembers(settings.team);
+      if (settings.security) setSecurity((c) => ({ ...c, ...settings.security }));
+    }
+  }, [settings]);
 
-  const [activeSection, setActiveSection] =
-    useState("general");
+  // Sync businessName from profile if empty
+  useEffect(() => {
+    if (profile && profile.businessName && !general.businessName) {
+      setGeneral((c) => ({ ...c, businessName: profile.businessName, businessEmail: profile.email || c.businessEmail }));
+    }
+  }, [profile]);
+
+  const [activeSection, setActiveSection] = useState("general");
+
+  // Password modal state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({ current: "", newPass: "", confirm: "" });
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
 
   /* =======================================================
      SAVE STATE
   ======================================================= */
 
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   /* =======================================================
      MOBILE MENU
@@ -271,51 +293,7 @@ const Settings = () => {
   const [mobileMenuOpen, setMobileMenuOpen] =
     useState(false);
 
-  /* =======================================================
-     THEME
-  ======================================================= */
-
-  useEffect(() => {
-    const root = document.documentElement;
-
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else if (theme === "light") {
-      root.classList.remove("dark");
-    } else {
-      const mediaQuery = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      );
-
-      root.classList.toggle("dark", mediaQuery.matches);
-
-      const handleSystemTheme = (event) => {
-        if (theme === "system") {
-          root.classList.toggle(
-            "dark",
-            event.matches
-          );
-        }
-      };
-
-      mediaQuery.addEventListener(
-        "change",
-        handleSystemTheme
-      );
-
-      return () => {
-        mediaQuery.removeEventListener(
-          "change",
-          handleSystemTheme
-        );
-      };
-    }
-
-    localStorage.setItem(
-      "threados-theme",
-      theme
-    );
-  }, [theme]);
+  // Theme/compact are applied globally via useAppearance() in App.jsx (single source of truth)
 
   /* =======================================================
      SELECT SECTION
@@ -331,66 +309,70 @@ const Settings = () => {
      SAVE
   ======================================================= */
 
-  const handleSave = () => {
-    localStorage.setItem(
-      "threados-general",
-      JSON.stringify(general)
-    );
-
-    localStorage.setItem(
-      "threados-ai",
-      JSON.stringify(aiSettings)
-    );
-
-    localStorage.setItem(
-      "threados-customer",
-      JSON.stringify(customerSettings)
-    );
-
-    localStorage.setItem(
-      "threados-notifications",
-      JSON.stringify(notifications)
-    );
-
-    localStorage.setItem(
-      "threados-channels",
-      JSON.stringify(channels)
-    );
-
-    localStorage.setItem(
-      "threados-storefront",
-      JSON.stringify(storefront)
-    );
-
-    localStorage.setItem(
-      "threados-knowledge",
-      JSON.stringify(knowledge)
-    );
-
-    localStorage.setItem(
-      "threados-security",
-      JSON.stringify(security)
-    );
-
-    setSaved(true);
-
-    setTimeout(() => {
-      setSaved(false);
-    }, 2500);
+  const handleSave = async () => {
+    setSaveError("");
+    try {
+      await updateSettings({
+        general,
+        ai: aiSettings,
+        customer: customerSettings,
+        notifications,
+        channels,
+        storefront,
+        knowledge,
+        team: teamMembers,
+        security,
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      setSaveError(err.message || "Failed to save settings");
+    }
   };
 
   /* =======================================================
      RESET
   ======================================================= */
 
-  const handleReset = () => {
-    const confirmed = window.confirm(
-      "Reset your current settings?"
-    );
-
+  const handleReset = async () => {
+    const confirmed = window.confirm("Reset your current settings?");
     if (!confirmed) return;
+    try {
+      await refetch();
+      setSaveError("");
+    } catch (err) {
+      setSaveError(err.message);
+    }
+  };
 
-    window.location.reload();
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordSuccess("");
+    if (!passwordData.current || !passwordData.newPass || !passwordData.confirm) {
+      setPasswordError("All fields are required");
+      return;
+    }
+    if (passwordData.newPass !== passwordData.confirm) {
+      setPasswordError("New passwords do not match");
+      return;
+    }
+    if (passwordData.newPass.length < 6) {
+      setPasswordError("Password must be at least 6 characters");
+      return;
+    }
+    try {
+      const user = auth.currentUser;
+      if (!user || !user.email) throw new Error("Not authenticated");
+      const cred = EmailAuthProvider.credential(user.email, passwordData.current);
+      await reauthenticateWithCredential(user, cred);
+      await updatePassword(user, passwordData.newPass);
+      setPasswordSuccess("Password updated successfully");
+      setPasswordData({ current: "", newPass: "", confirm: "" });
+      setTimeout(() => setShowPasswordModal(false), 1500);
+    } catch (err) {
+      setPasswordError(err.message || "Failed to update password");
+    }
   };
 
   /* =======================================================
@@ -497,23 +479,59 @@ const Settings = () => {
      REMOVE TEAM MEMBER
   ======================================================= */
 
-  const removeTeamMember = (id) => {
-    const confirmed = window.confirm(
-      "Remove this team member?"
-    );
-
+  const removeTeamMember = async (id) => {
+    const confirmed = window.confirm("Remove this team member?");
     if (!confirmed) return;
+    const updated = teamMembers.filter((member) => member.id !== id);
+    setTeamMembers(updated);
+    try {
+      await updateSettings({ team: updated });
+    } catch (err) {
+      setSaveError(err.message);
+    }
+  };
 
-    setTeamMembers((current) =>
-      current.filter(
-        (member) => member.id !== id
-      )
-    );
+  const handleAddTeamMember = async () => {
+    const email = window.prompt("Enter team member email:");
+    if (!email || !email.trim()) return;
+    const name = window.prompt("Enter team member name:") || email.split("@")[0];
+    const newMember = { id: Date.now().toString(), name: name.trim(), email: email.trim(), role: "Agent", status: "Active" };
+    const updated = [...teamMembers, newMember];
+    setTeamMembers(updated);
+    try {
+      await updateSettings({ team: updated });
+    } catch (err) {
+      setSaveError(err.message);
+    }
   };
 
   /* =======================================================
      RENDER
   ======================================================= */
+
+  if (loading) {
+    return (
+      <div className="flex h-full min-h-0 w-full items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <div className="text-center">
+          <Loader2 size={28} className="mx-auto animate-spin text-gray-300" />
+          <p className="mt-3 text-sm text-gray-500">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-full min-h-0 w-full items-center justify-center bg-gray-50 p-6 dark:bg-gray-950">
+        <div className="max-w-sm text-center">
+          <AlertTriangle size={28} className="mx-auto text-red-400" />
+          <h3 className="mt-3 text-sm font-semibold text-gray-700 dark:text-gray-200">Failed to load settings</h3>
+          <p className="mt-1 text-xs text-gray-400">{error}</p>
+          <button onClick={refetch} className="mt-3 text-xs font-medium text-blue-600 hover:underline">Retry</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
@@ -544,7 +562,7 @@ const Settings = () => {
           <button
             type="button"
             onClick={handleReset}
-            className="hidden items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 sm:flex"
+            className="hidden items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 transition hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 sm:flex"
           >
             <RotateCcw size={14} />
             Reset
@@ -553,9 +571,15 @@ const Settings = () => {
           <button
             type="button"
             onClick={handleSave}
-            className="flex items-center gap-2 rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
+            disabled={saving}
+            className="flex items-center gap-2 rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
           >
-            {saved ? (
+            {saving ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                Saving...
+              </>
+            ) : saved ? (
               <>
                 <Check size={14} />
                 Saved
@@ -569,6 +593,12 @@ const Settings = () => {
           </button>
         </div>
       </header>
+
+      {saveError && (
+        <div className="shrink-0 bg-red-50 px-4 py-2 text-xs text-red-600 dark:bg-red-950/30">
+          {saveError}
+        </div>
+      )}
 
       {/* =====================================================
           MOBILE SECTION BUTTON
@@ -1032,8 +1062,8 @@ const Settings = () => {
                   description="Reduce spacing to fit more information on screen."
                 >
                   <Toggle
-                    checked={false}
-                    onChange={() => {}}
+                    checked={compact}
+                    onChange={setCompact}
                   />
                 </SettingRow>
               </SettingsSection>
@@ -1865,7 +1895,7 @@ const Settings = () => {
 
                 <button
                   type="button"
-                  className="flex w-full items-center justify-between rounded-2xl border border-dashed border-gray-300 p-4 text-left transition hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                  className="flex w-full items-center justify-between rounded-2xl border border-dashed border-gray-300 p-4 text-left transition hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-800"
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
@@ -2051,6 +2081,7 @@ const Settings = () => {
 
                   <button
                     type="button"
+                    onClick={handleAddTeamMember}
                     className="flex shrink-0 items-center gap-2 rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800 dark:bg-white dark:text-gray-900"
                   >
                     <Plus size={14} />
@@ -2217,7 +2248,8 @@ const Settings = () => {
                   <div className="mt-4 space-y-2">
                     <button
                       type="button"
-                      className="flex w-full items-center justify-between rounded-xl border border-gray-200 p-4 text-left transition hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                      onClick={() => setShowPasswordModal(true)}
+                      className="flex w-full items-center justify-between rounded-xl border border-gray-200 p-4 text-left transition hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-800"
                     >
                       <div className="flex items-center gap-3">
                         <Lock
@@ -2244,7 +2276,7 @@ const Settings = () => {
 
                     <button
                       type="button"
-                      className="flex w-full items-center justify-between rounded-xl border border-gray-200 p-4 text-left transition hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                      className="flex w-full items-center justify-between rounded-xl border border-gray-200 p-4 text-left transition hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-800"
                     >
                       <div className="flex items-center gap-3">
                         <Smartphone
@@ -2285,6 +2317,38 @@ const Settings = () => {
           </div>
         </main>
       </div>
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-gray-900 dark:border dark:border-gray-800">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold">Change password</h2>
+              <button type="button" onClick={() => setShowPasswordModal(false)} className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-800">
+                <X size={16} />
+              </button>
+            </div>
+            <form onSubmit={handlePasswordChange} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium mb-1">Current password</label>
+                <input type="password" value={passwordData.current} onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-300 dark:border-gray-700 dark:bg-gray-800" required />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">New password</label>
+                <input type="password" value={passwordData.newPass} onChange={(e) => setPasswordData({ ...passwordData, newPass: e.target.value })} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-300 dark:border-gray-700 dark:bg-gray-800" required />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">Confirm new password</label>
+                <input type="password" value={passwordData.confirm} onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-300 dark:border-gray-700 dark:bg-gray-800" required />
+              </div>
+              {passwordError && <p className="text-xs text-red-600">{passwordError}</p>}
+              {passwordSuccess && <p className="text-xs text-green-600">{passwordSuccess}</p>}
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => setShowPasswordModal(false)} className="rounded-lg border border-gray-200 px-4 py-2 text-xs font-medium dark:border-gray-700">Cancel</button>
+                <button type="submit" className="rounded-lg bg-gray-900 px-4 py-2 text-xs font-medium text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900">Update password</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

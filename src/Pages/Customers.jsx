@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 
 import { useCustomers } from "../hooks/useCustomers";
+import { useSettings } from "../hooks/useSettings";
 
 /* =========================================================
    STYLES
@@ -56,6 +57,8 @@ const Customers = () => {
     createCustomer,
     updateCustomer,
   } = useCustomers();
+  const { settings } = useSettings();
+  const currency = settings?.general?.currency || "GHS";
 
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
 
@@ -168,18 +171,34 @@ const Customers = () => {
   ).length;
 
   /* =======================================================
-     EMPTY STATE - NO CUSTOMER SELECTED
+     LOADING / EMPTY STATE
   ======================================================= */
 
-  if (!selectedCustomer && !loading) {
+  if (loading) {
     return (
-      <div className="flex h-full min-h-0 w-full items-center justify-center overflow-hidden bg-gray-50">
+      <div className="flex h-full min-h-0 w-full items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-800">
+        <div className="text-center">
+          <Loader2 size={28} className="mx-auto animate-spin text-gray-300" />
+          <p className="mt-3 text-sm text-gray-500">Loading customers...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedCustomer) {
+    return (
+      <div className="flex h-full min-h-0 w-full items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-800">
         <div className="text-center">
           <UserRound size={36} className="mx-auto mb-3 text-gray-300" />
 
           <h2 className="text-sm font-semibold text-gray-700">
-            No customer selected
+            {customers.length === 0 ? "No customers yet" : "No customer selected"}
           </h2>
+          <p className="mt-1 text-xs text-gray-400">
+            {customers.length === 0
+              ? "Customers you create will appear here."
+              : "Select a customer to view details."}
+          </p>
 
           {customers.length === 0 && (
             <button
@@ -190,6 +209,39 @@ const Customers = () => {
             </button>
           )}
         </div>
+        {showCreateModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 p-6 shadow-xl">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Add Customer</h2>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 dark:bg-gray-800 hover:text-gray-900 dark:text-gray-100"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <form onSubmit={handleCreateCustomer}>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Name <span className="text-red-500">*</span></label>
+                    <input type="text" value={newCustomerData.name} onChange={(e) => setNewCustomerData({ ...newCustomerData, name: e.target.value })} placeholder="Customer name" className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:border-gray-300 focus:bg-white dark:bg-gray-900 focus:ring-1 focus:ring-gray-200" required autoFocus />
+                  </div>
+                  <div><label className="block text-xs font-medium text-gray-700 mb-1">Phone</label><input type="tel" value={newCustomerData.phone} onChange={(e) => setNewCustomerData({ ...newCustomerData, phone: e.target.value })} placeholder="+233 24 123 4567" className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:border-gray-300 focus:bg-white dark:bg-gray-900 focus:ring-1 focus:ring-gray-200" /></div>
+                  <div><label className="block text-xs font-medium text-gray-700 mb-1">Email</label><input type="email" value={newCustomerData.email} onChange={(e) => setNewCustomerData({ ...newCustomerData, email: e.target.value })} placeholder="customer@example.com" className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:border-gray-300 focus:bg-white dark:bg-gray-900 focus:ring-1 focus:ring-gray-200" /></div>
+                  <div><label className="block text-xs font-medium text-gray-700 mb-1">Location</label><input type="text" value={newCustomerData.location} onChange={(e) => setNewCustomerData({ ...newCustomerData, location: e.target.value })} placeholder="Accra, Ghana" className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:border-gray-300 focus:bg-white dark:bg-gray-900 focus:ring-1 focus:ring-gray-200" /></div>
+                  <div><label className="block text-xs font-medium text-gray-700 mb-1">Channel</label><select value={newCustomerData.channel} onChange={(e) => setNewCustomerData({ ...newCustomerData, channel: e.target.value })} className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:border-gray-300 focus:bg-white dark:bg-gray-900 focus:ring-1 focus:ring-gray-200"><option value="Website">Website</option><option value="WhatsApp">WhatsApp</option><option value="Instagram">Instagram</option><option value="Facebook">Facebook</option></select></div>
+                  <div><label className="block text-xs font-medium text-gray-700 mb-1">Notes</label><textarea value={newCustomerData.notes} onChange={(e) => setNewCustomerData({ ...newCustomerData, notes: e.target.value })} placeholder="Internal notes" rows={3} className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:border-gray-300 focus:bg-white dark:bg-gray-900 focus:ring-1 focus:ring-gray-200 resize-none" /></div>
+                </div>
+                <div className="mt-6 flex justify-end gap-3">
+                  <button type="button" onClick={() => setShowCreateModal(false)} className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200">Cancel</button>
+                  <button type="submit" disabled={!newCustomerData.name.trim()} className="rounded-lg px-4 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed">Create Customer</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -199,7 +251,7 @@ const Customers = () => {
   ======================================================= */
 
   return (
-    <div className="flex h-full min-h-0 w-full overflow-hidden bg-gray-50">
+    <div className="flex h-full min-h-0 w-full overflow-hidden bg-gray-50 dark:bg-gray-800">
 
       {/* =====================================================
           CUSTOMER LIST
@@ -278,7 +330,7 @@ const Customers = () => {
                     className="shrink-0 text-gray-700"
                   />
 
-                  <h1 className="truncate text-base font-semibold text-gray-900 sm:text-lg">
+                  <h1 className="truncate text-base font-semibold text-gray-900 dark:text-gray-100 sm:text-lg">
                     Customers
                   </h1>
                 </div>
@@ -487,7 +539,7 @@ const Customers = () => {
           ) : filteredCustomers.length === 0 ? (
             <div className="flex min-h-full items-center justify-center px-6 py-12">
               <div className="max-w-xs text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
                   <Users size={22} className="text-gray-400" />
                 </div>
 
@@ -582,7 +634,7 @@ const Customers = () => {
                       {/* Customer information */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="min-w-0 truncate text-sm font-semibold text-gray-900">
+                          <p className="min-w-0 truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
                             {customer.name}
                           </p>
 
@@ -626,7 +678,7 @@ const Customers = () => {
                           </span>
 
                           <span className="truncate text-[10px] text-gray-400">
-                            {customer.totalSpent}
+                            {typeof customer.totalSpent === "number" ? `${currency} ${customer.totalSpent}` : customer.totalSpent || `${currency} 0`}
                           </span>
                         </div>
                       </div>
@@ -745,7 +797,7 @@ const Customers = () => {
             {/* Name */}
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h2 className="truncate text-sm font-semibold text-gray-900 sm:text-base">
+                <h2 className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100 sm:text-base">
                   {selectedCustomer.name}
                 </h2>
 
@@ -830,7 +882,7 @@ const Customers = () => {
             <div className="grid gap-4 xl:grid-cols-3">
 
               {/* Profile card */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-5">
+              <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5">
                 <div className="flex items-center gap-4">
                   <div className="relative shrink-0">
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-900 text-lg font-semibold text-white">
@@ -855,7 +907,7 @@ const Customers = () => {
                   </div>
 
                   <div className="min-w-0">
-                    <h3 className="truncate text-base font-semibold text-gray-900">
+                    <h3 className="truncate text-base font-semibold text-gray-900 dark:text-gray-100">
                       {selectedCustomer.name}
                     </h3>
 
@@ -919,7 +971,7 @@ const Customers = () => {
                 <StatCard
                   icon={CircleDollarSign}
                   label="Total spent"
-                  value={selectedCustomer.totalSpent}
+                  value={typeof selectedCustomer.totalSpent === "number" ? `${currency} ${selectedCustomer.totalSpent}` : selectedCustomer.totalSpent || `${currency} 0`}
                   description="Customer value"
                 />
 
@@ -933,8 +985,8 @@ const Customers = () => {
                 <StatCard
                   icon={Clock3}
                   label="Last interaction"
-                  value={selectedCustomer.lastInteraction}
-                  description={`Via ${selectedCustomer.lastChannel}`}
+                  value={selectedCustomer.lastInteraction || "—"}
+                  description={`Via ${selectedCustomer.channel || selectedCustomer.lastChannel || "—"}`}
                 />
               </div>
             </div>
@@ -984,7 +1036,7 @@ const Customers = () => {
                               hover:bg-gray-50
                             "
                           >
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
                               <ShoppingBag
                                 size={16}
                                 className="text-gray-500"
@@ -992,7 +1044,7 @@ const Customers = () => {
                             </div>
 
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-xs font-semibold text-gray-900">
+                              <p className="truncate text-xs font-semibold text-gray-900 dark:text-gray-100">
                                 {order.product}
                               </p>
 
@@ -1003,7 +1055,7 @@ const Customers = () => {
                             </div>
 
                             <div className="text-right">
-                              <p className="text-xs font-semibold text-gray-900">
+                              <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">
                                 {order.amount}
                               </p>
 
@@ -1124,7 +1176,7 @@ const Customers = () => {
                         hover:bg-gray-50
                       "
                     >
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
                         <MessageSquare
                           size={16}
                           className="text-gray-500"
@@ -1180,7 +1232,7 @@ const Customers = () => {
 
             <Card>
               <div className="flex items-start gap-3 p-5">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
                   <Sparkles
                     size={16}
                     className="text-gray-600"
@@ -1188,7 +1240,7 @@ const Customers = () => {
                 </div>
 
                 <div className="min-w-0">
-                  <h3 className="text-sm font-semibold text-gray-900">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                     Customer insight
                   </h3>
 
@@ -1215,7 +1267,7 @@ const Customers = () => {
               />
 
               <div className="p-5">
-                <div className="rounded-xl bg-gray-50 p-4">
+                <div className="rounded-xl bg-gray-50 dark:bg-gray-800 p-4">
                   <p className="text-sm leading-6 text-gray-600">
                     {selectedCustomer.notes}
                   </p>
@@ -1226,165 +1278,159 @@ const Customers = () => {
           </div>
         </div>
       </section>
-    </div>
-  );
 
-  /* =======================================================
-     CREATE CUSTOMER MODAL
-  ======================================================= */
-
-  if (showCreateModal) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-gray-900">Add Customer</h2>
-            <button
-              type="button"
-              onClick={() => setShowCreateModal(false)}
-              className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-900"
-            >
-              <X size={20} />
-            </button>
-          </div>
-
-          <form onSubmit={handleCreateCustomer}>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={newCustomerData.name}
-                  onChange={(e) =>
-                    setNewCustomerData({
-                      ...newCustomerData,
-                      name: e.target.value,
-                    })
-                  }
-                  placeholder="Customer name"
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:border-gray-300 focus:bg-white focus:ring-1 focus:ring-gray-200"
-                  required
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Phone
-                </label>
-                <input
-                  type="tel"
-                  value={newCustomerData.phone}
-                  onChange={(e) =>
-                    setNewCustomerData({
-                      ...newCustomerData,
-                      phone: e.target.value,
-                    })
-                  }
-                  placeholder="+233 24 123 4567"
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:border-gray-300 focus:bg-white focus:ring-1 focus:ring-gray-200"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={newCustomerData.email}
-                  onChange={(e) =>
-                    setNewCustomerData({
-                      ...newCustomerData,
-                      email: e.target.value,
-                    })
-                  }
-                  placeholder="customer@example.com"
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:border-gray-300 focus:bg-white focus:ring-1 focus:ring-gray-200"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Location
-                </label>
-                <input
-                  type="text"
-                  value={newCustomerData.location}
-                  onChange={(e) =>
-                    setNewCustomerData({
-                      ...newCustomerData,
-                      location: e.target.value,
-                    })
-                  }
-                  placeholder="Accra, Ghana"
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:border-gray-300 focus:bg-white focus:ring-1 focus:ring-gray-200"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Channel
-                </label>
-                <select
-                  value={newCustomerData.channel}
-                  onChange={(e) =>
-                    setNewCustomerData({
-                      ...newCustomerData,
-                      channel: e.target.value,
-                    })
-                  }
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:border-gray-300 focus:bg-white focus:ring-1 focus:ring-gray-200"
-                >
-                  <option value="Website">Website</option>
-                  <option value="WhatsApp">WhatsApp</option>
-                  <option value="Instagram">Instagram</option>
-                  <option value="Facebook">Facebook</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Notes
-                </label>
-                <textarea
-                  value={newCustomerData.notes}
-                  onChange={(e) =>
-                    setNewCustomerData({
-                      ...newCustomerData,
-                      notes: e.target.value,
-                    })
-                  }
-                  placeholder="Internal notes about this customer"
-                  rows={3}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:border-gray-300 focus:bg-white focus:ring-1 focus:ring-gray-200 resize-none"
-                />
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end gap-3">
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Add Customer</h2>
               <button
                 type="button"
                 onClick={() => setShowCreateModal(false)}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200"
+                className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 dark:bg-gray-800 hover:text-gray-900 dark:text-gray-100"
               >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={!newCustomerData.name.trim()}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Create Customer
+                <X size={20} />
               </button>
             </div>
-          </form>
+
+            <form onSubmit={handleCreateCustomer}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newCustomerData.name}
+                    onChange={(e) =>
+                      setNewCustomerData({
+                        ...newCustomerData,
+                        name: e.target.value,
+                      })
+                    }
+                    placeholder="Customer name"
+                    className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:border-gray-300 focus:bg-white dark:bg-gray-900 focus:ring-1 focus:ring-gray-200"
+                    required
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Phone
+                  </label>
+                  <input
+                    type="tel"
+                    value={newCustomerData.phone}
+                    onChange={(e) =>
+                      setNewCustomerData({
+                        ...newCustomerData,
+                        phone: e.target.value,
+                      })
+                    }
+                    placeholder="+233 24 123 4567"
+                    className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:border-gray-300 focus:bg-white dark:bg-gray-900 focus:ring-1 focus:ring-gray-200"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={newCustomerData.email}
+                    onChange={(e) =>
+                      setNewCustomerData({
+                        ...newCustomerData,
+                        email: e.target.value,
+                      })
+                    }
+                    placeholder="customer@example.com"
+                    className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:border-gray-300 focus:bg-white dark:bg-gray-900 focus:ring-1 focus:ring-gray-200"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    value={newCustomerData.location}
+                    onChange={(e) =>
+                      setNewCustomerData({
+                        ...newCustomerData,
+                        location: e.target.value,
+                      })
+                    }
+                    placeholder="Accra, Ghana"
+                    className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:border-gray-300 focus:bg-white dark:bg-gray-900 focus:ring-1 focus:ring-gray-200"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Channel
+                  </label>
+                  <select
+                    value={newCustomerData.channel}
+                    onChange={(e) =>
+                      setNewCustomerData({
+                        ...newCustomerData,
+                        channel: e.target.value,
+                      })
+                    }
+                    className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:border-gray-300 focus:bg-white dark:bg-gray-900 focus:ring-1 focus:ring-gray-200"
+                  >
+                    <option value="Website">Website</option>
+                    <option value="WhatsApp">WhatsApp</option>
+                    <option value="Instagram">Instagram</option>
+                    <option value="Facebook">Facebook</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Notes
+                  </label>
+                  <textarea
+                    value={newCustomerData.notes}
+                    onChange={(e) =>
+                      setNewCustomerData({
+                        ...newCustomerData,
+                        notes: e.target.value,
+                      })
+                    }
+                    placeholder="Internal notes about this customer"
+                    rows={3}
+                    className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:border-gray-300 focus:bg-white dark:bg-gray-900 focus:ring-1 focus:ring-gray-200 resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!newCustomerData.name.trim()}
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Create Customer
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
-    );
-  }
+      )}
+    </div>
+  );
 };
 
 /* =========================================================
@@ -1396,8 +1442,8 @@ const SummaryCard = ({
   label,
 }) => {
   return (
-    <div className="rounded-xl bg-gray-50 px-2 py-2.5">
-      <p className="text-sm font-semibold text-gray-900">
+    <div className="rounded-xl bg-gray-50 dark:bg-gray-800 px-2 py-2.5">
+      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
         {value}
       </p>
 
@@ -1433,7 +1479,7 @@ const StatCard = ({
   description,
 }) => {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
+    <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 sm:p-5">
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium text-gray-500">
           {label}
@@ -1445,7 +1491,7 @@ const StatCard = ({
         />
       </div>
 
-      <p className="mt-3 truncate text-xl font-semibold text-gray-900 sm:text-2xl">
+      <p className="mt-3 truncate text-xl font-semibold text-gray-900 dark:text-gray-100 sm:text-2xl">
         {value}
       </p>
 
@@ -1458,7 +1504,7 @@ const StatCard = ({
 
 const Card = ({ children }) => {
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+    <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
       {children}
     </div>
   );
@@ -1472,7 +1518,7 @@ const CardHeader = ({
   return (
     <div className="flex items-center justify-between gap-4 border-b border-gray-100 px-5 py-4">
       <div className="min-w-0">
-        <h3 className="text-sm font-semibold text-gray-900">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
           {title}
         </h3>
 
@@ -1515,7 +1561,7 @@ const EmptyState = ({
   description,
 }) => {
   return (
-    <div className="rounded-xl bg-gray-50 px-5 py-8 text-center">
+    <div className="rounded-xl bg-gray-50 dark:bg-gray-800 px-5 py-8 text-center">
       <Icon
         size={24}
         className="mx-auto mb-2 text-gray-300"

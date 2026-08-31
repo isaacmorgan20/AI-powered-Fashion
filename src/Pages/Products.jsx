@@ -15,148 +15,11 @@ import {
   SlidersHorizontal,
   X,
   ShoppingBag,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
-
-/* =========================================================
-   DEMO PRODUCTS
-========================================================= */
-
-const initialProducts = [
-  {
-    id: 1,
-    name: "Black Evening Dress",
-    category: "Dresses",
-    price: 450,
-    stock: 12,
-    sizes: ["S", "M", "L"],
-    colors: ["Black"],
-    status: "In stock",
-    description:
-      "Elegant black evening dress suitable for weddings, parties and formal events.",
-    image:
-      "https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=900&q=80",
-  },
-
-  {
-    id: 2,
-    name: "Red Summer Dress",
-    category: "Dresses",
-    price: 380,
-    stock: 7,
-    sizes: ["S", "M", "L", "XL"],
-    colors: ["Red"],
-    status: "In stock",
-    description:
-      "Lightweight summer dress designed for casual and outdoor occasions.",
-    image:
-      "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=900&q=80",
-  },
-
-  {
-    id: 3,
-    name: "Black Shirt",
-    category: "Men",
-    price: 180,
-    stock: 4,
-    sizes: ["M", "L", "XL"],
-    colors: ["Black"],
-    status: "Low stock",
-    description:
-      "Classic black shirt with a clean modern fit.",
-    image:
-      "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=900&q=80",
-  },
-
-  {
-    id: 4,
-    name: "Blue Kaftan",
-    category: "Men",
-    price: 500,
-    stock: 0,
-    sizes: ["M", "L", "XL"],
-    colors: ["Blue"],
-    status: "Out of stock",
-    description:
-      "Premium blue kaftan for traditional and formal occasions.",
-    image:
-      "https://images.unsplash.com/photo-1610652492500-ded49ceeb378?auto=format&fit=crop&w=900&q=80",
-  },
-
-  {
-    id: 5,
-    name: "White Heels",
-    category: "Shoes",
-    price: 250,
-    stock: 9,
-    sizes: ["38", "39", "40", "41"],
-    colors: ["White"],
-    status: "In stock",
-    description:
-      "Elegant white heels designed for formal and evening wear.",
-    image:
-      "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=900&q=80",
-  },
-
-  {
-    id: 6,
-    name: "Gold Heels",
-    category: "Shoes",
-    price: 550,
-    stock: 3,
-    sizes: ["38", "39", "40"],
-    colors: ["Gold"],
-    status: "Low stock",
-    description:
-      "Premium gold heels for special occasions.",
-    image:
-      "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=900&q=80",
-  },
-
-  {
-    id: 7,
-    name: "Silk Dress",
-    category: "Dresses",
-    price: 900,
-    stock: 6,
-    sizes: ["S", "M", "L"],
-    colors: ["Cream"],
-    status: "In stock",
-    description:
-      "Premium silk dress with a refined finish.",
-    image:
-      "https://images.unsplash.com/photo-1566479179817-c0f6d85a3b4f?auto=format&fit=crop&w=900&q=80",
-  },
-
-  {
-    id: 8,
-    name: "Designer Bag",
-    category: "Accessories",
-    price: 700,
-    stock: 2,
-    sizes: [],
-    colors: ["Brown"],
-    status: "Low stock",
-    description:
-      "Premium designer-style handbag for everyday and formal use.",
-    image:
-      "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=80",
-  },
-
-  {
-    id: 9,
-    name: "White Shirt",
-    category: "Men",
-    price: 350,
-    stock: 15,
-    sizes: ["M", "L", "XL", "XXL"],
-    colors: ["White"],
-    status: "In stock",
-    description:
-      "Classic white shirt suitable for formal and casual styling.",
-    image:
-      "https://images.unsplash.com/photo-1603252109303-2751441dd157?auto=format&fit=crop&w=900&q=80",
-  },
-];
+import { useProducts } from "../hooks/useProducts";
+import { useSettings } from "../hooks/useSettings";
 
 /* =========================================================
    HELPERS
@@ -168,8 +31,8 @@ const getStatusFromStock = (stock) => {
   return "In stock";
 };
 
-const formatPrice = (price) => {
-  return `GHS ${Number(price).toLocaleString()}`;
+const formatPrice = (price, currency = "GHS") => {
+  return `${currency} ${Number(price).toLocaleString()}`;
 };
 
 const statusStyles = {
@@ -190,19 +53,27 @@ const categoryStyles = {
 ========================================================= */
 
 const Products = () => {
-  const [products, setProducts] = useState(initialProducts);
+  const {
+    products,
+    loading,
+    error,
+    refetch,
+    createProduct,
+    updateProduct,
+    deleteProduct: apiDeleteProduct,
+  } = useProducts();
+  const { settings } = useSettings();
+  const currency = settings?.general?.currency || "GHS";
+  const formatPriceWithCurrency = (price) => formatPriceWithCurrency(price, currency);
 
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
 
-  const [selectedProduct, setSelectedProduct] =
-    useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
-  const [showProductForm, setShowProductForm] =
-    useState(false);
+  const [showProductForm, setShowProductForm] = useState(false);
 
-  const [editingProduct, setEditingProduct] =
-    useState(null);
+  const [editingProduct, setEditingProduct] = useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -339,7 +210,7 @@ const Products = () => {
     }));
   };
 
-  const handleSaveProduct = (event) => {
+  const handleSaveProduct = async (event) => {
     event.preventDefault();
 
     if (
@@ -371,62 +242,40 @@ const Products = () => {
       image: formData.image || null,
     };
 
-    if (editingProduct) {
-      setProducts((current) =>
-        current.map((product) =>
-          product.id === editingProduct.id
-            ? {
-                ...product,
-                ...productData,
-              }
-            : product
-        )
-      );
-
-      if (
-        selectedProduct?.id === editingProduct.id
-      ) {
-        setSelectedProduct({
-          ...editingProduct,
-          ...productData,
-        });
+    try {
+      if (editingProduct) {
+        const updated = await updateProduct(editingProduct.id, productData);
+        if (selectedProduct?.id === editingProduct.id) {
+          setSelectedProduct(updated);
+        }
+      } else {
+        const newProduct = await createProduct(productData);
+        setSelectedProduct(newProduct);
       }
-    } else {
-      const newProduct = {
-        id: Date.now(),
-        ...productData,
-      };
-
-      setProducts((current) => [
-        ...current,
-        newProduct,
-      ]);
-
-      setSelectedProduct(newProduct);
+      closeForm();
+    } catch (err) {
+      console.error("Failed to save product:", err);
     }
-
-    closeForm();
   };
 
   /* =======================================================
      DELETE
   ======================================================= */
 
-  const deleteProduct = (id) => {
+  const deleteProduct = async (id) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this product?"
     );
 
     if (!confirmed) return;
 
-    setProducts((current) =>
-      current.filter(
-        (product) => product.id !== id
-      )
-    );
-
-    if (selectedProduct?.id === id) {
-      setSelectedProduct(null);
+    try {
+      await apiDeleteProduct(id);
+      if (selectedProduct?.id === id) {
+        setSelectedProduct(null);
+      }
+    } catch (err) {
+      console.error("Failed to delete product:", err);
     }
   };
 
@@ -435,12 +284,12 @@ const Products = () => {
   ======================================================= */
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-gray-50">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-gray-50 dark:bg-gray-800">
       {/* =================================================
           HEADER
       ================================================== */}
 
-      <header className="shrink-0 border-b border-gray-200 bg-white px-4 py-4 sm:px-6">
+      <header className="shrink-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-4 sm:px-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -450,7 +299,7 @@ const Products = () => {
                 className="shrink-0 text-gray-700"
               />
 
-              <h1 className="truncate text-lg font-semibold text-gray-900">
+              <h1 className="truncate text-lg font-semibold text-gray-900 dark:text-gray-100">
                 Products
               </h1>
             </div>
@@ -475,7 +324,7 @@ const Products = () => {
           SUMMARY
       ================================================== */}
 
-      <div className="shrink-0 border-b border-gray-200 bg-white px-4 py-4 sm:px-6">
+      <div className="shrink-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-4 sm:px-6">
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           <SummaryCard
             icon={Package}
@@ -508,7 +357,7 @@ const Products = () => {
       ================================================== */}
 
       <div className="min-h-0 flex-1 overflow-hidden p-3 sm:p-4 lg:p-5">
-        <div className="flex h-full min-h-0 overflow-hidden rounded-2xl border border-gray-200 bg-white">
+        <div className="flex h-full min-h-0 overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
 
           {/* =================================================
               PRODUCT CATALOG
@@ -516,7 +365,7 @@ const Products = () => {
 
           <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
             {/* Controls */}
-            <div className="shrink-0 border-b border-gray-200 bg-white px-4 py-4 sm:px-5">
+            <div className="shrink-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-4 sm:px-5">
               <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                 {/* Search */}
                 <div className="relative w-full xl:max-w-md">
@@ -532,7 +381,7 @@ const Products = () => {
                       setSearch(event.target.value)
                     }
                     placeholder="Search products"
-                    className="h-10 w-full rounded-xl border border-gray-200 bg-gray-50 pl-9 pr-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-300 focus:bg-white"
+                    className="h-10 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 pl-9 pr-3 text-sm text-gray-900 dark:text-gray-100 outline-none transition placeholder:text-gray-400 focus:border-gray-300 focus:bg-white dark:bg-gray-900"
                   />
                 </div>
 
@@ -581,10 +430,26 @@ const Products = () => {
             ================================================== */}
 
             <div className="products-list-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain">
-              {filteredProducts.length === 0 ? (
+              {loading ? (
+                <div className="flex min-h-full items-center justify-center px-6 py-16">
+                  <div className="text-center">
+                    <Loader2 size={28} className="mx-auto animate-spin text-gray-300" />
+                    <p className="mt-3 text-sm text-gray-500">Loading products...</p>
+                  </div>
+                </div>
+              ) : error ? (
                 <div className="flex min-h-full items-center justify-center px-6 py-16">
                   <div className="max-w-sm text-center">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100">
+                    <AlertCircle size={28} className="mx-auto text-red-400" />
+                    <h3 className="mt-3 text-sm font-semibold text-gray-700">Failed to load products</h3>
+                    <p className="mt-1 text-xs text-gray-400">{error}</p>
+                    <button onClick={refetch} className="mt-3 text-xs font-medium text-blue-600 hover:underline">Retry</button>
+                  </div>
+                </div>
+              ) : filteredProducts.length === 0 ? (
+                <div className="flex min-h-full items-center justify-center px-6 py-16">
+                  <div className="max-w-sm text-center">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
                       <Package
                         size={24}
                         className="text-gray-400"
@@ -618,6 +483,7 @@ const Products = () => {
                     <ProductCard
                       key={product.id}
                       product={product}
+                      currency={currency}
                       onView={() =>
                         setSelectedProduct(product)
                       }
@@ -639,11 +505,11 @@ const Products = () => {
           ================================================== */}
 
           {selectedProduct && (
-            <aside className="hidden h-full min-h-0 w-[350px] shrink-0 flex-col border-l border-gray-200 bg-white xl:flex 2xl:w-[380px]">
+            <aside className="hidden h-full min-h-0 w-[350px] shrink-0 flex-col border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 xl:flex 2xl:w-[380px]">
               {/* Header */}
-              <div className="flex shrink-0 items-center justify-between border-b border-gray-200 px-4 py-4">
+              <div className="flex shrink-0 items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4 py-4">
                 <div>
-                  <h2 className="text-sm font-semibold text-gray-900">
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                     Product details
                   </h2>
 
@@ -657,7 +523,7 @@ const Products = () => {
                   onClick={() =>
                     setSelectedProduct(null)
                   }
-                  className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                  className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 dark:bg-gray-800 hover:text-gray-700"
                 >
                   <X size={16} />
                 </button>
@@ -674,7 +540,7 @@ const Products = () => {
                   {/* Product title */}
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                         {selectedProduct.name}
                       </h3>
 
@@ -689,8 +555,8 @@ const Products = () => {
                       </span>
                     </div>
 
-                    <p className="mt-2 text-base font-semibold text-gray-900">
-                      {formatPrice(
+                    <p className="mt-2 text-base font-semibold text-gray-900 dark:text-gray-100">
+                      {formatPriceWithCurrency(
                         selectedProduct.price
                       )}
                     </p>
@@ -757,19 +623,19 @@ const Products = () => {
                   <div>
                     <SectionLabel label="Customer storefront preview" />
 
-                    <div className="mt-3 overflow-hidden rounded-2xl border border-gray-200 bg-white">
+                    <div className="mt-3 overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
                       <ProductLargeImage
                         product={selectedProduct}
                         small
                       />
 
                       <div className="p-4">
-                        <h4 className="text-sm font-semibold text-gray-900">
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                           {selectedProduct.name}
                         </h4>
 
                         <p className="mt-1 text-sm font-semibold text-gray-700">
-                          {formatPrice(
+                          {formatPriceWithCurrency(
                             selectedProduct.price
                           )}
                         </p>
@@ -779,7 +645,7 @@ const Products = () => {
                             (size) => (
                               <span
                                 key={size}
-                                className="rounded-md border border-gray-200 px-2 py-1 text-[10px] text-gray-600"
+                                className="rounded-md border border-gray-200 dark:border-gray-700 px-2 py-1 text-[10px] text-gray-600"
                               >
                                 {size}
                               </span>
@@ -803,7 +669,7 @@ const Products = () => {
                     onClick={() =>
                       openEditForm(selectedProduct)
                     }
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 py-2.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 py-2.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-gray-800"
                   >
                     <Edit3 size={14} />
                     Edit product
@@ -821,11 +687,11 @@ const Products = () => {
 
       {showProductForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-          <div className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+          <div className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white dark:bg-gray-900 shadow-xl">
             {/* Header */}
-            <div className="flex shrink-0 items-center justify-between border-b border-gray-200 px-5 py-4">
+            <div className="flex shrink-0 items-center justify-between border-b border-gray-200 dark:border-gray-700 px-5 py-4">
               <div>
-                <h2 className="text-sm font-semibold text-gray-900">
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                   {editingProduct
                     ? "Edit product"
                     : "Add product"}
@@ -839,7 +705,7 @@ const Products = () => {
               <button
                 type="button"
                 onClick={closeForm}
-                className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 dark:bg-gray-800 hover:text-gray-700"
               >
                 <X size={17} />
               </button>
@@ -853,7 +719,7 @@ const Products = () => {
               <div className="space-y-5 p-5">
                 {/* Image upload */}
                 <FormField label="Product image">
-                  <label className="group relative block cursor-pointer overflow-hidden rounded-2xl border border-dashed border-gray-300 bg-gray-50">
+                  <label className="group relative block cursor-pointer overflow-hidden rounded-2xl border border-dashed border-gray-300 bg-gray-50 dark:bg-gray-800">
                     {formData.image ? (
                       <div className="relative h-56 w-full">
                         <img
@@ -863,14 +729,14 @@ const Products = () => {
                         />
 
                         <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition group-hover:opacity-100">
-                          <span className="rounded-lg bg-white px-3 py-2 text-xs font-medium text-gray-700">
+                          <span className="rounded-lg bg-white dark:bg-gray-900 px-3 py-2 text-xs font-medium text-gray-700">
                             Change image
                           </span>
                         </div>
                       </div>
                     ) : (
                       <div className="flex h-48 flex-col items-center justify-center">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white dark:bg-gray-900 shadow-sm">
                           <ImageIcon
                             size={21}
                             className="text-gray-400"
@@ -927,7 +793,7 @@ const Products = () => {
                   <FormField label="Price">
                     <div className="relative">
                       <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-                        GHS
+                        {currency}
                       </span>
 
                       <input
@@ -1003,11 +869,11 @@ const Products = () => {
               </div>
 
               {/* Footer */}
-              <div className="flex shrink-0 justify-end gap-2 border-t border-gray-200 bg-white px-5 py-4">
+              <div className="flex shrink-0 justify-end gap-2 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-5 py-4">
                 <button
                   type="button"
                   onClick={closeForm}
-                  className="rounded-lg border border-gray-200 px-4 py-2 text-xs font-medium text-gray-600 transition hover:bg-gray-50"
+                  className="rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-2 text-xs font-medium text-gray-600 transition hover:bg-gray-50 dark:bg-gray-800"
                 >
                   Cancel
                 </button>
@@ -1038,14 +904,22 @@ const ProductCard = ({
   onView,
   onEdit,
   onDelete,
+  currency = "GHS",
 }) => {
   return (
-    <article className="group overflow-hidden rounded-2xl border border-gray-200 bg-white transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <article className="group overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
       {/* Product image */}
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={onView}
-        className="relative block aspect-[4/5] w-full overflow-hidden bg-gray-100"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onView();
+          }
+        }}
+        className="relative block aspect-[4/5] w-full cursor-pointer overflow-hidden bg-gray-100 dark:bg-gray-800"
       >
         {product.image ? (
           <img
@@ -1089,7 +963,7 @@ const ProductCard = ({
             onDelete={onDelete}
           />
         </div>
-      </button>
+      </div>
 
       {/* Product information */}
       <div className="p-4">
@@ -1111,7 +985,7 @@ const ProductCard = ({
               {product.category}
             </span>
 
-            <h3 className="mt-2 truncate text-sm font-semibold text-gray-900">
+            <h3 className="mt-2 truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
               {product.name}
             </h3>
           </div>
@@ -1119,8 +993,8 @@ const ProductCard = ({
 
         <div className="mt-3 flex items-end justify-between gap-3">
           <div>
-            <p className="text-base font-semibold text-gray-900">
-              {formatPrice(product.price)}
+            <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+              {formatPrice(product.price, currency)}
             </p>
 
             <p className="mt-1 text-[10px] text-gray-400">
@@ -1135,7 +1009,7 @@ const ProductCard = ({
           <button
             type="button"
             onClick={onView}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-[10px] font-medium text-gray-600 transition hover:bg-gray-50 hover:text-gray-900"
+            className="rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-[10px] font-medium text-gray-600 transition hover:bg-gray-50 dark:bg-gray-800 hover:text-gray-900 dark:text-gray-100"
           >
             View
           </button>
@@ -1147,7 +1021,7 @@ const ProductCard = ({
             {product.sizes.slice(0, 4).map((size) => (
               <span
                 key={size}
-                className="rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-[9px] text-gray-500"
+                className="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-2 py-1 text-[9px] text-gray-500"
               >
                 {size}
               </span>
@@ -1185,7 +1059,7 @@ const ProductActions = ({
           event.stopPropagation();
           setOpen((value) => !value);
         }}
-        className="rounded-lg bg-white/95 p-2 text-gray-500 shadow-sm backdrop-blur transition hover:bg-white hover:text-gray-900"
+        className="rounded-lg bg-white dark:bg-gray-900/95 p-2 text-gray-500 shadow-sm backdrop-blur transition hover:bg-white dark:bg-gray-900 hover:text-gray-900 dark:text-gray-100"
         aria-label={`Actions for ${product.name}`}
       >
         <MoreHorizontal size={16} />
@@ -1200,14 +1074,14 @@ const ProductActions = ({
             aria-label="Close menu"
           />
 
-          <div className="absolute right-0 top-10 z-40 w-36 overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-xl">
+          <div className="absolute right-0 top-10 z-40 w-36 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 py-1 shadow-xl">
             <button
               type="button"
               onClick={() => {
                 onView();
                 setOpen(false);
               }}
-              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs text-gray-600 transition hover:bg-gray-50"
+              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs text-gray-600 transition hover:bg-gray-50 dark:bg-gray-800"
             >
               <Eye size={14} />
               View
@@ -1219,7 +1093,7 @@ const ProductActions = ({
                 onEdit();
                 setOpen(false);
               }}
-              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs text-gray-600 transition hover:bg-gray-50"
+              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs text-gray-600 transition hover:bg-gray-50 dark:bg-gray-800"
             >
               <Edit3 size={14} />
               Edit
@@ -1303,7 +1177,7 @@ const SummaryCard = ({
   value,
 }) => {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
+    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium text-gray-500">
           {label}
@@ -1316,7 +1190,7 @@ const SummaryCard = ({
         />
       </div>
 
-      <p className="mt-2 text-xl font-semibold text-gray-900">
+      <p className="mt-2 text-xl font-semibold text-gray-900 dark:text-gray-100">
         {value}
       </p>
     </div>
