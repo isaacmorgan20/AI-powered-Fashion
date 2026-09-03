@@ -8,6 +8,7 @@ import {
     onAuthStateChanged, //keep session after refresh
 } from "firebase/auth";
 import useSettingsStore from "./settingsStore";
+import { api } from "../service/api";
 
 const useAuthStore = create((set) => ({
     user: null,     // firebase auth user (uid, email)
@@ -37,6 +38,9 @@ const useAuthStore = create((set) => ({
         // 4) save to zustand for easy access in UI
         set({ user, profile: profileData });
         try { useSettingsStore.getState().fetchSettings(); } catch {}
+        
+        // 5) Create server-side session
+        try { await api.sessions.create(); } catch (e) { console.warn('Session creation failed:', e); }
     },
 
     //LOGIN: 
@@ -52,10 +56,24 @@ const useAuthStore = create((set) => ({
         // 3) save to Zustand
         set({ user, profile: profileData });
         try { useSettingsStore.getState().fetchSettings(); } catch {}
+        
+        // 4) Create server-side session
+        try { await api.sessions.create(); } catch (e) { console.warn('Session creation failed:', e); }
     },
 
-    //Logout: signs out + clears state
+    //Logout: signs out + clears state + revokes server session
     logout: async() => {
+        // 1) Revoke server-side session
+        try { 
+            await api.sessions.logoutAll(); 
+        } catch (e) { 
+            console.warn('Session revocation failed:', e); 
+        }
+        
+        // 2) Clear local session data
+        api.sessions.clearLocal();
+        
+        // 3) Sign out from Firebase
         await signOut(auth);
         set({user: null, profile: null});
         try { useSettingsStore.getState().fetchSettings(); } catch {}

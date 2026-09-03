@@ -1,8 +1,274 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
+/* @custom-variant dark (&:is(.dark *)); */
 
-/* Compact mode - reduces spacing/padding throughout dashboard */
+/* ============================================================
+   THREADOS GLOBAL DESIGN SYSTEM - THEME SYSTEM
+   ============================================================ */
+
+/* ============================================================
+   COLOUR SYSTEM - Semantic Design Tokens
+   ============================================================ */
+
+:root {
+  /* ----- Primary / Brand (Purple/Violet) ----- */
+  --color-primary-50: #f5f3ff;
+  --color-primary-100: #ede9fe;
+  --color-primary-200: #ddd6fe;
+  --color-primary-300: #c4b5fd;
+  --color-primary-400: #a78bfa;
+  --color-primary-500: #8b5cf6;
+  --color-primary-600: #7c3aed;
+  --color-primary-700: #6d28d9;
+  --color-primary-800: #5b21b6;
+  --color-primary-900: #4c1d95;
+  --color-primary-950: #2e1065;
+
+  /* ----- AI (Purple/Violet) ----- */
+  --color-ai-50: #faf5ff;
+  --color-ai-100: #f3e8ff;
+  --color-ai-200: #e9d5ff;
+  --color-ai-300: #d8b4fe;
+  --color-ai-400: #c084fc;
+  --color-ai-500: #a855f7;
+  --color-ai-600: #9333ea;
+  --color-ai-700: #7e22ce;
+  --color-ai-800: #6b21a8;
+  --color-ai-900: #581c87;
+  --color-ai-950: #3b0764;
+
+  /* ----- Customers / Social (Pink/Magenta) ----- */
+  --color-social-50: #fdf2f8;
+  --color-social-100: #fce7f3;
+  --color-social-200: #fbcfe8;
+  --color-social-300: #f9a8d4;
+  --color-social-400: #f472b6;
+  --color-social-500: #ec4899;
+  --color-social-600: #db2777;
+  --color-social-700: #be185d;
+  --color-social-800: #9d174d;
+  --color-social-900: #831843;
+  --color-social-950: #500724;
+
+  /* ----- Orders (Orange/Amber) ----- */
+  --color-order-50: #fff7ed;
+  --color-order-100: #ffedd5;
+  --color-order-200: #fed7aa;
+  --color-order-300: #fdba74;
+  --color-order-400: #fb923c;
+  --color-order-500: #f97316;
+  --color-order-600: #ea580c;
+  --color-order-700: #c2410c;
+  --color-order-700: #c2410c;
+  --color-order-800: #9a3412;
+  --color-order-900: #7c2d12;
+  --color-order-950: #431407;
+
+  /* ----- Success / Connected (Green) ----- */
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-200: #bbf7d0;
+  --color-success-300: #86efac;
+  --color-success-400: #4ade80;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+  --color-success-800: #166534;
+  --color-success-900: #14532d;
+  --color-success-950: #052e16;
+
+  /* ----- Information (Blue) ----- */
+  --color-info-50: #eff6ff;
+  --color-info-100: #dbeafe;
+  --color-info-200: #bfdbfe;
+  --color-info-300: #93c5fd;
+  --color-info-400: #60a5fa;
+  --color-info-500: #3b82f6;
+  --color-info-600: #2563eb;
+  --color-info-700: #1d4ed8;
+  --color-info-800: #1e40af;
+  --color-info-900: #1e3a8a;
+  --color-info-950: #172554;
+
+  /* ----- Warning (Amber/Yellow) ----- */
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-200: #fde68a;
+  --color-warning-300: #fcd34d;
+  --color-warning-400: #fbbf24;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-warning-800: #92400e;
+  --color-warning-900: #78350f;
+  --color-warning-950: #451a03;
+
+  /* ----- Error / Destructive (Red) ----- */
+  --color-error-50: #fef2f2;
+  --color-error-100: #fee2e2;
+  --color-error-200: #fecaca;
+  --color-error-300: #fca5a5;
+  --color-error-400: #f87171;
+  --color-error-500: #ef4444;
+  --color-error-600: #dc2626;
+  --color-error-700: #b91c1c;
+  --color-error-800: #991b1b;
+  --color-error-900: #7f1d1d;
+  --color-error-950: #450a0a;
+
+  /* ----- Neutral / Surface (Light) ----- */
+  --color-surface-50: #fafafa;
+  --color-surface-100: #f5f5f5;
+  --color-surface-200: #e5e5e5;
+  --color-surface-300: #d4d4d4;
+  --color-surface-400: #a3a3a3;
+  --color-surface-500: #737373;
+  --color-surface-600: #525252;
+  --color-surface-700: #404040;
+  --color-surface-800: #262626;
+  --color-surface-900: #171717;
+  --color-surface-950: #0a0a0a;
+
+  /* ----- Channel Brand Colours ----- */
+  --color-whatsapp: #25d366;
+  --color-whatsapp-light: #dcfce7;
+  --color-instagram: #e1306c;
+  --color-instagram-gradient: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  --color-facebook: #1877f2;
+  --color-facebook-light: #dbeafe;
+  --color-website: #4f46e5;
+  --color-website-light: #e0e7ff;
+
+  /* ============================================================
+     LIGHT THEME - Semantic UI Colours (Default)
+     ============================================================ */
+  --color-bg-primary: #fafafa;
+  --color-bg-secondary: #f5f5f5;
+  --color-bg-tertiary: #f0f0f0;
+  --color-bg-card: #ffffff;
+  --color-bg-card-hover: #fafafa;
+  --color-bg-card-hover-dark: #1e293b;
+  --color-border-light: #e5e7eb;
+  --color-border-medium: #d1d5db;
+  --color-border-focus: #8b5cf6;
+  --color-text-primary: #111827;
+  --color-text-secondary: #4b5563;
+  --color-text-tertiary: #9ca3af;
+  --color-text-inverse: #ffffff;
+
+  /* ----- Channel Brand Colours ----- */
+  --color-whatsapp: #25d366;
+  --color-whatsapp-light: #dcfce7;
+  --color-instagram: #e1306c;
+  --color-instagram-gradient: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  --color-facebook: #1877f2;
+  --color-facebook-light: #dbeafe;
+  --color-website: #4f46e5;
+  --color-website-light: #e0e7ff;
+
+  /* ============================================================
+     DARK THEME OVERRIDES - Layered Visual Hierarchy
+     ============================================================ */
+  --color-bg-primary-dark: #0a0f1a;
+  --color-bg-secondary-dark: #0f141f;
+  --color-bg-tertiary-dark: #151c2b;
+  --color-bg-card-dark: #111927;
+  --color-bg-card-hover-dark: #171f2e;
+  --color-border-light-dark: #1f2a3e;
+  --color-border-medium-dark: #2d3a4f;
+  --color-border-focus-dark: #a78bfa;
+  --color-text-primary-dark: #f1f5f9;
+  --color-text-secondary-dark: #94a3b8;
+  --color-text-tertiary-dark: #64748b;
+  --color-text-inverse-dark: #0f172a;
+}
+
+/* Dark mode overrides - Layered visual hierarchy */
+.dark {
+  --color-bg-primary: var(--color-bg-primary-dark);
+  --color-bg-secondary: var(--color-bg-secondary-dark);
+  --color-bg-tertiary: var(--color-bg-tertiary-dark);
+  --color-bg-card: var(--color-bg-card-dark);
+  --color-bg-card-hover: var(--color-bg-card-hover-dark);
+  --color-border-light: var(--color-border-light-dark);
+  --color-border-medium: var(--color-border-medium-dark);
+  --color-border-focus: var(--color-border-focus-dark);
+  --color-text-primary: var(--color-text-primary-dark);
+  --color-text-secondary: var(--color-text-secondary-dark);
+  --color-text-tertiary: var(--color-text-tertiary-dark);
+  --color-text-inverse: var(--color-text-inverse-dark);
+}
+
+/* ============================================================
+   BUTTON LOADING STATE
+   ============================================================ */
+
+.btn-loading {
+  position: relative;
+  color: transparent;
+}
+.btn-loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' stroke='currentColor' stroke-width='3' stroke-linecap='round' fill='none' stroke-dasharray='31 31' stroke-dashoffset='31'%3E%3CanimateTransform attributeName='transform' type='rotate' from='0 12 12' to='360 12 12' dur='1s' repeatCount='indefinite'/%3E%3C/circle%3E%3C/svg%3E") center / 1.25rem no-repeat;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   ANIMATIONS & TRANSITIONS
+   ============================================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-fadeIn { animation: fadeIn 200ms ease-out; }
+.animate-slideUp { animation: slideUp 250ms ease-out; }
+.animate-slideDown { animation: slideDown 250ms ease-out; }
+.animate-scaleIn { animation: scaleIn 200ms ease-out; }
+
+/* Transition utilities */
+.transition-smooth { transition: all 200ms ease-out; }
+.transition-fast { transition: all 150ms ease-out; }
+
+/* Hover lift effect */
+.hover-lift { transition: transform 200ms ease, box-shadow 200ms ease; }
+.hover-lift:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+
+/* ============================================================
+   COMPACT MODE
+   ============================================================ */
 .compact .p-5 { padding: 1rem !important; }
 .compact .p-6 { padding: 1rem !important; }
 .compact .p-4 { padding: 0.75rem !important; }
@@ -17,3 +283,17 @@
 .compact .rounded-2xl { border-radius: 0.75rem !important; }
 .compact header { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
 .compact .rounded-xl { border-radius: 0.5rem !important; }
+
+/* ============================================================
+   UTILITY: Focus ring
+   ============================================================ */
+.focus-ring {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-primary-500), 0 0 0 4px white;
+}
+.dark .focus-ring:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-primary-400), 0 0 0 4px var(--color-bg-primary-dark);
+}

@@ -32,10 +32,10 @@ import { useSettings } from "../hooks/useSettings";
 const ChannelIcon = ({ name }) => {
   if (name === "WhatsApp") {
     return (
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-green-50">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 ring-1 ring-emerald-100 dark:bg-emerald-900/20 dark:ring-emerald-800/50">
         <MessageCircle
-          size={17}
-          className="text-green-600"
+          size={18}
+          className="text-emerald-600 dark:text-emerald-400"
         />
       </div>
     );
@@ -43,10 +43,10 @@ const ChannelIcon = ({ name }) => {
 
   if (name === "Instagram") {
     return (
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-pink-50">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-pink-50 ring-1 ring-pink-100 dark:bg-pink-900/20 dark:ring-pink-800/50">
         <Share2
-          size={17}
-          className="text-pink-600"
+          size={18}
+          className="text-pink-600 dark:text-pink-400"
         />
       </div>
     );
@@ -54,20 +54,20 @@ const ChannelIcon = ({ name }) => {
 
   if (name === "Facebook") {
     return (
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 ring-1 ring-blue-100 dark:bg-blue-900/20 dark:ring-blue-800/50">
         <Share2
-          size={17}
-          className="text-blue-600"
+          size={18}
+          className="text-blue-600 dark:text-blue-400"
         />
       </div>
     );
   }
 
   return (
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 ring-1 ring-violet-100 dark:bg-violet-900/20 dark:ring-violet-800/50">
       <Globe2
-        size={17}
-        className="text-gray-600"
+        size={18}
+        className="text-violet-600 dark:text-violet-400"
       />
     </div>
   );
@@ -123,6 +123,7 @@ const Analytics = () => {
 
   const visibleKnowledgeGaps = useMemo(() => {
     if (!data?.knowledgeGaps) return [];
+
     return showAllGaps
       ? data.knowledgeGaps
       : data.knowledgeGaps.slice(0, 3);
@@ -130,10 +131,22 @@ const Analytics = () => {
 
   if (loading) {
     return (
-      <div className="flex h-full min-h-0 w-full items-center justify-center bg-gray-50 dark:bg-gray-800">
-        <div className="text-center">
-          <Loader2 size={28} className="mx-auto animate-spin text-gray-300" />
-          <p className="mt-3 text-sm text-gray-500">Loading analytics...</p>
+      <div className="flex h-full min-h-0 w-full items-center justify-center bg-gradient-to-br from-violet-50 via-white to-pink-50 dark:from-surface-950 dark:via-surface-900 dark:to-violet-950/20">
+        <div className="rounded-2xl border border-violet-100 bg-white/90 px-8 py-7 text-center shadow-xl shadow-violet-500/10 dark:border-violet-900/40 dark:bg-surface-900/90">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-900/30">
+            <Loader2
+              size={25}
+              className="animate-spin text-violet-600 dark:text-violet-400"
+            />
+          </div>
+
+          <p className="mt-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
+            Loading analytics...
+          </p>
+
+          <p className="mt-1 text-xs text-slate-400">
+            Preparing your business insights
+          </p>
         </div>
       </div>
     );
@@ -141,12 +154,29 @@ const Analytics = () => {
 
   if (error) {
     return (
-      <div className="flex h-full min-h-0 w-full items-center justify-center bg-gray-50 dark:bg-gray-800 p-6">
-        <div className="max-w-sm text-center">
-          <AlertCircle size={28} className="mx-auto text-red-400" />
-          <h3 className="mt-3 text-sm font-semibold text-gray-700">Failed to load analytics</h3>
-          <p className="mt-1 text-xs text-gray-400">{error}</p>
-          <button onClick={refetch} className="mt-3 text-xs font-medium text-blue-600 hover:underline">Retry</button>
+      <div className="flex h-full min-h-0 w-full items-center justify-center bg-gradient-to-br from-rose-50 via-white to-orange-50 p-6 dark:from-surface-950 dark:via-surface-900 dark:to-rose-950/20">
+        <div className="max-w-sm rounded-2xl border border-rose-100 bg-white p-7 text-center shadow-xl shadow-rose-500/10 dark:border-rose-900/40 dark:bg-surface-900">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 dark:bg-rose-900/30">
+            <AlertCircle
+              size={25}
+              className="text-rose-600 dark:text-rose-400"
+            />
+          </div>
+
+          <h3 className="mt-4 text-sm font-semibold text-slate-800 dark:text-slate-100">
+            Failed to load analytics
+          </h3>
+
+          <p className="mt-2 text-xs leading-5 text-slate-400">
+            {error}
+          </p>
+
+          <button
+            onClick={refetch}
+            className="mt-4 rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-violet-700 hover:shadow-md"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -154,34 +184,61 @@ const Analytics = () => {
 
   if (!data) {
     return (
-      <div className="flex h-full min-h-0 w-full items-center justify-center bg-gray-50 dark:bg-gray-800">
-        <p className="text-sm text-gray-500">No analytics data.</p>
+      <div className="flex h-full min-h-0 w-full items-center justify-center bg-gradient-to-br from-violet-50 via-white to-pink-50 dark:from-surface-950 dark:via-surface-900 dark:to-violet-950/20">
+        <div className="rounded-2xl border border-slate-200 bg-white px-8 py-7 text-center shadow-lg dark:border-slate-700 dark:bg-surface-900">
+          <BarChart3
+            size={28}
+            className="mx-auto text-violet-500"
+          />
+
+          <p className="mt-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+            No analytics data
+          </p>
+
+          <p className="mt-1 text-xs text-slate-400">
+            There is currently no data available for this period.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-gray-50 dark:bg-gray-800">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-gradient-to-br from-violet-50/60 via-slate-50 to-pink-50/50 dark:from-surface-950 dark:via-surface-900 dark:to-violet-950/20">
+
       {/* ===================================================
           FIXED HEADER
       ==================================================== */}
 
-      <header className="shrink-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-4 sm:px-6">
+      <header className="shrink-0 border-b border-violet-100/80 bg-white/95 px-4 py-4 shadow-sm backdrop-blur-xl dark:border-surface-700 dark:bg-surface-900/95 sm:px-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <BarChart3
-                size={19}
-                strokeWidth={1.8}
-                className="shrink-0 text-gray-700"
-              />
 
-              <h1 className="truncate text-lg font-semibold text-gray-900 dark:text-gray-100">
-                Analytics
-              </h1>
+          <div className="min-w-0">
+            <div className="flex items-center gap-3">
+
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/25">
+                <BarChart3
+                  size={20}
+                  strokeWidth={2}
+                />
+              </div>
+
+              <div>
+                <h1 className="truncate text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                  Analytics
+                </h1>
+
+                <div className="mt-0.5 flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_7px_rgba(16,185,129,0.6)]" />
+
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                    Business intelligence
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
               Track customer engagement, AI performance and sales.
             </p>
           </div>
@@ -192,16 +249,7 @@ const Analytics = () => {
               onChange={(event) =>
                 setRange(event.target.value)
               }
-              className="
-                h-10 appearance-none rounded-xl
-                border border-gray-200
-                bg-white
-                pl-3 pr-9
-                text-sm font-medium text-gray-700
-                outline-none
-                transition
-                focus:border-gray-300
-              "
+              className="appearance-none rounded-xl border border-violet-200 bg-violet-50/70 py-2.5 pl-4 pr-10 text-xs font-semibold text-violet-700 outline-none transition hover:border-violet-300 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 dark:border-violet-800 dark:bg-violet-900/20 dark:text-violet-300"
             >
               <option value="Today">Today</option>
               <option value="7 days">7 days</option>
@@ -211,7 +259,7 @@ const Analytics = () => {
 
             <ChevronDown
               size={15}
-              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-violet-500"
             />
           </div>
         </div>
@@ -229,6 +277,7 @@ const Analytics = () => {
           ================================================== */}
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+
             <MetricCard
               icon={MessageSquare}
               title="Conversations"
@@ -236,6 +285,7 @@ const Analytics = () => {
               change={data.conversationsChange}
               positive={true}
               description="vs previous period"
+              accent="info"
             />
 
             <MetricCard
@@ -245,6 +295,7 @@ const Analytics = () => {
               change={data.aiResolvedChange}
               positive={true}
               description={`${data.aiResolved.toLocaleString()} conversations handled by AI`}
+              accent="ai"
             />
 
             <MetricCard
@@ -258,6 +309,7 @@ const Analytics = () => {
                   ? "faster than previous period"
                   : "slower than previous period"
               }
+              accent="warning"
             />
 
             <MetricCard
@@ -267,6 +319,7 @@ const Analytics = () => {
               change={data.revenueChange}
               positive={true}
               description="vs previous period"
+              accent="order"
             />
           </div>
 
@@ -275,20 +328,33 @@ const Analytics = () => {
           ================================================== */}
 
           <div className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-            {/* Conversation trend */}
-            <section className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-              <div className="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-4">
-                <div className="min-w-0">
-                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                    Conversations
-                  </h2>
 
-                  <p className="mt-1 text-xs text-gray-400">
+            {/* Conversation trend */}
+
+            <section className="overflow-hidden rounded-2xl border border-violet-100 bg-white shadow-sm shadow-violet-500/5 transition hover:shadow-md dark:border-surface-700 dark:bg-surface-900">
+
+              <div className="flex items-start justify-between gap-4 border-b border-violet-50 bg-gradient-to-r from-violet-50/70 to-transparent px-5 py-4 dark:border-surface-700 dark:from-violet-950/20">
+
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/30">
+                      <TrendingUp
+                        size={14}
+                        className="text-violet-600 dark:text-violet-400"
+                      />
+                    </div>
+
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                      Conversations
+                    </h2>
+                  </div>
+
+                  <p className="mt-1 text-xs text-slate-400">
                     Customer conversations over time
                   </p>
                 </div>
 
-                <span className="shrink-0 rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-1 text-[10px] font-medium text-gray-600">
+                <span className="shrink-0 rounded-full bg-violet-100 px-3 py-1 text-[10px] font-bold text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
                   {range}
                 </span>
               </div>
@@ -301,40 +367,63 @@ const Analytics = () => {
             </section>
 
             {/* Intent */}
-            <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-              <div className="border-b border-gray-100 px-5 py-4">
-                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                  Customer intent
-                </h2>
 
-                <p className="mt-1 text-xs text-gray-400">
+            <section className="overflow-hidden rounded-2xl border border-pink-100 bg-white shadow-sm shadow-pink-500/5 transition hover:shadow-md dark:border-surface-700 dark:bg-surface-900">
+
+              <div className="border-b border-pink-50 bg-gradient-to-r from-pink-50/70 to-transparent px-5 py-4 dark:border-surface-700 dark:from-pink-950/20">
+
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-pink-100 dark:bg-pink-900/30">
+                    <MessageCircle
+                      size={14}
+                      className="text-pink-600 dark:text-pink-400"
+                    />
+                  </div>
+
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Customer intent
+                  </h2>
+                </div>
+
+                <p className="mt-1 text-xs text-slate-400">
                   What customers ask about most
                 </p>
               </div>
 
               <div className="space-y-4 p-5">
-                {data.intents.map((intent) => (
-                  <div key={intent.name}>
-                    <div className="mb-1.5 flex items-center justify-between gap-3">
-                      <span className="truncate text-xs font-medium text-gray-700">
-                        {intent.name}
-                      </span>
+                {data.intents.map((intent, index) => {
+                  const intentColors = [
+                    "bg-pink-500",
+                    "bg-violet-500",
+                    "bg-blue-500",
+                    "bg-orange-500",
+                    "bg-emerald-500",
+                  ];
 
-                      <span className="shrink-0 text-[10px] text-gray-400">
-                        {intent.value}%
-                      </span>
-                    </div>
+                  return (
+                    <div key={intent.name}>
+                      <div className="mb-1.5 flex items-center justify-between gap-3">
 
-                    <div className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-                      <div
-                        className="h-full rounded-full bg-gray-900 transition-all duration-500"
-                        style={{
-                          width: `${intent.value}%`,
-                        }}
-                      />
+                        <span className="truncate text-xs font-semibold text-slate-700 dark:text-slate-300">
+                          {intent.name}
+                        </span>
+
+                        <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                          {intent.value}%
+                        </span>
+                      </div>
+
+                      <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                        <div
+                          className={`h-full rounded-full ${intentColors[index % intentColors.length]} transition-all duration-500`}
+                          style={{
+                            width: `${intent.value}%`,
+                          }}
+                        />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
           </div>
@@ -343,19 +432,30 @@ const Analytics = () => {
               SALES FUNNEL
           ================================================== */}
 
-          <section className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-            <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                  Conversation → Purchase
-                </h2>
+          <section className="overflow-hidden rounded-2xl border border-emerald-100 bg-white shadow-sm shadow-emerald-500/5 dark:border-surface-700 dark:bg-surface-900">
 
-                <p className="mt-1 text-xs text-gray-400">
+            <div className="flex flex-col gap-3 border-b border-emerald-50 bg-gradient-to-r from-emerald-50/70 via-transparent to-transparent px-5 py-4 dark:border-surface-700 dark:from-emerald-950/20 sm:flex-row sm:items-center sm:justify-between">
+
+              <div>
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                    <ShoppingBag
+                      size={14}
+                      className="text-emerald-600 dark:text-emerald-400"
+                    />
+                  </div>
+
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Conversation → Purchase
+                  </h2>
+                </div>
+
+                <p className="mt-1 text-xs text-slate-400">
                   How customer conversations move toward completed orders
                 </p>
               </div>
 
-              <div className="w-fit rounded-full bg-gray-100 dark:bg-gray-800 px-3 py-1.5 text-xs font-medium text-gray-700">
+              <div className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
                 {conversionRate}% conversion
               </div>
             </div>
@@ -366,6 +466,7 @@ const Analytics = () => {
                 label="Conversations"
                 value={data.funnel.conversations}
                 icon={MessageSquare}
+                accent="violet"
               />
 
               <FunnelStep
@@ -373,6 +474,7 @@ const Analytics = () => {
                 label="Product interest"
                 value={data.funnel.productInterest}
                 icon={ShoppingBag}
+                accent="pink"
               />
 
               <FunnelStep
@@ -380,6 +482,7 @@ const Analytics = () => {
                 label="Order attempts"
                 value={data.funnel.orderAttempts}
                 icon={Package}
+                accent="orange"
               />
 
               <FunnelStep
@@ -387,6 +490,7 @@ const Analytics = () => {
                 label="Completed orders"
                 value={data.funnel.completedOrders}
                 icon={CheckCircle2}
+                accent="emerald"
                 last
               />
             </div>
@@ -397,81 +501,108 @@ const Analytics = () => {
           ================================================== */}
 
           <div className="grid gap-5 xl:grid-cols-2">
-            {/* Products */}
-            <section className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-              <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-                <div>
-                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                    Top products
-                  </h2>
 
-                  <p className="mt-1 text-xs text-gray-400">
+            {/* Products */}
+
+            <section className="overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm shadow-orange-500/5 dark:border-surface-700 dark:bg-surface-900">
+
+              <div className="flex items-center justify-between border-b border-orange-50 bg-gradient-to-r from-orange-50/70 to-transparent px-5 py-4 dark:border-surface-700 dark:from-orange-950/20">
+
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900/30">
+                      <Package
+                        size={14}
+                        className="text-orange-600 dark:text-orange-400"
+                      />
+                    </div>
+
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                      Top products
+                    </h2>
+                  </div>
+
+                  <p className="mt-1 text-xs text-slate-400">
                     Products generating the most interest
                   </p>
                 </div>
 
                 <Package
-                  size={17}
-                  className="text-gray-400"
+                  size={18}
+                  className="text-orange-400"
                 />
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[520px]">
+
                   <thead>
-                    <tr className="border-b border-gray-100 bg-gray-50 dark:bg-gray-800">
-                      <th className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                    <tr className="border-b border-slate-100 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/60">
+
+                      <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wide text-slate-400">
                         Product
                       </th>
 
-                      <th className="px-3 py-3 text-right text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                      <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-wide text-slate-400">
                         Enquiries
                       </th>
 
-                      <th className="px-3 py-3 text-right text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                      <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-wide text-slate-400">
                         Orders
                       </th>
 
-                      <th className="px-5 py-3 text-right text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                      <th className="px-5 py-3 text-right text-[10px] font-bold uppercase tracking-wide text-slate-400">
                         Revenue
                       </th>
                     </tr>
                   </thead>
 
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+
                     {data.topProducts.map(
                       (product, index) => (
                         <tr
                           key={product.name}
-                          className="transition hover:bg-gray-50 dark:bg-gray-800"
+                          className="transition hover:bg-orange-50/40 dark:hover:bg-orange-950/10"
                         >
                           <td className="px-5 py-4">
+
                             <div className="flex items-center gap-3">
-                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-xs font-semibold text-gray-600">
+
+                              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold ${
+                                index === 0
+                                  ? "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400"
+                                  : index === 1
+                                  ? "bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400"
+                                  : index === 2
+                                  ? "bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400"
+                                  : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                              }`}>
                                 {index + 1}
                               </div>
 
                               <div className="min-w-0">
-                                <p className="truncate text-xs font-semibold text-gray-900 dark:text-gray-100">
+
+                                <p className="truncate text-xs font-bold text-slate-900 dark:text-slate-100">
                                   {product.name}
                                 </p>
 
-                                <p className="mt-0.5 text-[10px] text-gray-400">
+                                <p className="mt-0.5 text-[10px] text-slate-400">
                                   Product interest
                                 </p>
                               </div>
                             </div>
                           </td>
 
-                          <td className="px-3 py-4 text-right text-xs font-medium text-gray-700">
+                          <td className="px-3 py-4 text-right text-xs font-semibold text-slate-700 dark:text-slate-300">
                             {product.enquiries.toLocaleString()}
                           </td>
 
-                          <td className="px-3 py-4 text-right text-xs font-medium text-gray-700">
+                          <td className="px-3 py-4 text-right text-xs font-semibold text-slate-700 dark:text-slate-300">
                             {product.orders.toLocaleString()}
                           </td>
 
-                          <td className="px-5 py-4 text-right text-xs font-semibold text-gray-900 dark:text-gray-100">
+                          <td className="px-5 py-4 text-right text-xs font-bold text-emerald-600 dark:text-emerald-400">
                             {currency}{" "}
                             {product.revenue.toLocaleString()}
                           </td>
@@ -484,49 +615,75 @@ const Analytics = () => {
             </section>
 
             {/* Channels */}
-            <section className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-              <div className="border-b border-gray-100 px-5 py-4">
-                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                  Channel performance
-                </h2>
 
-                <p className="mt-1 text-xs text-gray-400">
+            <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm shadow-blue-500/5 dark:border-surface-700 dark:bg-surface-900">
+
+              <div className="border-b border-blue-50 bg-gradient-to-r from-blue-50/70 to-transparent px-5 py-4 dark:border-surface-700 dark:from-blue-950/20">
+
+                <div className="flex items-center gap-2">
+
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                    <Globe2
+                      size={14}
+                      className="text-blue-600 dark:text-blue-400"
+                    />
+                  </div>
+
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Channel performance
+                  </h2>
+                </div>
+
+                <p className="mt-1 text-xs text-slate-400">
                   Where customer conversations originate
                 </p>
               </div>
 
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+
                 {data.channels.map((channel) => (
                   <div
                     key={channel.name}
-                    className="px-5 py-4"
+                    className="px-5 py-4 transition hover:bg-blue-50/30 dark:hover:bg-blue-950/10"
                   >
                     <div className="flex items-center gap-3">
+
                       <ChannelIcon
                         name={channel.name}
                       />
 
                       <div className="min-w-0 flex-1">
+
                         <div className="flex items-center justify-between gap-3">
-                          <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">
+
+                          <p className="text-xs font-bold text-slate-900 dark:text-slate-100">
                             {channel.name}
                           </p>
 
-                          <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">
+                          <p className="text-xs font-bold text-blue-600 dark:text-blue-400">
                             {channel.value}%
                           </p>
                         </div>
 
-                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                           <div
-                            className="h-full rounded-full bg-gray-900"
+                            className={`h-full rounded-full ${
+                              channel.name === "WhatsApp"
+                                ? "bg-emerald-500"
+                                : channel.name === "Instagram"
+                                ? "bg-pink-500"
+                                : channel.name === "Facebook"
+                                ? "bg-blue-500"
+                                : "bg-violet-500"
+                            }`}
                             style={{
                               width: `${channel.value}%`,
                             }}
                           />
                         </div>
 
-                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-gray-400">
+                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-slate-400">
+
                           <span>
                             {channel.conversations.toLocaleString()}{" "}
                             conversations
@@ -555,23 +712,39 @@ const Analytics = () => {
           ================================================== */}
 
           <div className="grid gap-5 xl:grid-cols-2">
-            {/* AI */}
-            <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-              <div className="border-b border-gray-100 px-5 py-4">
-                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                  AI performance
-                </h2>
 
-                <p className="mt-1 text-xs text-gray-400">
+            {/* AI */}
+
+            <section className="overflow-hidden rounded-2xl border border-violet-100 bg-white shadow-sm shadow-violet-500/5 dark:border-surface-700 dark:bg-surface-900">
+
+              <div className="border-b border-violet-50 bg-gradient-to-r from-violet-50/70 to-transparent px-5 py-4 dark:border-surface-700 dark:from-violet-950/20">
+
+                <div className="flex items-center gap-2">
+
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/30">
+                    <Sparkles
+                      size={14}
+                      className="text-violet-600 dark:text-violet-400"
+                    />
+                  </div>
+
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                    AI performance
+                  </h2>
+                </div>
+
+                <p className="mt-1 text-xs text-slate-400">
                   How the AI is handling customer conversations
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3 p-5">
+
                 <MiniMetric
                   icon={Bot}
                   label="AI handled"
                   value={data.aiResolved.toLocaleString()}
+                  accent="violet"
                 />
 
                 <MiniMetric
@@ -581,61 +754,70 @@ const Analytics = () => {
                     data.conversations -
                     data.aiResolved
                   ).toLocaleString()}
+                  accent="blue"
                 />
 
                 <MiniMetric
                   icon={CheckCircle2}
                   label="Resolution rate"
                   value={`${aiRate}%`}
+                  accent="emerald"
                 />
 
                 <MiniMetric
                   icon={Clock3}
                   label="Avg. response"
                   value={`${data.responseTime}s`}
+                  accent="orange"
                 />
               </div>
 
-              <div className="mx-5 mb-5 rounded-xl bg-gray-50 dark:bg-gray-800 p-4">
+              <div className="mx-5 mb-5 rounded-xl border border-violet-100 bg-gradient-to-br from-violet-50 to-pink-50/60 p-4 dark:border-violet-900/30 dark:from-violet-950/20 dark:to-pink-950/10">
+
                 <div className="flex items-center justify-between gap-3">
+
                   <div>
-                    <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">
                       AI vs human
                     </p>
 
-                    <p className="mt-1 text-[10px] text-gray-400">
+                    <p className="mt-1 text-[10px] text-slate-400">
                       Conversation handling
                     </p>
                   </div>
 
-                  <Bot
-                    size={17}
-                    className="text-gray-400"
-                  />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/30">
+                    <Bot
+                      size={16}
+                      className="text-violet-600 dark:text-violet-400"
+                    />
+                  </div>
                 </div>
 
-                <div className="mt-4 flex h-3 overflow-hidden rounded-full bg-gray-200">
+                <div className="mt-4 flex h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+
                   <div
-                    className="h-full bg-gray-900 transition-all duration-500"
+                    className="h-full bg-gradient-to-r from-violet-500 to-purple-600 transition-all duration-500"
                     style={{
                       width: `${aiRate}%`,
                     }}
                   />
 
                   <div
-                    className="h-full bg-gray-300 transition-all duration-500"
+                    className="h-full bg-slate-300 transition-all duration-500 dark:bg-slate-600"
                     style={{
                       width: `${humanRate}%`,
                     }}
                   />
                 </div>
 
-                <div className="mt-2 flex items-center justify-between text-[10px] text-gray-400">
-                  <span>
+                <div className="mt-2 flex items-center justify-between text-[10px] font-semibold">
+
+                  <span className="text-violet-600 dark:text-violet-400">
                     AI {aiRate}%
                   </span>
 
-                  <span>
+                  <span className="text-slate-500 dark:text-slate-400">
                     Human {humanRate}%
                   </span>
                 </div>
@@ -643,58 +825,81 @@ const Analytics = () => {
             </section>
 
             {/* Customers */}
-            <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-              <div className="border-b border-gray-100 px-5 py-4">
-                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                  Customer activity
-                </h2>
 
-                <p className="mt-1 text-xs text-gray-400">
+            <section className="overflow-hidden rounded-2xl border border-pink-100 bg-white shadow-sm shadow-pink-500/5 dark:border-surface-700 dark:bg-surface-900">
+
+              <div className="border-b border-pink-50 bg-gradient-to-r from-pink-50/70 to-transparent px-5 py-4 dark:border-surface-700 dark:from-pink-950/20">
+
+                <div className="flex items-center gap-2">
+
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-pink-100 dark:bg-pink-900/30">
+                    <Users
+                      size={14}
+                      className="text-pink-600 dark:text-pink-400"
+                    />
+                  </div>
+
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Customer activity
+                  </h2>
+                </div>
+
+                <p className="mt-1 text-xs text-slate-400">
                   Customer mix during this period
                 </p>
               </div>
 
               <div className="p-5">
+
                 <div className="grid grid-cols-3 gap-3">
+
                   <CustomerMetric
                     icon={Users}
                     label="New"
                     value={data.customers.new}
+                    accent="blue"
                   />
 
                   <CustomerMetric
                     icon={UserRound}
                     label="Returning"
                     value={data.customers.returning}
+                    accent="violet"
                   />
 
                   <CustomerMetric
                     icon={Sparkles}
                     label="VIP"
                     value={data.customers.vip}
+                    accent="amber"
                   />
                 </div>
 
-                <div className="mt-5 rounded-xl border border-gray-100 p-4">
+                <div className="mt-5 rounded-xl border border-pink-100 bg-gradient-to-br from-pink-50/70 to-violet-50/60 p-4 dark:border-pink-900/30 dark:from-pink-950/10 dark:to-violet-950/10">
+
                   <div className="flex items-center justify-between gap-3">
+
                     <div>
-                      <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">
+                      <p className="text-xs font-bold text-slate-900 dark:text-white">
                         Returning customer ratio
                       </p>
 
-                      <p className="mt-1 text-[10px] text-gray-400">
+                      <p className="mt-1 text-[10px] text-slate-400">
                         Returning customers compared with new customers
                       </p>
                     </div>
 
-                    <ArrowUpRight
-                      size={16}
-                      className="text-gray-400"
-                    />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-pink-100 dark:bg-pink-900/30">
+                      <ArrowUpRight
+                        size={16}
+                        className="text-pink-600 dark:text-pink-400"
+                      />
+                    </div>
                   </div>
 
                   <div className="mt-4 flex items-end gap-2">
-                    <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+
+                    <p className="text-2xl font-bold text-pink-600 dark:text-pink-400">
                       {(
                         (data.customers.returning /
                           Math.max(
@@ -706,7 +911,7 @@ const Analytics = () => {
                       %
                     </p>
 
-                    <span className="pb-1 text-[10px] text-gray-400">
+                    <span className="pb-1 text-[10px] font-medium text-slate-400">
                       returning / new
                     </span>
                   </div>
@@ -720,47 +925,64 @@ const Analytics = () => {
           ================================================== */}
 
           <div className="grid gap-5 xl:grid-cols-2">
-            {/* Handoffs */}
-            <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-              <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-                <div>
-                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                    Human handoffs
-                  </h2>
 
-                  <p className="mt-1 text-xs text-gray-400">
+            {/* Handoffs */}
+
+            <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm shadow-blue-500/5 dark:border-surface-700 dark:bg-surface-900">
+
+              <div className="flex items-center justify-between border-b border-blue-50 bg-gradient-to-r from-blue-50/70 to-transparent px-5 py-4 dark:border-surface-700 dark:from-blue-950/20">
+
+                <div>
+                  <div className="flex items-center gap-2">
+
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                      <UserRound
+                        size={14}
+                        className="text-blue-600 dark:text-blue-400"
+                      />
+                    </div>
+
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                      Human handoffs
+                    </h2>
+                  </div>
+
+                  <p className="mt-1 text-xs text-slate-400">
                     Conversations requiring a human
                   </p>
                 </div>
 
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/30">
                   <UserRound
                     size={16}
-                    className="text-gray-600"
+                    className="text-blue-600 dark:text-blue-400"
                   />
                 </div>
               </div>
 
               <div className="p-5">
+
                 <div className="flex items-end justify-between gap-4">
+
                   <div>
-                    <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">
                       {data.handoffs.toLocaleString()}
                     </p>
 
-                    <p className="mt-1 text-[10px] text-gray-400">
+                    <p className="mt-1 text-[10px] text-slate-400">
                       Total handoffs
                     </p>
                   </div>
 
-                  <span className="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-1 text-[10px] font-medium text-gray-600">
+                  <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
                     {handoffRate}% of conversations
                   </span>
                 </div>
 
                 <div className="mt-5 space-y-4">
+
                   {data.handoffReasons.map(
-                    (reason) => {
+                    (reason, index) => {
                       const maxValue = Math.max(
                         ...data.handoffReasons.map(
                           (item) => item.value
@@ -774,21 +996,32 @@ const Analytics = () => {
                             100
                           : 0;
 
+                      const barColors = [
+                        "bg-blue-500",
+                        "bg-violet-500",
+                        "bg-pink-500",
+                        "bg-orange-500",
+                        "bg-emerald-500",
+                      ];
+
                       return (
                         <div key={reason.name}>
+
                           <div className="mb-1.5 flex items-center justify-between gap-3">
-                            <span className="truncate text-xs font-medium text-gray-700">
+
+                            <span className="truncate text-xs font-semibold text-slate-700 dark:text-slate-300">
                               {reason.name}
                             </span>
 
-                            <span className="text-[10px] text-gray-400">
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                               {reason.value}
                             </span>
                           </div>
 
-                          <div className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                          <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+
                             <div
-                              className="h-full rounded-full bg-gray-900"
+                              className={`h-full rounded-full ${barColors[index % barColors.length]}`}
                               style={{
                                 width: `${percentage}%`,
                               }}
@@ -803,46 +1036,62 @@ const Analytics = () => {
             </section>
 
             {/* Knowledge gaps */}
-            <section className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-              <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-                <div>
-                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                    AI knowledge gaps
-                  </h2>
 
-                  <p className="mt-1 text-xs text-gray-400">
+            <section className="overflow-hidden rounded-2xl border border-amber-100 bg-white shadow-sm shadow-amber-500/5 dark:border-surface-700 dark:bg-surface-900">
+
+              <div className="flex items-center justify-between border-b border-amber-50 bg-gradient-to-r from-amber-50/70 to-transparent px-5 py-4 dark:border-surface-700 dark:from-amber-950/20">
+
+                <div>
+                  <div className="flex items-center gap-2">
+
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                      <Sparkles
+                        size={14}
+                        className="text-amber-600 dark:text-amber-400"
+                      />
+                    </div>
+
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                      AI knowledge gaps
+                    </h2>
+                  </div>
+
+                  <p className="mt-1 text-xs text-slate-400">
                     Questions the AI could not answer confidently
                   </p>
                 </div>
 
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/30">
                   <AlertTriangle
                     size={16}
-                    className="text-amber-600"
+                    className="text-amber-600 dark:text-amber-400"
                   />
                 </div>
               </div>
 
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+
                 {visibleKnowledgeGaps.map(
                   (gap) => (
                     <div
                       key={gap.question}
-                      className="flex items-start gap-3 px-5 py-4"
+                      className="flex items-start gap-3 px-5 py-4 transition hover:bg-amber-50/40 dark:hover:bg-amber-950/10"
                     >
-                      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
+
+                      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
                         <MessageSquare
                           size={13}
-                          className="text-gray-500"
+                          className="text-amber-600 dark:text-amber-400"
                         />
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium leading-5 text-gray-700">
+
+                        <p className="text-xs font-semibold leading-5 text-slate-700 dark:text-slate-300">
                           {gap.question}
                         </p>
 
-                        <p className="mt-1 text-[10px] text-gray-400">
+                        <p className="mt-1 text-[10px] text-slate-400">
                           Asked {gap.count}{" "}
                           {gap.count === 1
                             ? "time"
@@ -860,7 +1109,8 @@ const Analytics = () => {
               </div>
 
               {data.knowledgeGaps.length > 3 && (
-                <div className="border-t border-gray-100 px-5 py-3">
+                <div className="border-t border-amber-100 px-5 py-3 dark:border-surface-700">
+
                   <button
                     type="button"
                     onClick={() =>
@@ -868,7 +1118,7 @@ const Analytics = () => {
                         (value) => !value
                       )
                     }
-                    className="text-xs font-medium text-gray-600 transition hover:text-gray-900 dark:text-gray-100"
+                    className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 transition hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-300 dark:hover:bg-amber-900/40"
                   >
                     {showAllGaps
                       ? "Show less"
@@ -895,14 +1145,121 @@ const MetricCard = ({
   change,
   positive,
   description,
+  accent = "primary",
 }) => {
+  const accentMap = {
+    info: {
+      iconBg:
+        "bg-blue-100 dark:bg-blue-900/30",
+      iconColor:
+        "text-blue-600 dark:text-blue-400",
+      border:
+        "border-blue-200 dark:border-blue-900/50",
+      top:
+        "from-blue-500 to-cyan-500",
+      shadow:
+        "shadow-blue-500/10",
+    },
+
+    ai: {
+      iconBg:
+        "bg-violet-100 dark:bg-violet-900/30",
+      iconColor:
+        "text-violet-600 dark:text-violet-400",
+      border:
+        "border-violet-200 dark:border-violet-900/50",
+      top:
+        "from-violet-500 to-purple-600",
+      shadow:
+        "shadow-violet-500/10",
+    },
+
+    social: {
+      iconBg:
+        "bg-pink-100 dark:bg-pink-900/30",
+      iconColor:
+        "text-pink-600 dark:text-pink-400",
+      border:
+        "border-pink-200 dark:border-pink-900/50",
+      top:
+        "from-pink-500 to-rose-500",
+      shadow:
+        "shadow-pink-500/10",
+    },
+
+    order: {
+      iconBg:
+        "bg-emerald-100 dark:bg-emerald-900/30",
+      iconColor:
+        "text-emerald-600 dark:text-emerald-400",
+      border:
+        "border-emerald-200 dark:border-emerald-900/50",
+      top:
+        "from-emerald-500 to-teal-500",
+      shadow:
+        "shadow-emerald-500/10",
+    },
+
+    primary: {
+      iconBg:
+        "bg-violet-100 dark:bg-violet-900/30",
+      iconColor:
+        "text-violet-600 dark:text-violet-400",
+      border:
+        "border-violet-200 dark:border-violet-900/50",
+      top:
+        "from-violet-500 to-purple-600",
+      shadow:
+        "shadow-violet-500/10",
+    },
+
+    success: {
+      iconBg:
+        "bg-emerald-100 dark:bg-emerald-900/30",
+      iconColor:
+        "text-emerald-600 dark:text-emerald-400",
+      border:
+        "border-emerald-200 dark:border-emerald-900/50",
+      top:
+        "from-emerald-500 to-teal-500",
+      shadow:
+        "shadow-emerald-500/10",
+    },
+
+    warning: {
+      iconBg:
+        "bg-orange-100 dark:bg-orange-900/30",
+      iconColor:
+        "text-orange-600 dark:text-orange-400",
+      border:
+        "border-orange-200 dark:border-orange-900/50",
+      top:
+        "from-orange-500 to-amber-500",
+      shadow:
+        "shadow-orange-500/10",
+    },
+  };
+
+  const accentStyles =
+    accentMap[accent] || accentMap.primary;
+
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 sm:p-5">
+    <div
+      className={`group relative overflow-hidden rounded-2xl border bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${accentStyles.border} ${accentStyles.shadow} dark:bg-surface-900 sm:p-5`}
+    >
+
+      <div
+        className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${accentStyles.top}`}
+      />
+
       <div className="flex items-center justify-between gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
+
+        <div
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${accentStyles.iconBg}`}
+        >
           <Icon
-            size={17}
-            className="text-gray-600"
+            size={18}
+            className={accentStyles.iconColor}
           />
         </div>
 
@@ -910,11 +1267,11 @@ const MetricCard = ({
           className={`
             flex items-center gap-1
             rounded-full px-2 py-1
-            text-[10px] font-medium
+            text-[10px] font-bold
             ${
               positive
-                ? "bg-green-50 text-green-700"
-                : "bg-red-50 text-red-700"
+                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300"
             }
           `}
         >
@@ -928,15 +1285,15 @@ const MetricCard = ({
         </div>
       </div>
 
-      <p className="mt-4 text-xs font-medium text-gray-500">
+      <p className="mt-4 text-xs font-semibold text-slate-500 dark:text-slate-400">
         {title}
       </p>
 
-      <p className="mt-1 truncate text-2xl font-semibold text-gray-900 dark:text-gray-100">
+      <p className="mt-1 truncate text-2xl font-bold text-slate-900 dark:text-white">
         {value}
       </p>
 
-      <p className="mt-1 text-[10px] leading-4 text-gray-400">
+      <p className="mt-1 text-[10px] leading-4 text-slate-400">
         {description}
       </p>
     </div>
@@ -999,7 +1356,49 @@ const SimpleLineChart = ({ values }) => {
         role="img"
         aria-label="Conversation trend chart"
       >
+
+        <defs>
+          <linearGradient
+            id="analyticsAreaGradient"
+            x1="0"
+            x2="0"
+            y1="0"
+            y2="1"
+          >
+            <stop
+              offset="0%"
+              stopColor="#8b5cf6"
+              stopOpacity="0.25"
+            />
+
+            <stop
+              offset="100%"
+              stopColor="#ec4899"
+              stopOpacity="0.02"
+            />
+          </linearGradient>
+
+          <linearGradient
+            id="analyticsLineGradient"
+            x1="0"
+            x2="1"
+            y1="0"
+            y2="0"
+          >
+            <stop
+              offset="0%"
+              stopColor="#8b5cf6"
+            />
+
+            <stop
+              offset="100%"
+              stopColor="#ec4899"
+            />
+          </linearGradient>
+        </defs>
+
         {/* Horizontal grid */}
+
         {[0, 1, 2, 3].map((line) => {
           const y =
             paddingTop +
@@ -1015,42 +1414,56 @@ const SimpleLineChart = ({ values }) => {
               x2={width - paddingRight}
               y1={y}
               y2={y}
-              stroke="#eeeeee"
+              stroke="#e5e7eb"
               strokeWidth="1"
+              strokeDasharray="4 5"
             />
           );
         })}
 
         {/* Area */}
+
         <polygon
           points={areaPoints}
-          fill="#f3f4f6"
+          fill="url(#analyticsAreaGradient)"
         />
 
         {/* Line */}
+
         <polyline
           points={points.join(" ")}
           fill="none"
-          stroke="#111827"
-          strokeWidth="3"
+          stroke="url(#analyticsLineGradient)"
+          strokeWidth="4"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
 
         {/* Points */}
+
         {values.map((value, index) => {
           const [x, y] = points[index]
             .split(",")
             .map(Number);
 
           return (
-            <circle
-              key={index}
-              cx={x}
-              cy={y}
-              r="3"
-              fill="#111827"
-            />
+            <g key={index}>
+              <circle
+                cx={x}
+                cy={y}
+                r="6"
+                fill="white"
+                stroke="#8b5cf6"
+                strokeWidth="3"
+              />
+
+              <circle
+                cx={x}
+                cy={y}
+                r="2.5"
+                fill="#ec4899"
+              />
+            </g>
           );
         })}
 
@@ -1058,7 +1471,7 @@ const SimpleLineChart = ({ values }) => {
           x={paddingLeft}
           y={height - 8}
           fontSize="10"
-          fill="#9ca3af"
+          fill="#94a3b8"
         >
           Start
         </text>
@@ -1067,7 +1480,7 @@ const SimpleLineChart = ({ values }) => {
           x={width - paddingRight}
           y={height - 8}
           fontSize="10"
-          fill="#9ca3af"
+          fill="#94a3b8"
           textAnchor="end"
         >
           Now
@@ -1086,39 +1499,77 @@ const FunnelStep = ({
   label,
   value,
   icon: Icon,
+  accent = "violet",
   last = false,
 }) => {
+  const accents = {
+    violet: {
+      bg: "bg-violet-100 dark:bg-violet-900/30",
+      icon: "text-violet-600 dark:text-violet-400",
+      number: "text-violet-500",
+    },
+
+    pink: {
+      bg: "bg-pink-100 dark:bg-pink-900/30",
+      icon: "text-pink-600 dark:text-pink-400",
+      number: "text-pink-500",
+    },
+
+    orange: {
+      bg: "bg-orange-100 dark:bg-orange-900/30",
+      icon: "text-orange-600 dark:text-orange-400",
+      number: "text-orange-500",
+    },
+
+    emerald: {
+      bg: "bg-emerald-100 dark:bg-emerald-900/30",
+      icon: "text-emerald-600 dark:text-emerald-400",
+      number: "text-emerald-500",
+    },
+  };
+
+  const style =
+    accents[accent] || accents.violet;
+
   return (
     <div
       className={`
         flex items-center gap-4 p-5
+        transition hover:bg-slate-50 dark:hover:bg-slate-800/40
         md:items-start
         ${
           !last
-            ? "border-b border-gray-100 md:border-b-0 md:border-r"
+            ? "border-b border-slate-100 md:border-b-0 md:border-r dark:border-slate-700"
             : ""
         }
       `}
     >
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
+
+      <div
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${style.bg}`}
+      >
         <Icon
           size={17}
-          className="text-gray-600"
+          className={style.icon}
         />
       </div>
 
       <div className="min-w-0">
+
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-semibold text-gray-400">
+
+          <span
+            className={`text-[10px] font-bold ${style.number}`}
+          >
             {number}
           </span>
 
-          <p className="text-xs font-medium text-gray-500">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
             {label}
           </p>
         </div>
 
-        <p className="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <p className="mt-1 text-xl font-bold text-slate-900 dark:text-white">
           {value.toLocaleString()}
         </p>
       </div>
@@ -1134,21 +1585,58 @@ const MiniMetric = ({
   icon: Icon,
   label,
   value,
+  accent = "violet",
 }) => {
-  return (
-    <div className="rounded-xl border border-gray-100 p-4">
-      <div className="flex items-center gap-2">
-        <Icon
-          size={15}
-          className="text-gray-400"
-        />
+  const accents = {
+    violet: {
+      bg: "bg-violet-100 dark:bg-violet-900/30",
+      icon: "text-violet-600 dark:text-violet-400",
+      border: "border-violet-100 dark:border-violet-900/40",
+    },
 
-        <p className="text-[10px] font-medium text-gray-400">
+    blue: {
+      bg: "bg-blue-100 dark:bg-blue-900/30",
+      icon: "text-blue-600 dark:text-blue-400",
+      border: "border-blue-100 dark:border-blue-900/40",
+    },
+
+    emerald: {
+      bg: "bg-emerald-100 dark:bg-emerald-900/30",
+      icon: "text-emerald-600 dark:text-emerald-400",
+      border: "border-emerald-100 dark:border-emerald-900/40",
+    },
+
+    orange: {
+      bg: "bg-orange-100 dark:bg-orange-900/30",
+      icon: "text-orange-600 dark:text-orange-400",
+      border: "border-orange-100 dark:border-orange-900/40",
+    },
+  };
+
+  const style =
+    accents[accent] || accents.violet;
+
+  return (
+    <div
+      className={`rounded-xl border ${style.border} bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-md dark:bg-surface-900`}
+    >
+      <div className="flex items-center gap-2">
+
+        <div
+          className={`flex h-7 w-7 items-center justify-center rounded-lg ${style.bg}`}
+        >
+          <Icon
+            size={14}
+            className={style.icon}
+          />
+        </div>
+
+        <p className="text-[10px] font-semibold text-slate-400">
           {label}
         </p>
       </div>
 
-      <p className="mt-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
+      <p className="mt-3 text-lg font-bold text-slate-900 dark:text-white">
         {value}
       </p>
     </div>
@@ -1163,21 +1651,67 @@ const CustomerMetric = ({
   icon: Icon,
   label,
   value,
+  accent = "blue",
 }) => {
+  const accents = {
+    blue: {
+      wrapper:
+        "bg-blue-50 dark:bg-blue-950/20",
+      iconBg:
+        "bg-blue-100 dark:bg-blue-900/30",
+      icon:
+        "text-blue-600 dark:text-blue-400",
+      value:
+        "text-blue-700 dark:text-blue-300",
+    },
+
+    violet: {
+      wrapper:
+        "bg-violet-50 dark:bg-violet-950/20",
+      iconBg:
+        "bg-violet-100 dark:bg-violet-900/30",
+      icon:
+        "text-violet-600 dark:text-violet-400",
+      value:
+        "text-violet-700 dark:text-violet-300",
+    },
+
+    amber: {
+      wrapper:
+        "bg-amber-50 dark:bg-amber-950/20",
+      iconBg:
+        "bg-amber-100 dark:bg-amber-900/30",
+      icon:
+        "text-amber-600 dark:text-amber-400",
+      value:
+        "text-amber-700 dark:text-amber-300",
+    },
+  };
+
+  const style =
+    accents[accent] || accents.blue;
+
   return (
-    <div className="rounded-xl bg-gray-50 dark:bg-gray-800 p-4 text-center">
-      <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-white dark:bg-gray-900">
+    <div
+      className={`rounded-xl p-4 text-center transition hover:-translate-y-0.5 hover:shadow-md ${style.wrapper}`}
+    >
+
+      <div
+        className={`mx-auto flex h-8 w-8 items-center justify-center rounded-lg ${style.iconBg}`}
+      >
         <Icon
           size={15}
-          className="text-gray-500"
+          className={style.icon}
         />
       </div>
 
-      <p className="mt-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
+      <p
+        className={`mt-3 text-lg font-bold ${style.value}`}
+      >
         {value.toLocaleString()}
       </p>
 
-      <p className="mt-1 text-[10px] text-gray-400">
+      <p className="mt-1 text-[10px] font-medium text-slate-400">
         {label}
       </p>
     </div>

@@ -23,6 +23,10 @@ import {
   ArrowLeft,
   Loader2,
   AlertCircle,
+  RotateCcw,
+  CheckCircle2,
+  Zap,
+  Circle,
 } from "lucide-react";
 
 import { useConversations } from "../hooks/useConversations";
@@ -34,10 +38,73 @@ import { useSettings } from "../hooks/useSettings";
 ========================================================= */
 
 const channelStyles = {
-  WhatsApp: "bg-green-50 text-green-700",
-  Instagram: "bg-pink-50 text-pink-700",
-  Facebook: "bg-blue-50 text-blue-700",
-  Website: "bg-gray-100 text-gray-700",
+  WhatsApp: {
+    badge:
+      "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:ring-emerald-900",
+    dot: "bg-emerald-500",
+  },
+
+  Instagram: {
+    badge:
+      "bg-pink-50 text-pink-700 ring-1 ring-pink-200 dark:bg-pink-950/40 dark:text-pink-400 dark:ring-pink-900",
+    dot: "bg-pink-500",
+  },
+
+  Facebook: {
+    badge:
+      "bg-blue-50 text-blue-700 ring-1 ring-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:ring-blue-900",
+    dot: "bg-blue-500",
+  },
+
+  Website: {
+    badge:
+      "bg-violet-50 text-violet-700 ring-1 ring-violet-200 dark:bg-violet-950/40 dark:text-violet-400 dark:ring-violet-900",
+    dot: "bg-violet-500",
+  },
+};
+
+/* =========================================================
+   MODE STYLES
+========================================================= */
+
+const modeStyles = {
+  ai: {
+    badge:
+      "bg-violet-50 text-violet-700 ring-1 ring-violet-200 dark:bg-violet-950/40 dark:text-violet-400 dark:ring-violet-900",
+  },
+
+  human: {
+    badge:
+      "bg-blue-50 text-blue-700 ring-1 ring-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:ring-blue-900",
+  },
+
+  handoff: {
+    badge:
+      "bg-amber-50 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:ring-amber-900",
+  },
+};
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+const getChannelStyle = (channel) => {
+  return (
+    channelStyles[channel] || {
+      badge:
+        "bg-slate-50 text-slate-600 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
+      dot: "bg-slate-400",
+    }
+  );
+};
+
+const getModeStyle = (mode) => {
+  return (
+    modeStyles[mode] || {
+      badge:
+        "bg-slate-50 text-slate-600 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
+    }
+  );
 };
 
 /* =========================================================
@@ -46,7 +113,7 @@ const channelStyles = {
 
 const Inbox = () => {
   const {
-    conversations,
+    conversations = [],
     setConversations,
     loading,
     error,
@@ -57,20 +124,40 @@ const Inbox = () => {
     returnToAI: apiReturnToAI,
     markResolved: apiMarkResolved,
     reopenConversation: apiReopenConversation,
+    sendingStates = {},
   } = useConversations();
 
-  const { sendToAI, loading: aiLoading } = useAIChat();
+  const { sendToAI } = useAIChat();
   const { settings } = useSettings();
-  const currency = settings?.general?.currency || "GHS";
-  const timezone = settings?.general?.timezone || "Africa/Accra";
-  const aiEnabled = settings?.ai?.enabled ?? true;
-  const autoReply = settings?.ai?.autoReply ?? true;
 
-  const [selectedId, setSelectedId] = useState(null);
+  /* =======================================================
+     SETTINGS
+  ======================================================= */
 
-  const [search, setSearch] = useState("");
+  const timezone =
+    settings?.general?.timezone || "Africa/Accra";
 
-  const [message, setMessage] = useState("");
+  const aiEnabled =
+    settings?.ai?.enabled ?? true;
+
+  const autoReply =
+    settings?.ai?.autoReply ?? true;
+
+  const allowCustomerChat =
+    settings?.customer?.allowCustomerChat ?? true;
+
+  /* =======================================================
+     STATE
+  ======================================================= */
+
+  const [selectedId, setSelectedId] =
+    useState(null);
+
+  const [search, setSearch] =
+    useState("");
+
+  const [message, setMessage] =
+    useState("");
 
   const [showCustomerPanel, setShowCustomerPanel] =
     useState(true);
@@ -78,12 +165,6 @@ const Inbox = () => {
   const [activeFilter, setActiveFilter] =
     useState("All");
 
-  /*
-    MOBILE VIEW
-
-    list = conversation list
-    chat = active conversation
-  */
   const [mobileView, setMobileView] =
     useState("list");
 
@@ -91,20 +172,53 @@ const Inbox = () => {
      SELECTED CONVERSATION
   ======================================================= */
 
-  const selectedConversation =
-    conversations.find(
+  const selectedConversation = useMemo(() => {
+    return conversations.find(
       (conversation) =>
         conversation.id === selectedId
     );
+  }, [conversations, selectedId]);
 
-  // Auto-select first conversation when loaded
+  /* =======================================================
+     NORMALIZED DATA
+  ======================================================= */
+
+  const selectedMessages =
+    selectedConversation?.messages || [];
+
+  const selectedOrders =
+    selectedConversation?.orders || [];
+
+  const selectedProducts =
+    selectedConversation?.productsDiscussed || [];
+
+  /* =======================================================
+     AUTO SELECT FIRST CONVERSATION
+  ======================================================= */
+
   useEffect(() => {
-    if (conversations.length > 0 && !selectedId) {
-      const firstId = conversations[0].id;
-      setSelectedId(firstId);
-      selectConversation(firstId);
+    if (
+      conversations.length > 0 &&
+      !selectedId
+    ) {
+      const firstConversation =
+        conversations[0];
+
+      if (firstConversation?.id) {
+        setSelectedId(
+          firstConversation.id
+        );
+
+        selectConversation(
+          firstConversation.id
+        );
+      }
     }
-  }, [conversations, selectedId, selectConversation]);
+  }, [
+    conversations,
+    selectedId,
+    selectConversation,
+  ]);
 
   /* =======================================================
      FILTER CONVERSATIONS
@@ -117,15 +231,24 @@ const Inbox = () => {
 
     return conversations.filter(
       (conversation) => {
+        const name =
+          conversation?.name || "";
+
+        const lastMessage =
+          conversation?.lastMessage || "";
+
+        const channel =
+          conversation?.channel || "";
+
         const matchesSearch =
           !value ||
-          conversation.name
+          name
             .toLowerCase()
             .includes(value) ||
-          conversation.lastMessage
+          lastMessage
             .toLowerCase()
             .includes(value) ||
-          conversation.channel
+          channel
             .toLowerCase()
             .includes(value);
 
@@ -133,18 +256,19 @@ const Inbox = () => {
 
         if (activeFilter === "Unread") {
           matchesFilter =
-            conversation.unread > 0;
+            Number(conversation?.unread || 0) >
+            0;
         }
 
         if (activeFilter === "AI") {
           matchesFilter =
-            conversation.mode === "ai";
+            conversation?.mode === "ai";
         }
 
         if (activeFilter === "Human") {
           matchesFilter =
-            conversation.mode === "human" ||
-            conversation.mode === "handoff";
+            conversation?.mode === "human" ||
+            conversation?.mode === "handoff";
         }
 
         return (
@@ -164,17 +288,15 @@ const Inbox = () => {
   ======================================================= */
 
   const handleSelectConversation = (id) => {
+    if (!id) return;
+
     setSelectedId(id);
     selectConversation(id);
-
-    /*
-      On mobile, move from list to chat
-    */
     setMobileView("chat");
   };
 
   /* =======================================================
-     GO BACK TO LIST ON MOBILE
+     MOBILE BACK
   ======================================================= */
 
   const goBackToList = () => {
@@ -186,20 +308,37 @@ const Inbox = () => {
   ======================================================= */
 
   const handleSendMessage = async (event) => {
-    event.preventDefault();
+    event?.preventDefault();
 
-    const trimmedMessage = message.trim();
+    const trimmedMessage =
+      message.trim();
 
-    if (!trimmedMessage || !selectedConversation) {
+    if (
+      !trimmedMessage ||
+      !selectedConversation ||
+      !allowCustomerChat
+    ) {
       return;
     }
 
     setMessage("");
 
     try {
-      await apiSendMessage(selectedConversation.id, trimmedMessage);
+      await apiSendMessage(
+        selectedConversation.id,
+        trimmedMessage
+      );
     } catch (err) {
-      console.error('Failed to send message:', err);
+      console.error(
+        "Failed to send message:",
+        err
+      );
+
+      /*
+       * Restore the message if sending fails.
+       * This makes retrying easier for the seller.
+       */
+      setMessage(trimmedMessage);
     }
   };
 
@@ -209,10 +348,14 @@ const Inbox = () => {
 
   const handleTakeOver = async () => {
     if (!selectedId) return;
+
     try {
       await apiTakeOver(selectedId);
     } catch (err) {
-      console.error('Failed to take over:', err);
+      console.error(
+        "Failed to take over:",
+        err
+      );
     }
   };
 
@@ -222,23 +365,31 @@ const Inbox = () => {
 
   const handleReturnToAI = async () => {
     if (!selectedId) return;
+
     try {
       await apiReturnToAI(selectedId);
     } catch (err) {
-      console.error('Failed to return to AI:', err);
+      console.error(
+        "Failed to return to AI:",
+        err
+      );
     }
   };
 
   /* =======================================================
-     MARK RESOLVED
+     RESOLVE
   ======================================================= */
 
   const handleMarkResolved = async () => {
     if (!selectedId) return;
+
     try {
       await apiMarkResolved(selectedId);
     } catch (err) {
-      console.error('Failed to mark resolved:', err);
+      console.error(
+        "Failed to mark resolved:",
+        err
+      );
     }
   };
 
@@ -248,88 +399,155 @@ const Inbox = () => {
 
   const handleReopenConversation = async () => {
     if (!selectedId) return;
+
     try {
-      await apiReopenConversation(selectedId);
+      await apiReopenConversation(
+        selectedId
+      );
     } catch (err) {
-      console.error('Failed to reopen:', err);
+      console.error(
+        "Failed to reopen:",
+        err
+      );
     }
   };
 
   /* =======================================================
-     AI RESPONSE HANDLING
+     AI RESPONSE
   ======================================================= */
 
-  // Trigger AI response when conversation is in AI mode and last message is from customer - respects AI settings
   useEffect(() => {
-    // Respect Enable AI and Automatic replies - single source of truth is settings.ai
-    if (!aiEnabled || !autoReply) return;
-    if (
-      selectedConversation &&
-      selectedConversation.mode === 'ai' &&
-      selectedConversation.messages.length > 0
-    ) {
-      const lastMessage = selectedConversation.messages[selectedConversation.messages.length - 1];
-      // Check if last message is from customer and we haven't responded yet
-      if (lastMessage.sender === 'customer') {
-        // Check if there's already an AI response after this customer message
-        const hasAIResponse = selectedConversation.messages.some(
-          (msg, idx) => msg.sender === 'ai' && idx > selectedConversation.messages.indexOf(lastMessage)
-        );
-        
-        if (!hasAIResponse) {
-          // Trigger AI response
-          const conversationHistory = selectedConversation.messages.slice(-6).map(msg => ({
-            id: msg.id,
-            sender: msg.sender,
-            content: msg.content,
-            time: msg.time,
-          }));
-          
-          sendToAI(lastMessage.content, selectedConversation.id, conversationHistory)
-            .then((aiResponse) => {
-              if (aiResponse.requiresHandoff) {
-                // AI requested handoff - update conversation mode
-                setConversations((current) =>
-                  current.map((conv) =>
-                    conv.id === selectedId
-                      ? {
-                          ...conv,
-                          mode: 'handoff',
-                          conversationStatus: 'handed_off',
-                        }
-                      : conv
-                  )
-                );
-              } else {
-                // Add AI response to conversation
-                const aiMessage = {
-                  id: Date.now(),
-                  sender: 'ai',
-                  content: aiResponse.response,
-                  time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: timezone }),
-                };
-                
-                setConversations((current) =>
-                  current.map((conv) =>
-                    conv.id === selectedId
-                      ? {
-                          ...conv,
-                          lastMessage: aiResponse.response,
-                          time: aiMessage.time,
-                          messages: [...conv.messages, aiMessage],
-                        }
-                      : conv
-                  )
-                );
-              }
-            })
-            .catch((err) => {
-              console.error('AI response error:', err);
-            });
-        }
-      }
+    if (!aiEnabled || !autoReply) {
+      return;
     }
-  }, [selectedConversation?.messages, selectedConversation?.mode, selectedId, sendToAI, aiEnabled, autoReply]);
+
+    if (
+      !selectedConversation ||
+      selectedConversation.mode !== "ai" ||
+      selectedMessages.length === 0
+    ) {
+      return;
+    }
+
+    const lastIndex =
+      selectedMessages.length - 1;
+
+    const lastMessage =
+      selectedMessages[lastIndex];
+
+    if (
+      !lastMessage ||
+      lastMessage.sender !== "customer"
+    ) {
+      return;
+    }
+
+    /*
+     * The customer message is the latest message,
+     * therefore an AI response cannot already exist
+     * after it.
+     */
+    const conversationHistory =
+      selectedMessages
+        .slice(-6)
+        .map((msg) => ({
+          id: msg.id,
+          sender: msg.sender,
+          content: msg.content,
+          time: msg.time,
+        }));
+
+    let cancelled = false;
+
+    sendToAI(
+      lastMessage.content,
+      selectedConversation.id,
+      conversationHistory
+    )
+      .then((aiResponse) => {
+        if (cancelled || !aiResponse) {
+          return;
+        }
+
+        if (
+          aiResponse.requiresHandoff
+        ) {
+          setConversations((current) =>
+            current.map((conv) =>
+              conv.id === selectedConversation.id
+                ? {
+                    ...conv,
+                    mode: "handoff",
+                    conversationStatus:
+                      "handed_off",
+                  }
+                : conv
+            )
+          );
+
+          return;
+        }
+
+        const responseText =
+          aiResponse.response || "";
+
+        if (!responseText) {
+          return;
+        }
+
+        const aiMessage = {
+          id: `ai-${Date.now()}`,
+          sender: "ai",
+          content: responseText,
+          time: new Date().toLocaleTimeString(
+            [],
+            {
+              hour: "numeric",
+              minute: "2-digit",
+              timeZone: timezone,
+            }
+          ),
+        };
+
+        setConversations((current) =>
+          current.map((conv) =>
+            conv.id === selectedConversation.id
+              ? {
+                  ...conv,
+                  lastMessage:
+                    responseText,
+                  time: aiMessage.time,
+                  messages: [
+                    ...(conv.messages || []),
+                    aiMessage,
+                  ],
+                }
+              : conv
+          )
+        );
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          console.error(
+            "AI response error:",
+            err
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    selectedConversation?.id,
+    selectedConversation?.mode,
+    selectedMessages,
+    aiEnabled,
+    autoReply,
+    sendToAI,
+    setConversations,
+    timezone,
+  ]);
 
   /* =======================================================
      EMPTY STATE
@@ -337,46 +555,48 @@ const Inbox = () => {
 
   if (!selectedConversation) {
     return (
-      <div className="flex h-full min-h-0 w-full items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-800">
-        <div className="text-center">
-          <MessageSquare
-            className="mx-auto mb-3 text-gray-400"
-            size={32}
-          />
+      <div className="flex h-full min-h-0 w-full items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="px-6 text-center">
 
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+            <MessageSquare
+              size={28}
+              className="text-violet-500"
+            />
+          </div>
+
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">
             No conversation selected
           </h2>
+
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Select a conversation to start chatting.
+          </p>
         </div>
       </div>
     );
   }
+
+  const selectedChannelStyle =
+    getChannelStyle(
+      selectedConversation.channel
+    );
+
+  const selectedModeStyle =
+    getModeStyle(
+      selectedConversation.mode
+    );
 
   /* =======================================================
      PAGE
   ======================================================= */
 
   return (
-    <div
-      className="
-        flex
-        h-full
-        min-h-0
-        w-full
-        min-w-0
-        overflow-hidden
-        bg-gray-50
-      "
-    >
+    <div className="flex h-full min-h-0 w-full min-w-0 overflow-hidden bg-slate-50 dark:bg-slate-950">
+
       {/* ===================================================
-          LEFT — CONVERSATION LIST
-
-          MOBILE:
-          flex when mobileView === list
-
-          DESKTOP:
-          always flex from md upwards
-      ==================================================== */}
+          LEFT — CONVERSATIONS
+      =================================================== */}
 
       <aside
         className={`
@@ -386,17 +606,19 @@ const Inbox = () => {
           shrink-0
           flex-col
           border-r
-          border-gray-200
+          border-slate-200
           bg-white
+          dark:border-slate-800
+          dark:bg-slate-900
 
           md:flex
-          md:w-[290px]
+          md:w-[300px]
 
-          lg:w-[300px]
+          lg:w-[320px]
 
-          xl:w-[320px]
+          xl:w-[335px]
 
-          2xl:w-[340px]
+          2xl:w-[350px]
 
           ${
             mobileView === "list"
@@ -405,52 +627,49 @@ const Inbox = () => {
           }
         `}
       >
-        {/* HEADER */}
-        <div
-          className="
-            shrink-0
-            border-b
-            border-gray-200
-            bg-white
-            px-3
-            py-3
-            sm:px-4
-            sm:py-4
-          "
-        >
-          {/* Title */}
-          <div className="mb-3 flex items-center justify-between gap-2 sm:mb-4">
-            <div className="min-w-0">
-              <h1 className="truncate text-base font-semibold text-gray-900 dark:text-gray-100 sm:text-lg">
-                Inbox
-              </h1>
 
-              <p className="text-[11px] text-gray-500 sm:text-xs">
+        {/* LEFT HEADER */}
+
+        <div className="shrink-0 border-b border-slate-200 px-4 py-4 dark:border-slate-800 sm:px-5">
+
+          <div className="mb-4 flex items-center justify-between">
+
+            <div>
+              <div className="flex items-center gap-2">
+
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600 text-white shadow-sm shadow-violet-200 dark:shadow-none">
+                  <MessageSquare size={15} />
+                </div>
+
+                <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                  Inbox
+                </h1>
+              </div>
+
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 {conversations.length}{" "}
-                conversations
+                {conversations.length === 1
+                  ? "conversation"
+                  : "conversations"}
               </p>
             </div>
 
             <button
               type="button"
-              className="shrink-0 rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 dark:bg-gray-800 hover:text-gray-900 dark:text-gray-100"
+              aria-label="Inbox options"
+              className="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
             >
-              <MoreHorizontal size={18} />
+              <MoreHorizontal size={19} />
             </button>
           </div>
 
-          {/* Search */}
+          {/* SEARCH */}
+
           <div className="relative">
+
             <Search
               size={16}
-              className="
-                pointer-events-none
-                absolute
-                left-3
-                top-1/2
-                -translate-y-1/2
-                text-gray-400
-              "
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
             />
 
             <input
@@ -461,32 +680,39 @@ const Inbox = () => {
                   event.target.value
                 )
               }
-              placeholder="Search conversations"
+              placeholder="Search conversations..."
               className="
                 h-10
                 w-full
                 rounded-xl
                 border
-                border-gray-200
-                bg-gray-50
-                pl-9
+                border-slate-200
+                bg-slate-50
+                pl-10
                 pr-3
-                text-xs
-                text-gray-900
+                text-sm
+                text-slate-900
                 outline-none
                 transition
-                placeholder:text-gray-400
-                focus:border-gray-300
+                placeholder:text-slate-400
+                focus:border-violet-300
                 focus:bg-white
-                focus:ring-1
-                focus:ring-gray-200
-                sm:text-sm
+                focus:ring-4
+                focus:ring-violet-50
+                dark:border-slate-700
+                dark:bg-slate-800
+                dark:text-white
+                dark:focus:border-violet-600
+                dark:focus:bg-slate-800
+                dark:focus:ring-violet-950
               "
             />
           </div>
 
-          {/* Filters */}
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+          {/* FILTERS */}
+
+          <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1">
+
             {[
               "All",
               "Unread",
@@ -501,18 +727,17 @@ const Inbox = () => {
                 }
                 className={`
                   shrink-0
-                  rounded-full
+                  rounded-lg
                   px-3
                   py-1.5
                   text-[11px]
-                  font-medium
+                  font-semibold
                   transition
-                  sm:text-xs
 
                   ${
                     activeFilter === filter
-                      ? "bg-gray-900 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      ? "bg-violet-600 text-white shadow-sm shadow-violet-200 dark:shadow-none"
+                      : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
                   }
                 `}
               >
@@ -522,56 +747,65 @@ const Inbox = () => {
           </div>
         </div>
 
-        {/* LIST ONLY SCROLLS */}
-        <div
-          className="
-            min-h-0
-            flex-1
-            overflow-y-auto
-            overscroll-contain
-          "
-        >
+        {/* CONVERSATION LIST */}
+
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+
           {loading ? (
-            <div className="px-5 py-12 text-center">
-              <Loader2
-                className="mx-auto mb-3 text-gray-300 animate-spin"
-                size={28}
-              />
-              <p className="text-sm font-medium text-gray-700">
+            <div className="px-5 py-14 text-center">
+
+              <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-950">
+                <Loader2
+                  size={21}
+                  className="animate-spin text-violet-500"
+                />
+              </div>
+
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                 Loading conversations...
               </p>
             </div>
           ) : error ? (
-            <div className="px-5 py-12 text-center">
-              <AlertCircle
-                className="mx-auto mb-3 text-red-400"
-                size={28}
-              />
-              <p className="text-sm font-medium text-gray-700">
+            <div className="px-5 py-14 text-center">
+
+              <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/40">
+                <AlertCircle
+                  size={21}
+                  className="text-red-500"
+                />
+              </div>
+
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                 Failed to load conversations
               </p>
-              <p className="mt-1 text-xs text-gray-400">
-                {error}
+
+              <p className="mt-1 text-xs leading-5 text-slate-400">
+                {String(error)}
               </p>
+
               <button
+                type="button"
                 onClick={refetch}
-                className="mt-3 text-xs font-medium text-blue-600 hover:underline"
+                className="mt-4 rounded-lg bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-600 transition hover:bg-violet-100 dark:bg-violet-950 dark:text-violet-400"
               >
                 Retry
               </button>
             </div>
           ) : filteredConversations.length === 0 ? (
-            <div className="px-5 py-12 text-center">
-              <Search
-                className="mx-auto mb-3 text-gray-300"
-                size={28}
-              />
+            <div className="px-5 py-14 text-center">
 
-              <p className="text-sm font-medium text-gray-700">
+              <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
+                <Search
+                  size={20}
+                  className="text-slate-400"
+                />
+              </div>
+
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                 No conversations found
               </p>
 
-              <p className="mt-1 text-xs text-gray-400">
+              <p className="mt-1 text-xs text-slate-400">
                 Try another search or filter.
               </p>
             </div>
@@ -581,6 +815,21 @@ const Inbox = () => {
                 const active =
                   conversation.id ===
                   selectedId;
+
+                const conversationChannel =
+                  getChannelStyle(
+                    conversation.channel
+                  );
+
+                const conversationMode =
+                  getModeStyle(
+                    conversation.mode
+                  );
+
+                const unread =
+                  Number(
+                    conversation.unread || 0
+                  );
 
                 return (
                   <button
@@ -592,173 +841,172 @@ const Inbox = () => {
                       )
                     }
                     className={`
+                      group
+                      relative
                       w-full
                       border-b
-                      border-gray-100
-                      px-3
-                      py-3
+                      border-slate-100
+                      px-4
+                      py-3.5
                       text-left
                       transition
-                      sm:px-4
-                      sm:py-4
+                      dark:border-slate-800
 
                       ${
                         active
-                          ? "bg-gray-50"
-                          : "bg-white hover:bg-gray-50"
+                          ? "bg-violet-50/70 dark:bg-violet-950/30"
+                          : "bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800/70"
                       }
                     `}
                   >
+
+                    {/* ACTIVE INDICATOR */}
+
+                    {active && (
+                      <span className="absolute bottom-0 left-0 top-0 w-0.5 bg-violet-600" />
+                    )}
+
                     <div className="flex min-w-0 gap-3">
-                      {/* Avatar */}
+
+                      {/* AVATAR */}
+
                       <div className="relative shrink-0">
+
                         <div
-                          className="
+                          className={`
                             flex
-                            h-10
-                            w-10
+                            h-11
+                            w-11
                             items-center
                             justify-center
-                            rounded-full
-                            bg-gray-900
-                            text-[11px]
-                            font-semibold
-                            text-white
-                            sm:h-11
-                            sm:w-11
-                            sm:text-xs
-                          "
+                            rounded-xl
+                            text-xs
+                            font-bold
+                            shadow-sm
+
+                            ${
+                              active
+                                ? "bg-violet-600 text-white"
+                                : "bg-slate-900 text-white dark:bg-slate-700"
+                            }
+                          `}
                         >
-                          {
-                            conversation.initials
-                          }
+                          {conversation.initials ||
+                            "?"}
                         </div>
 
                         {conversation.status ===
                           "online" && (
-                          <span
-                            className="
-                              absolute
-                              bottom-0
-                              right-0
-                              h-3
-                              w-3
-                              rounded-full
-                              border-2
-                              border-white
-                              bg-green-500
-                            "
-                          />
+                          <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900">
+                            <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                          </span>
                         )}
                       </div>
 
-                      {/* Conversation details */}
+                      {/* DETAILS */}
+
                       <div className="min-w-0 flex-1">
+
                         <div className="flex items-start justify-between gap-2">
-                          <p className="min-w-0 truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
-                            {
-                              conversation.name
-                            }
+
+                          <p className="min-w-0 truncate text-sm font-bold text-slate-900 dark:text-white">
+                            {conversation.name ||
+                              "Unknown customer"}
                           </p>
 
-                          <span className="shrink-0 text-[10px] text-gray-400">
-                            {
-                              conversation.time
-                            }
+                          <span className="shrink-0 text-[10px] font-medium text-slate-400">
+                            {conversation.time ||
+                              ""}
                           </span>
                         </div>
 
-                        {/* Channel / mode */}
-                        <div className="mt-1 flex min-w-0 items-center gap-1.5">
+                        {/* CHANNEL + MODE */}
+
+                        <div className="mt-1.5 flex min-w-0 items-center gap-1.5">
+
                           <span
                             className={`
+                              inline-flex
                               shrink-0
-                              rounded
+                              items-center
+                              gap-1
+                              rounded-md
                               px-1.5
                               py-0.5
                               text-[9px]
-                              font-medium
-                              sm:text-[10px]
-                              ${
-                                channelStyles[
-                                  conversation
-                                    .channel
-                                ]
-                              }
+                              font-bold
+                              ${conversationChannel.badge}
                             `}
                           >
-                            {
-                              conversation.channel
-                            }
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${conversationChannel.dot}`}
+                            />
+
+                            {conversation.channel ||
+                              "Unknown"}
                           </span>
 
-                          {conversation.mode ===
-                            "ai" && (
-                            <span className="flex shrink-0 items-center gap-1 text-[9px] text-gray-400 sm:text-[10px]">
-                              <Bot size={10} />
-                              AI
-                            </span>
-                          )}
+                          {conversation.mode && (
+                            <span
+                              className={`
+                                inline-flex
+                                shrink-0
+                                items-center
+                                gap-1
+                                rounded-md
+                                px-1.5
+                                py-0.5
+                                text-[9px]
+                                font-bold
+                                ${conversationMode.badge}
+                              `}
+                            >
+                              {conversation.mode ===
+                              "ai" ? (
+                                <Bot size={9} />
+                              ) : conversation.mode ===
+                                "handoff" ? (
+                                <Clock3 size={9} />
+                              ) : (
+                                <User size={9} />
+                              )}
 
-                          {conversation.mode ===
-                            "human" && (
-                            <span className="flex shrink-0 items-center gap-1 text-[9px] text-gray-400 sm:text-[10px]">
-                              <User size={10} />
-                              Human
-                            </span>
-                          )}
-
-                          {conversation.mode ===
-                            "handoff" && (
-                            <span className="flex shrink-0 items-center gap-1 text-[9px] text-amber-600 sm:text-[10px]">
-                              <User size={10} />
-                              Handoff
+                              {conversation.mode ===
+                              "ai"
+                                ? "AI"
+                                : conversation.mode ===
+                                  "handoff"
+                                ? "Handoff"
+                                : "Human"}
                             </span>
                           )}
                         </div>
 
-                        {/* Last message */}
+                        {/* LAST MESSAGE */}
+
                         <div className="mt-2 flex items-center gap-2">
+
                           <p
                             className={`
                               min-w-0
                               flex-1
                               truncate
                               text-xs
+
                               ${
-                                conversation.unread >
-                                0
-                                  ? "font-medium text-gray-900"
-                                  : "text-gray-500"
+                                unread > 0
+                                  ? "font-semibold text-slate-800 dark:text-slate-200"
+                                  : "text-slate-500 dark:text-slate-400"
                               }
                             `}
                           >
-                            {
-                              conversation.lastMessage
-                            }
+                            {conversation.lastMessage ||
+                              "No messages yet"}
                           </p>
 
-                          {conversation.unread >
-                            0 && (
-                            <span
-                              className="
-                                flex
-                                h-5
-                                min-w-5
-                                shrink-0
-                                items-center
-                                justify-center
-                                rounded-full
-                                bg-gray-900
-                                px-1.5
-                                text-[10px]
-                                font-semibold
-                                text-white
-                              "
-                            >
-                              {
-                                conversation.unread
-                              }
+                          {unread > 0 && (
+                            <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-violet-600 px-1.5 text-[10px] font-bold text-white shadow-sm">
+                              {unread}
                             </span>
                           )}
                         </div>
@@ -774,13 +1022,7 @@ const Inbox = () => {
 
       {/* ===================================================
           MIDDLE — CHAT
-
-          MOBILE:
-          full width when mobileView === chat
-
-          DESKTOP:
-          always visible
-      ==================================================== */}
+      =================================================== */}
 
       <section
         className={`
@@ -790,7 +1032,8 @@ const Inbox = () => {
           flex-1
           flex-col
           overflow-hidden
-          bg-gray-50
+          bg-slate-50
+          dark:bg-slate-950
 
           ${
             mobileView === "chat"
@@ -799,121 +1042,89 @@ const Inbox = () => {
           }
         `}
       >
+
         {/* =================================================
             CHAT HEADER
-        ================================================== */}
+        ================================================= */}
 
-        <header
-          className="
-            flex
-            shrink-0
-            items-center
-            justify-between
-            border-b
-            border-gray-200
-            bg-white
-            px-3
-            py-3
-            sm:px-5
-            sm:py-4
-          "
-        >
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        <header className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-5 sm:py-3.5">
+
+          <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+
             {/* MOBILE BACK */}
+
             <button
               type="button"
               onClick={goBackToList}
-              className="
-                rounded-lg
-                p-2
-                text-gray-500
-                transition
-                hover:bg-gray-100
-                hover:text-gray-900
-
-                md:hidden
-              "
               aria-label="Back to conversations"
+              className="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white md:hidden"
             >
               <ArrowLeft size={18} />
             </button>
 
-            {/* Avatar */}
+            {/* AVATAR */}
+
             <div className="relative shrink-0">
-              <div
-                className="
-                  flex
-                  h-9
-                  w-9
-                  items-center
-                  justify-center
-                  rounded-full
-                  bg-gray-900
-                  text-[10px]
-                  font-semibold
-                  text-white
-                  sm:h-10
-                  sm:w-10
-                  sm:text-xs
-                "
-              >
-                {
-                  selectedConversation.initials
-                }
+
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600 text-xs font-bold text-white shadow-sm">
+                {selectedConversation.initials ||
+                  "?"}
               </div>
 
               {selectedConversation.status ===
                 "online" && (
-                <span
-                  className="
-                    absolute
-                    bottom-0
-                    right-0
-                    h-3
-                    w-3
-                    rounded-full
-                    border-2
-                    border-white
-                    bg-green-500
-                  "
-                />
+                <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900" />
               )}
             </div>
 
-            {/* Customer info */}
+            {/* CUSTOMER */}
+
             <div className="min-w-0">
+
               <div className="flex items-center gap-2">
-                <h2 className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
-                  {
-                    selectedConversation.name
-                  }
+
+                <h2 className="truncate text-sm font-bold text-slate-900 dark:text-white">
+                  {selectedConversation.name ||
+                    "Unknown customer"}
                 </h2>
 
                 <span
                   className={`
                     hidden
-                    rounded
+                    items-center
+                    gap-1
+                    rounded-md
                     px-1.5
                     py-0.5
-                    text-[10px]
-                    font-medium
-                    sm:inline-block
-                    ${
-                      channelStyles[
-                        selectedConversation
-                          .channel
-                      ]
-                    }
+                    text-[9px]
+                    font-bold
+                    sm:inline-flex
+                    ${selectedChannelStyle.badge}
                   `}
                 >
-                  {
-                    selectedConversation.channel
-                  }
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${selectedChannelStyle.dot}`}
+                  />
+
+                  {selectedConversation.channel ||
+                    "Unknown"}
                 </span>
               </div>
 
-              <div className="mt-0.5 flex items-center gap-2 text-[10px] text-gray-400 sm:text-xs">
-                <span>
+              <div className="mt-0.5 flex items-center gap-2 text-[10px] text-slate-400 sm:text-xs">
+
+                <span className="flex items-center gap-1">
+
+                  <Circle
+                    size={6}
+                    className={
+                      selectedConversation.status ===
+                      "online"
+                        ? "fill-emerald-500 text-emerald-500"
+                        : "fill-slate-300 text-slate-300"
+                    }
+                  />
+
                   {selectedConversation.status ===
                   "online"
                     ? "Online"
@@ -923,8 +1134,11 @@ const Inbox = () => {
                 <span>•</span>
 
                 <span className="capitalize">
-                  {selectedConversation.conversationStatus.replace(
-                    "_",
+                  {(
+                    selectedConversation.conversationStatus ||
+                    "active"
+                  ).replace(
+                    /_/g,
                     " "
                   )}
                 </span>
@@ -932,19 +1146,15 @@ const Inbox = () => {
             </div>
           </div>
 
-          {/* Chat actions */}
+          {/* ACTIONS */}
+
           <div className="flex shrink-0 items-center gap-0.5">
+
             <button
               type="button"
               title="Call"
-              className="
-                rounded-lg
-                p-2
-                text-gray-500
-                transition
-                hover:bg-gray-100
-                hover:text-gray-900
-              "
+              aria-label="Call customer"
+              className="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
             >
               <Phone size={17} />
             </button>
@@ -952,16 +1162,8 @@ const Inbox = () => {
             <button
               type="button"
               title="Video call"
-              className="
-                hidden
-                rounded-lg
-                p-2
-                text-gray-500
-                transition
-                hover:bg-gray-100
-                hover:text-gray-900
-                sm:block
-              "
+              aria-label="Video call customer"
+              className="hidden rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white sm:block"
             >
               <Video size={17} />
             </button>
@@ -969,19 +1171,21 @@ const Inbox = () => {
             <button
               type="button"
               title="Customer details"
+              aria-label="Toggle customer details"
               onClick={() =>
                 setShowCustomerPanel(
                   (value) => !value
                 )
               }
               className={`
-                rounded-lg
+                rounded-xl
                 p-2
                 transition
+
                 ${
                   showCustomerPanel
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                    ? "bg-violet-50 text-violet-600 dark:bg-violet-950 dark:text-violet-400"
+                    : "text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
                 }
               `}
             >
@@ -990,7 +1194,9 @@ const Inbox = () => {
 
             <button
               type="button"
-              className="rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 dark:bg-gray-800 hover:text-gray-900 dark:text-gray-100"
+              title="More options"
+              aria-label="More options"
+              className="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
             >
               <MoreHorizontal size={17} />
             </button>
@@ -998,82 +1204,88 @@ const Inbox = () => {
         </header>
 
         {/* =================================================
-            AI STATUS
-        ================================================== */}
+            AI STATUS BAR
+        ================================================= */}
 
-        <div className="shrink-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 sm:px-5">
+        <div className="shrink-0 border-b border-slate-200 bg-white px-3 py-2.5 dark:border-slate-800 dark:bg-slate-900 sm:px-5">
+
           {!aiEnabled ? (
-            <div className="flex items-center gap-2 text-[11px] text-gray-500 sm:text-xs">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-                <Bot size={13} className="text-gray-400" />
+            <div className="flex items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400">
+
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
+                <Bot
+                  size={14}
+                  className="text-slate-500"
+                />
               </span>
-              <span>AI assistant is disabled</span>
+
+              <span>
+                AI assistant is disabled
+              </span>
             </div>
           ) : !autoReply ? (
-            <div className="flex items-center gap-2 text-[11px] text-gray-500 sm:text-xs">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-                <Bot size={13} className="text-gray-400" />
+            <div className="flex items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400">
+
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950">
+                <Bot
+                  size={14}
+                  className="text-violet-500"
+                />
               </span>
-              <span>Automatic replies are disabled</span>
+
+              <span>
+                Automatic replies are disabled
+              </span>
             </div>
           ) : selectedConversation.mode ===
-            "ai" && (
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex min-w-0 items-center gap-2 text-[11px] text-gray-600 sm:text-xs">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-                  <Bot
-                    size={13}
-                    className="text-gray-700"
+            "ai" ? (
+            <div className="flex items-center justify-between gap-3">
+
+              <div className="flex min-w-0 items-center gap-2.5">
+
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950">
+                  <Zap
+                    size={14}
+                    className="text-violet-600"
                   />
                 </span>
 
-                <span className="truncate">
-                  <strong className="font-semibold text-gray-900 dark:text-gray-100">
+                <span className="truncate text-xs text-slate-500 dark:text-slate-400">
+
+                  <strong className="font-bold text-violet-700 dark:text-violet-400">
                     AI is handling
                   </strong>{" "}
                   this conversation
                 </span>
               </div>
 
-              {settings?.ai?.humanHandoff !== false && (
-              <button
-                type="button"
-                onClick={handleTakeOver}
-                className="
-                  shrink-0
-                  rounded-lg
-                  border
-                  border-gray-200
-                  px-2.5
-                  py-1.5
-                  text-[10px]
-                  font-medium
-                  text-gray-700
-                  transition
-                  hover:bg-gray-50
-                  sm:px-3
-                  sm:text-xs
-                "
-              >
-                Take over
-              </button>
+              {settings?.ai
+                ?.humanHandoff !== false && (
+                <button
+                  type="button"
+                  onClick={handleTakeOver}
+                  className="shrink-0 rounded-lg bg-violet-600 px-3 py-1.5 text-[10px] font-bold text-white shadow-sm shadow-violet-200 transition hover:bg-violet-700 dark:shadow-none"
+                >
+                  Take over
+                </button>
               )}
             </div>
-          )}
+          ) : selectedConversation.mode ===
+            "human" ? (
+            <div className="flex items-center justify-between gap-3">
 
-          {selectedConversation.mode ===
-            "human" && (
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex min-w-0 items-center gap-2 text-[11px] text-gray-600 sm:text-xs">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+              <div className="flex min-w-0 items-center gap-2.5">
+
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950">
                   <User
-                    size={13}
-                    className="text-gray-700"
+                    size={14}
+                    className="text-blue-600"
                   />
                 </span>
 
-                <span className="truncate">
-                  <strong className="font-semibold text-gray-900 dark:text-gray-100">
+                <span className="truncate text-xs text-slate-500 dark:text-slate-400">
+
+                  <strong className="font-bold text-blue-700 dark:text-blue-400">
                     You are handling
                   </strong>{" "}
                   this conversation
@@ -1083,281 +1295,352 @@ const Inbox = () => {
               <button
                 type="button"
                 onClick={handleReturnToAI}
-                className="
-                  shrink-0
-                  rounded-lg
-                  border
-                  border-gray-200
-                  px-2.5
-                  py-1.5
-                  text-[10px]
-                  font-medium
-                  text-gray-700
-                  transition
-                  hover:bg-gray-50
-                  sm:px-3
-                  sm:text-xs
-                "
+                className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
               >
                 Return to AI
               </button>
             </div>
-          )}
+          ) : selectedConversation.mode ===
+            "handoff" ? (
+            <div className="flex items-center justify-between gap-3">
 
-          {selectedConversation.mode ===
-            "handoff" && (
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex min-w-0 items-center gap-2 text-[11px] text-gray-600 sm:text-xs">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-50">
+              <div className="flex min-w-0 items-center gap-2.5">
+
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-950">
                   <Clock3
-                    size={13}
+                    size={14}
                     className="text-amber-600"
                   />
                 </span>
 
-                <span className="truncate">
-                  <strong className="font-semibold text-gray-900 dark:text-gray-100">
+                <span className="truncate text-xs text-slate-500 dark:text-slate-400">
+
+                  <strong className="font-bold text-amber-700 dark:text-amber-400">
                     Human requested
                   </strong>{" "}
                   — this conversation needs attention.
                 </span>
               </div>
 
-              {settings?.ai?.humanHandoff !== false && (
-              <button
-                type="button"
-                onClick={handleTakeOver}
-                className="
-                  shrink-0
-                  rounded-lg
-                  bg-gray-900
-                  px-2.5
-                  py-1.5
-                  text-[10px]
-                  font-medium
-                  text-white
-                  transition
-                  hover:bg-gray-800
-                  sm:px-3
-                  sm:text-xs
-                "
-              >
-                Take over
+              {settings?.ai
+                ?.humanHandoff !== false && (
+                <button
+                  type="button"
+                  onClick={handleTakeOver}
+                  className="shrink-0 rounded-lg bg-amber-500 px-3 py-1.5 text-[10px] font-bold text-white shadow-sm transition hover:bg-amber-600"
+                >
+                  Take over
                 </button>
-                )}
-              </div>
-          )}
-          </div>
+              )}
+            </div>
+          ) : null}
+        </div>
 
         {/* =================================================
-            MESSAGE COMPOSER — FIXED
-        ================================================== */}
+            MESSAGE AREA
+        ================================================= */}
 
-        <div
-          className="
-            min-h-0
-            flex-1
-            overflow-y-auto
-            overscroll-contain
-            px-3
-            py-4
-            sm:px-5
-            sm:py-6
-          "
-        >
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-5 sm:px-5 sm:py-6">
+
           <div className="mx-auto w-full max-w-3xl space-y-5">
-            {/* Date */}
+
+            {/* DATE */}
+
             <div className="flex justify-center">
-              <span className="rounded-full bg-white dark:bg-gray-900 px-3 py-1 text-[10px] font-medium text-gray-400 shadow-sm">
+
+              <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[10px] font-semibold text-slate-400 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 Today
               </span>
             </div>
 
-            {/* Messages */}
-            {selectedConversation.messages.map(
-              (item) => {
-                const isCustomer =
-                  item.sender ===
-                  "customer";
+            {/* MESSAGES */}
 
-                const isAI =
-                  item.sender === "ai";
+            {selectedMessages.length === 0 ? (
+              <div className="py-12 text-center">
 
-                const isHuman =
-                  item.sender === "human";
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-slate-900">
+                  <MessageSquare
+                    size={20}
+                    className="text-slate-300"
+                  />
+                </div>
 
-                return (
-                  <div
-                    key={item.id}
-                    className={`flex ${
-                      isCustomer
-                        ? "justify-start"
-                        : "justify-end"
-                    }`}
-                  >
+                <p className="text-sm font-medium text-slate-500">
+                  No messages yet
+                </p>
+              </div>
+            ) : (
+              selectedMessages.map(
+                (item, index) => {
+                  const isCustomer =
+                    item.sender ===
+                    "customer";
+
+                  const isAI =
+                    item.sender === "ai";
+
+                  const isHuman =
+                    item.sender === "human";
+
+                  return (
                     <div
-                      className={`
-                        flex
-                        max-w-[92%]
-                        flex-col
-                        sm:max-w-[78%]
-                        ${
-                          isCustomer
-                            ? "items-start"
-                            : "items-end"
-                        }
-                      `}
+                      key={
+                        item.id ??
+                        `${selectedConversation.id}-${index}`
+                      }
+                      className={`flex ${
+                        isCustomer
+                          ? "justify-start"
+                          : "justify-end"
+                      }`}
                     >
-                      {!isCustomer && (
-                        <div className="mb-1 flex items-center gap-1 text-[10px] font-medium text-gray-400">
-                          {isAI ? (
-                            <>
-                              <Bot size={11} />
-                              AI
-                            </>
-                          ) : (
-                            <>
-                              <User size={11} />
-                              You
-                            </>
-                          )}
-                        </div>
-                      )}
 
                       <div
                         className={`
-                          rounded-2xl
-                          px-3.5
-                          py-2.5
-                          text-xs
-                          leading-6
-                          sm:px-4
-                          sm:py-3
-                          sm:text-sm
+                          flex
+                          max-w-[92%]
+                          flex-col
+                          sm:max-w-[78%]
+
                           ${
                             isCustomer
-                              ? "rounded-tl-md bg-white text-gray-800 shadow-sm"
-                              : "rounded-tr-md bg-gray-900 text-white"
+                              ? "items-start"
+                              : "items-end"
                           }
                         `}
                       >
-                        {item.content}
-                      </div>
 
-                      <div className="mt-1 flex items-center gap-1 text-[10px] text-gray-400">
-                        <span>
-                          {item.time}
-                        </span>
+                        {/* SENDER */}
 
-                        {isHuman && (
-                          <CheckCheck
-                            size={11}
-                          />
+                        {!isCustomer && (
+                          <div
+                            className={`
+                              mb-1.5
+                              flex
+                              items-center
+                              gap-1.5
+                              text-[10px]
+                              font-bold
+
+                              ${
+                                isAI
+                                  ? "text-violet-500"
+                                  : "text-blue-500"
+                              }
+                            `}
+                          >
+                            {isAI ? (
+                              <>
+                                <span className="flex h-4 w-4 items-center justify-center rounded bg-violet-50 dark:bg-violet-950">
+                                  <Bot size={9} />
+                                </span>
+
+                                AI Assistant
+                              </>
+                            ) : (
+                              <>
+                                <span className="flex h-4 w-4 items-center justify-center rounded bg-blue-50 dark:bg-blue-950">
+                                  <User size={9} />
+                                </span>
+
+                                You
+                              </>
+                            )}
+                          </div>
                         )}
+
+                        {/* MESSAGE */}
+
+                        <div
+                          className={`
+                            rounded-2xl
+                            px-4
+                            py-3
+                            text-sm
+                            leading-6
+                            shadow-sm
+
+                            ${
+                              isCustomer
+                                ? "rounded-tl-md border border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+                                : isAI
+                                ? "rounded-tr-md bg-violet-600 text-white shadow-violet-100 dark:shadow-none"
+                                : "rounded-tr-md bg-slate-900 text-white dark:bg-slate-700"
+                            }
+                          `}
+                        >
+                          {item.content || ""}
+                        </div>
+
+                        {/* TIME */}
+
+                        <div className="mt-1.5 flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
+
+                          <span>
+                            {item.time || ""}
+                          </span>
+
+                          {isHuman && (
+                            <CheckCheck
+                              size={12}
+                              className="text-blue-500"
+                            />
+                          )}
+
+                          {isAI && (
+                            <Sparkles
+                              size={10}
+                              className="text-violet-400"
+                            />
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              }
+                  );
+                }
+              )
             )}
 
             {/* =================================================
-                AI INSIGHT - respects Product recommendations setting
-            ================================================== */}
+                AI INSIGHT
+            ================================================= */}
 
-            {settings?.ai?.productRecommendations !== false && (
-            <div className="ml-auto w-full max-w-[94%] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 shadow-sm sm:max-w-[78%] sm:p-4">
-              <div className="mb-3 flex items-center gap-2">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
-                  <Sparkles
-                    size={14}
-                    className="text-gray-700"
-                  />
-                </span>
+            {settings?.ai
+              ?.productRecommendations !==
+              false && (
+              <div className="ml-auto w-full max-w-[94%] rounded-2xl border border-violet-100 bg-white p-4 shadow-sm dark:border-violet-900/50 dark:bg-slate-900 sm:max-w-[78%]">
 
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">
-                    AI insight
-                  </p>
+                <div className="mb-3 flex items-center gap-3">
 
-                  <p className="text-[10px] text-gray-400">
-                    Purchase intent detected
-                  </p>
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-sm">
+                    <Sparkles size={16} />
+                  </div>
+
+                  <div className="min-w-0">
+
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">
+                      AI insight
+                    </p>
+
+                    <p className="mt-0.5 text-[10px] text-slate-400">
+                      {selectedProducts.length >
+                      0
+                        ? `Products discussed: ${selectedProducts.length}`
+                        : "No products discussed yet"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/70">
+
+                  <div className="flex items-center gap-3">
+
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-slate-700">
+                      <ShoppingBag
+                        size={19}
+                        className="text-violet-500"
+                      />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+
+                      <p className="truncate text-xs font-bold text-slate-800 dark:text-slate-100">
+                        {selectedProducts[0] ||
+                          "No product recommendations yet"}
+                      </p>
+
+                      <p className="mt-0.5 text-[10px] text-slate-400">
+                        {selectedProducts.length >
+                        1
+                          ? `+${selectedProducts.length - 1} more discussed`
+                          : "Discussed in this conversation"}
+                      </p>
+                    </div>
+
+                    {settings?.ai
+                      ?.orderAssistance !==
+                      false &&
+                      selectedProducts.length >
+                        0 && (
+                        <button
+                          type="button"
+                          className="hidden shrink-0 rounded-lg bg-violet-600 px-3 py-2 text-[10px] font-bold text-white transition hover:bg-violet-700 sm:block"
+                        >
+                          Create Order
+                        </button>
+                      )}
+                  </div>
                 </div>
               </div>
-
-              <div className="flex items-center gap-3 rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gray-200 sm:h-12 sm:w-12">
-                  <ShoppingBag
-                    size={17}
-                    className="text-gray-500"
-                  />
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-semibold text-gray-900 dark:text-gray-100">
-                    Black Evening Dress
-                  </p>
-
-                  <p className="text-[10px] text-gray-500 sm:text-xs">
-                    {currency} 450 • Size M
-                  </p>
-                </div>
-
-                {settings?.ai?.orderAssistance !== false && (
-                <button
-                  type="button"
-                  className="
-                    hidden
-                    shrink-0
-                    rounded-lg
-                    bg-gray-900
-                    px-3
-                    py-1.5
-                    text-[10px]
-                    font-medium
-                    text-white
-                    sm:block
-                  "
-                >
-                  Create Order
-                </button>
-                )}
-              </div>
-            </div>
-          )}
+            )}
           </div>
         </div>
 
         {/* =================================================
-            MESSAGE COMPOSER — FIXED
-        ================================================== */}
+            COMPOSER
+        ================================================= */}
 
-        <div className="shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 sm:p-4">
+        <div className="shrink-0 border-t border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:p-4">
+
+          {/* RESOLVED */}
+
           {selectedConversation.conversationStatus ===
             "resolved" && (
-            <div className="mb-3 flex items-center justify-between gap-2 rounded-lg bg-gray-50 dark:bg-gray-800 px-3 py-2.5">
-              <div className="flex items-center gap-2 text-[11px] text-gray-500 sm:text-xs">
-                <CheckCheck size={14} />
+            <div className="mx-auto mb-3 flex max-w-3xl items-center justify-between gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2.5 dark:border-emerald-900 dark:bg-emerald-950/30">
+
+              <div className="flex items-center gap-2 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+
+                <CheckCircle2 size={14} />
 
                 Conversation resolved
               </div>
 
               <button
                 type="button"
-                onClick={handleReopenConversation}
-                className="shrink-0 text-[11px] font-medium text-gray-900 dark:text-gray-100 hover:underline sm:text-xs"
+                onClick={
+                  handleReopenConversation
+                }
+                className="text-[11px] font-bold text-emerald-700 hover:underline dark:text-emerald-400"
               >
                 Reopen
               </button>
             </div>
           )}
 
+          {/* COMPOSER */}
+
           <form
             onSubmit={handleSendMessage}
             className="mx-auto w-full max-w-3xl"
           >
-            <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
+
+            <div
+              className={`
+                overflow-hidden
+                rounded-2xl
+                border
+                border-slate-200
+                bg-white
+                shadow-sm
+                transition
+
+                focus-within:border-violet-300
+                focus-within:ring-4
+                focus-within:ring-violet-50
+
+                dark:border-slate-700
+                dark:bg-slate-900
+                dark:focus-within:border-violet-700
+                dark:focus-within:ring-violet-950
+
+                ${
+                  !allowCustomerChat
+                    ? "opacity-60"
+                    : ""
+                }
+              `}
+            >
+
               <textarea
                 value={message}
                 onChange={(event) =>
@@ -1371,66 +1654,68 @@ const Inbox = () => {
                     !event.shiftKey
                   ) {
                     event.preventDefault();
-
                     handleSendMessage(event);
                   }
                 }}
                 rows={2}
-                placeholder="Type a message..."
+                placeholder={
+                  !allowCustomerChat
+                    ? "Customer chat is disabled"
+                    : "Write a message..."
+                }
+                disabled={
+                  !allowCustomerChat
+                }
                 className="
                   w-full
                   resize-none
                   bg-transparent
-                  px-3
-                  pt-3
-                  text-xs
-                  text-gray-900
+                  px-4
+                  pt-3.5
+                  text-sm
+                  text-slate-900
                   outline-none
-                  placeholder:text-gray-400
-                  sm:px-4
-                  sm:text-sm
+                  placeholder:text-slate-400
+                  dark:text-white
+                  disabled:cursor-not-allowed
                 "
               />
 
-              <div className="flex items-center justify-between px-2.5 pb-2.5 pt-2 sm:px-3 sm:pb-3">
+              <div className="flex items-center justify-between px-2.5 pb-2.5 pt-2">
+
                 <div className="flex items-center gap-1">
+
                   <button
                     type="button"
-                    className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 dark:bg-gray-800 hover:text-gray-700"
+                    disabled={
+                      !allowCustomerChat
+                    }
+                    className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-violet-600 disabled:cursor-not-allowed dark:hover:bg-slate-800"
                   >
                     <Paperclip size={16} />
                   </button>
 
                   <button
                     type="button"
-                    className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 dark:bg-gray-800 hover:text-gray-700"
+                    disabled={
+                      !allowCustomerChat
+                    }
+                    className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-violet-600 disabled:cursor-not-allowed dark:hover:bg-slate-800"
                   >
                     <Smile size={16} />
                   </button>
                 </div>
 
                 <div className="flex items-center gap-2">
+
                   {selectedConversation.conversationStatus !==
                     "resolved" && (
                     <button
                       type="button"
-                      onClick={handleMarkResolved}
-                      className="
-                        hidden
-                        rounded-lg
-                        border
-                        border-gray-200
-                        px-3
-                        py-2
-                        text-[10px]
-                        font-medium
-                        text-gray-600
-                        transition
-                        hover:bg-gray-50
-                        hover:text-gray-900
-                        sm:block
-                        sm:text-xs
-                      "
+                      onClick={
+                        handleMarkResolved
+                      }
+                      className="hidden rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-bold text-slate-500 transition hover:bg-slate-50 hover:text-slate-800 dark:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-white sm:block sm:text-xs"
                     >
                       Resolve
                     </button>
@@ -1439,35 +1724,72 @@ const Inbox = () => {
                   <button
                     type="submit"
                     disabled={
-                      !message.trim()
+                      !message.trim() ||
+                      !allowCustomerChat ||
+                      sendingStates[
+                        selectedId
+                      ] === "sending"
                     }
-                    className="
+                    className={`
                       flex
                       items-center
                       gap-2
                       rounded-lg
-                      bg-gray-900
-                      px-3
+                      px-3.5
                       py-2
                       text-[10px]
-                      font-medium
+                      font-bold
                       text-white
+                      shadow-sm
                       transition
-                      hover:bg-gray-800
                       disabled:cursor-not-allowed
                       disabled:opacity-40
                       sm:text-xs
-                    "
-                  >
-                    <span>Send</span>
 
-                    <Send size={13} />
+                      ${
+                        sendingStates[
+                          selectedId
+                        ] === "sending"
+                          ? "bg-amber-500"
+                          : sendingStates[
+                              selectedId
+                            ] === "failed"
+                          ? "bg-red-500 hover:bg-red-600"
+                          : "bg-violet-600 hover:bg-violet-700"
+                      }
+                    `}
+                  >
+
+                    {sendingStates[
+                      selectedId
+                    ] === "sending"
+                      ? "Sending..."
+                      : sendingStates[
+                          selectedId
+                        ] === "failed"
+                      ? "Failed - Retry"
+                      : "Send"}
+
+                    {sendingStates[
+                      selectedId
+                    ] === "sending" ? (
+                      <Loader2
+                        size={13}
+                        className="animate-spin"
+                      />
+                    ) : sendingStates[
+                        selectedId
+                      ] === "failed" ? (
+                      <RotateCcw size={13} />
+                    ) : (
+                      <Send size={13} />
+                    )}
                   </button>
                 </div>
               </div>
             </div>
 
-            <p className="mt-2 hidden text-center text-[10px] text-gray-400 sm:block">
+            <p className="mt-2 hidden text-center text-[10px] font-medium text-slate-400 sm:block">
               Press Enter to send • Shift + Enter for a new line
             </p>
           </form>
@@ -1476,47 +1798,22 @@ const Inbox = () => {
 
       {/* ===================================================
           RIGHT — CUSTOMER DETAILS
-
-          Hidden below xl
-      ==================================================== */}
+      =================================================== */}
 
       {showCustomerPanel && (
-        <aside
-          className="
-            hidden
-            h-full
-            min-h-0
-            w-[270px]
-            shrink-0
-            flex-col
-            border-l
-            border-gray-200
-            bg-white
+        <aside className="hidden h-full min-h-0 w-[285px] shrink-0 flex-col border-l border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 xl:flex 2xl:w-[320px]">
 
-            xl:flex
-
-            2xl:w-[320px]
-          "
-        >
           {/* HEADER */}
-          <div
-            className="
-              flex
-              shrink-0
-              items-center
-              justify-between
-              border-b
-              border-gray-200
-              px-4
-              py-4
-            "
-          >
+
+          <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+
             <div className="min-w-0">
-              <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
+
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                 Customer details
               </h3>
 
-              <p className="mt-0.5 text-[10px] text-gray-400">
+              <p className="mt-0.5 text-[10px] text-slate-400">
                 Customer profile
               </p>
             </div>
@@ -1524,211 +1821,236 @@ const Inbox = () => {
             <button
               type="button"
               onClick={() =>
-                setShowCustomerPanel(
-                  false
-                )
+                setShowCustomerPanel(false)
               }
-              className="
-                rounded-lg
-                p-2
-                text-gray-400
-                transition
-                hover:bg-gray-100
-                hover:text-gray-700
-              "
+              aria-label="Close customer details"
+              className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
             >
               <X size={16} />
             </button>
           </div>
 
-          {/* DETAILS — ONLY THIS SCROLLS */}
-          <div
-            className="
-              min-h-0
-              flex-1
-              overflow-y-auto
-              overscroll-contain
-            "
-          >
+          {/* DETAILS */}
+
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+
             {/* PROFILE */}
-            <div className="border-b border-gray-100 px-5 py-5 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-900 text-lg font-semibold text-white">
-                {
-                  selectedConversation.initials
-                }
-              </div>
 
-              <h4 className="mt-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
-                {
-                  selectedConversation.name
-                }
-              </h4>
+            <div className="border-b border-slate-100 px-5 py-6 text-center dark:border-slate-800">
 
-              <div className="mt-1 flex items-center justify-center gap-1.5 text-xs text-gray-400">
+              <div className="relative mx-auto w-fit">
+
+                <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-xl font-bold text-white shadow-lg shadow-violet-100 dark:shadow-none">
+                  {selectedConversation.initials ||
+                    "?"}
+                </div>
+
                 <span
                   className={`
-                    h-2
-                    w-2
+                    absolute
+                    -bottom-1
+                    -right-1
+                    h-5
+                    w-5
                     rounded-full
+                    border-4
+                    border-white
+                    dark:border-slate-900
+
                     ${
                       selectedConversation.status ===
                       "online"
-                        ? "bg-green-500"
-                        : "bg-gray-300"
+                        ? "bg-emerald-500"
+                        : "bg-slate-300"
                     }
                   `}
                 />
-
-                {selectedConversation.status ===
-                "online"
-                  ? "Online"
-                  : "Offline"}
               </div>
 
-              <div className="mt-4 space-y-2 text-left">
-                <div className="flex min-w-0 items-center gap-2 text-xs text-gray-500">
+              <h4 className="mt-4 text-sm font-bold text-slate-900 dark:text-white">
+                {selectedConversation.name ||
+                  "Unknown customer"}
+              </h4>
+
+              <p className="mt-1 text-xs text-slate-400">
+                {selectedConversation.status ===
+                "online"
+                  ? "Active now"
+                  : "Offline"}
+              </p>
+
+              {/* CONTACT */}
+
+              <div className="mt-5 space-y-2 text-left">
+
+                <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800">
+
                   <Phone
                     size={14}
-                    className="shrink-0"
+                    className="shrink-0 text-violet-500"
                   />
 
-                  <span className="truncate">
-                    {
-                      selectedConversation.phone
-                    }
+                  <span className="truncate text-xs font-medium text-slate-600 dark:text-slate-300">
+                    {selectedConversation.phone ||
+                      "No phone number"}
                   </span>
                 </div>
 
-                <div className="flex min-w-0 items-center gap-2 text-xs text-gray-500">
+                <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800">
+
                   <Mail
                     size={14}
-                    className="shrink-0"
+                    className="shrink-0 text-blue-500"
                   />
 
-                  <span className="truncate">
-                    {
-                      selectedConversation.email
-                    }
+                  <span className="truncate text-xs font-medium text-slate-600 dark:text-slate-300">
+                    {selectedConversation.email ||
+                      "No email"}
                   </span>
                 </div>
 
-                <div className="flex min-w-0 items-center gap-2 text-xs text-gray-500">
+                <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800">
+
                   <MapPin
                     size={14}
-                    className="shrink-0"
+                    className="shrink-0 text-emerald-500"
                   />
 
-                  <span className="truncate">
-                    {
-                      selectedConversation.location
-                    }
+                  <span className="truncate text-xs font-medium text-slate-600 dark:text-slate-300">
+                    {selectedConversation.location ||
+                      "No location"}
                   </span>
                 </div>
               </div>
             </div>
 
             {/* STATS */}
-            <div className="grid grid-cols-2 border-b border-gray-100">
-              <div className="border-r border-gray-100 px-4 py-4 text-center">
-                <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  {
-                    selectedConversation
-                      .orders.length
-                  }
+
+            <div className="grid grid-cols-2 border-b border-slate-100 dark:border-slate-800">
+
+              <div className="border-r border-slate-100 px-4 py-4 text-center dark:border-slate-800">
+
+                <div className="mx-auto mb-1 flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950">
+                  <ShoppingBag
+                    size={13}
+                    className="text-blue-500"
+                  />
+                </div>
+
+                <p className="text-lg font-bold text-slate-900 dark:text-white">
+                  {selectedOrders.length}
                 </p>
 
-                <p className="text-[11px] text-gray-400">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
                   Orders
                 </p>
               </div>
 
               <div className="px-4 py-4 text-center">
-                <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  {
-                    selectedConversation
-                      .productsDiscussed
-                      .length
-                  }
+
+                <div className="mx-auto mb-1 flex h-7 w-7 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950">
+                  <Sparkles
+                    size={13}
+                    className="text-violet-500"
+                  />
+                </div>
+
+                <p className="text-lg font-bold text-slate-900 dark:text-white">
+                  {selectedProducts.length}
                 </p>
 
-                <p className="text-[11px] text-gray-400">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
                   Products
                 </p>
               </div>
             </div>
 
             {/* ORDERS */}
-            <div className="border-b border-gray-100 px-5 py-5">
+
+            <div className="border-b border-slate-100 px-5 py-5 dark:border-slate-800">
+
               <div className="mb-3 flex items-center justify-between">
-                <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Orders
                 </h4>
 
                 <ChevronDown
                   size={14}
-                  className="text-gray-400"
+                  className="text-slate-400"
                 />
               </div>
 
-              {selectedConversation.orders
-                .length === 0 ? (
-                <div className="rounded-lg bg-gray-50 dark:bg-gray-800 px-3 py-4 text-center">
-                  <ShoppingBag
-                    size={18}
-                    className="mx-auto mb-2 text-gray-300"
-                  />
+              {selectedOrders.length ===
+              0 ? (
+                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-5 text-center dark:border-slate-700 dark:bg-slate-800/50">
 
-                  <p className="text-xs text-gray-400">
+                  <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-white dark:bg-slate-700">
+                    <ShoppingBag
+                      size={16}
+                      className="text-slate-300"
+                    />
+                  </div>
+
+                  <p className="text-xs font-medium text-slate-400">
                     No orders yet
                   </p>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {selectedConversation.orders.map(
-                    (order) => (
+
+                  {selectedOrders.map(
+                    (order, index) => (
                       <div
-                        key={order.id}
-                        className="rounded-lg border border-gray-100 p-3"
+                        key={
+                          order.id ??
+                          `order-${index}`
+                        }
+                        className="rounded-xl border border-slate-200 bg-white p-3 transition hover:border-violet-200 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800"
                       >
+
                         <div className="flex items-start justify-between gap-2">
+
                           <div className="min-w-0">
-                            <p className="truncate text-xs font-semibold text-gray-900 dark:text-gray-100">
-                              {
-                                order.product
-                              }
+
+                            <p className="truncate text-xs font-bold text-slate-800 dark:text-slate-100">
+                              {order.product ||
+                                "Order"}
                             </p>
 
-                            <p className="mt-1 text-[10px] text-gray-400">
-                              {order.id}
+                            <p className="mt-1 text-[10px] font-medium text-slate-400">
+                              {order.id ||
+                                "Order ID unavailable"}
                             </p>
                           </div>
 
-                          <span className="shrink-0 text-xs font-semibold text-gray-900 dark:text-gray-100">
-                            {
-                              order.amount
-                            }
+                          <span className="shrink-0 text-xs font-bold text-slate-900 dark:text-white">
+                            {order.amount ||
+                              ""}
                           </span>
                         </div>
 
-                        <div className="mt-2">
+                        <div className="mt-3">
+
                           <span
                             className={`
-                              rounded
-                              px-1.5
+                              inline-flex
+                              rounded-md
+                              px-2
                               py-1
-                              text-[10px]
-                              font-medium
+                              text-[9px]
+                              font-bold
+
                               ${
                                 order.status ===
                                 "Completed"
-                                  ? "bg-green-50 text-green-700"
-                                  : "bg-amber-50 text-amber-700"
+                                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                                  : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
                               }
                             `}
                           >
-                            {
-                              order.status
-                            }
+                            {order.status ||
+                              "Pending"}
                           </span>
                         </div>
                       </div>
@@ -1739,56 +2061,81 @@ const Inbox = () => {
             </div>
 
             {/* PRODUCTS */}
-            <div className="border-b border-gray-100 px-5 py-5">
-              <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
+
+            <div className="border-b border-slate-100 px-5 py-5 dark:border-slate-800">
+
+              <h4 className="mb-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Products discussed
               </h4>
 
-              <div className="space-y-2">
-                {selectedConversation.productsDiscussed.map(
-                  (product) => (
-                    <div
-                      key={product}
-                      className="flex items-center gap-3 rounded-lg bg-gray-50 dark:bg-gray-800 p-3"
-                    >
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-200">
-                        <ShoppingBag
-                          size={15}
-                          className="text-gray-500"
-                        />
-                      </div>
+              {selectedProducts.length ===
+              0 ? (
+                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-5 text-center dark:border-slate-700 dark:bg-slate-800/50">
 
-                      <p className="truncate text-xs font-medium text-gray-700">
-                        {product}
-                      </p>
-                    </div>
-                  )
-                )}
-              </div>
+                  <ShoppingBag
+                    size={17}
+                    className="mx-auto mb-2 text-slate-300"
+                  />
+
+                  <p className="text-xs font-medium text-slate-400">
+                    No products discussed
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+
+                  {selectedProducts.map(
+                    (product, index) => (
+                      <div
+                        key={`${product}-${index}`}
+                        className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800"
+                      >
+
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm dark:bg-slate-700">
+                          <ShoppingBag
+                            size={14}
+                            className="text-violet-500"
+                          />
+                        </div>
+
+                        <p className="truncate text-xs font-semibold text-slate-700 dark:text-slate-200">
+                          {product}
+                        </p>
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
             </div>
 
             {/* NOTES */}
+
             <div className="px-5 py-5">
+
               <div className="mb-3 flex items-center justify-between">
-                <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Notes
                 </h4>
 
                 <button
                   type="button"
-                  className="text-[10px] font-medium text-gray-600 transition hover:text-gray-900 dark:text-gray-100"
+                  className="rounded-md px-2 py-1 text-[10px] font-bold text-violet-600 transition hover:bg-violet-50 dark:hover:bg-violet-950"
                 >
                   + Add
                 </button>
               </div>
 
-              <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-700 px-3 py-4 text-center">
-                <UserRound
-                  size={18}
-                  className="mx-auto mb-2 text-gray-300"
-                />
+              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-5 text-center dark:border-slate-700 dark:bg-slate-800/50">
 
-                <p className="text-xs leading-5 text-gray-400">
+                <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-white dark:bg-slate-700">
+                  <UserRound
+                    size={16}
+                    className="text-slate-300"
+                  />
+                </div>
+
+                <p className="text-xs leading-5 text-slate-400">
                   Add notes about this customer.
                 </p>
               </div>

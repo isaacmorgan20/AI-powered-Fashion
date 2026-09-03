@@ -17,6 +17,7 @@ import Settings from "./Pages/Settings";
 import Help from "./Components/Help";
 import Login from "./Pages/Login";
 import Signup from "./Pages/SignUp";
+import PublicStorefront from "./Pages/PublicStorefront";
 import useAuthStore from "./Store/AuthStore";
 import { useAppearance } from "./hooks/useAppearance";
 
@@ -47,6 +48,9 @@ const App = () => {
             <Route path="/help" element={<Help />} />
           </Route>
         </Route>
+
+        {/* Public storefront route - must be after protected routes */}
+        <Route path="/store/:sellerId" element={<PublicStorefront />} />
 
         {/* Redirect any unknown routes to login */}
         <Route path="*" element={<Navigate to="/login" replace />} />
