@@ -16,7 +16,7 @@ import Analytics from "./Pages/Analytics";
 import Settings from "./Pages/Settings";
 import Help from "./Components/Help";
 import Login from "./Pages/Login";
-import Signup from "./Pages/SignUp";
+import Signup from "./Pages/Signup";
 import PublicStorefront from "./Pages/PublicStorefront";
 import useAuthStore from "./Store/AuthStore";
 import { useAppearance } from "./hooks/useAppearance";
