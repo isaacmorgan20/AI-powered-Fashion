@@ -253,6 +253,16 @@ export const api = {
         method: 'POST',
       }),
     },
+    // Telegram-specific endpoints
+    telegram: {
+      setup: (credentials) => fetchWithAuth('/channels/telegram/setup', {
+        method: 'POST',
+        body: JSON.stringify(credentials),
+      }),
+      disconnect: () => fetchWithAuth('/channels/telegram/disconnect', {
+        method: 'POST',
+      }),
+    },
   },
 
   // Team & Access

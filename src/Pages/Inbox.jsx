@@ -61,6 +61,12 @@ const channelStyles = {
       "bg-violet-50 text-violet-700 ring-1 ring-violet-200 dark:bg-violet-950/40 dark:text-violet-400 dark:ring-violet-900",
     dot: "bg-violet-500",
   },
+
+  telegram: {
+    badge:
+      "bg-blue-50 text-blue-700 ring-1 ring-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:ring-blue-900",
+    dot: "bg-blue-500",
+  },
 };
 
 /* =========================================================

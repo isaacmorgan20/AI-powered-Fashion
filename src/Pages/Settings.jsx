@@ -39,6 +39,7 @@ import {
   Share2,
   Loader2,
   X,
+  Zap,
 } from "lucide-react";
 import { useSettings } from "../hooks/useSettings";
 import useAuthStore from "../Store/AuthStore";
@@ -216,17 +217,30 @@ const Settings = () => {
   
   // WhatsApp setup modal state
   const [showWhatsAppSetup, setShowWhatsAppSetup] = useState(false);
+  const [whatsappProvider, setWhatsappProvider] = useState("meta"); // "meta" or "wagate"
   const [whatsappCredentials, setWhatsappCredentials] = useState({
+    // Meta credentials
     access_token: "",
     phone_number_id: "",
     waba_id: "",
     app_id: "",
     app_secret: "",
     verify_token: "",
+    // WAGate credentials
+    api_key: "",
   });
   const [whatsappSetupLoading, setWhatsappSetupLoading] = useState(false);
   const [whatsappSetupError, setWhatsappSetupError] = useState("");
   const [whatsappWebhookUrl, setWhatsappWebhookUrl] = useState("");
+  
+  // Telegram setup modal state
+  const [showTelegramSetup, setShowTelegramSetup] = useState(false);
+  const [telegramCredentials, setTelegramCredentials] = useState({
+    bot_token: "",
+  });
+  const [telegramSetupLoading, setTelegramSetupLoading] = useState(false);
+  const [telegramSetupError, setTelegramSetupError] = useState("");
+  const [telegramWebhookUrl, setTelegramWebhookUrl] = useState("");
 
   /* =======================================================
      STOREFRONT
@@ -521,16 +535,22 @@ const Settings = () => {
     }
   };
 
-  /* =======================================================
+/* =======================================================
      CHANNEL UPDATE (connect/disconnect)
-  ======================================================= */
+======================================================= */
 
-  const updateChannel = async (channelType, enabled) => {
+const updateChannel = async (channelType, enabled) => {
     setChannelError("");
     
     // WhatsApp requires special setup flow
     if (channelType === "whatsapp" && enabled) {
       setShowWhatsAppSetup(true);
+      return;
+    }
+    
+    // Telegram requires special setup flow
+    if (channelType === "telegram" && enabled) {
+      setShowTelegramSetup(true);
       return;
     }
     
@@ -553,6 +573,8 @@ const Settings = () => {
         // Disconnect channel
         if (channelType === "whatsapp") {
           await api.channels.whatsapp.disconnect();
+        } else if (channelType === "telegram") {
+          await api.channels.telegram.disconnect();
         } else {
           await api.channels.disconnect(channelType);
         }
@@ -577,14 +599,39 @@ const Settings = () => {
     setWhatsappSetupError("");
     setWhatsappSetupLoading(true);
     try {
-      // Validate required fields
-      const required = ["access_token", "phone_number_id", "waba_id", "app_secret", "verify_token"];
-      const missing = required.filter((f) => !whatsappCredentials[f]?.trim());
+      // Validate required fields based on provider
+      let missing = [];
+      if (whatsappProvider === "meta") {
+        const required = ["access_token", "phone_number_id", "waba_id", "app_secret", "verify_token"];
+        missing = required.filter((f) => !whatsappCredentials[f]?.trim());
+      } else if (whatsappProvider === "wagate") {
+        if (!whatsappCredentials.api_key?.trim()) {
+          missing = ["api_key"];
+        } else if (!whatsappCredentials.api_key.startsWith("ag_live_sk_") && !whatsappCredentials.api_key.startsWith("ag_test_sk_")) {
+          throw new Error("Invalid WAGate API key format. Expected format: ag_live_sk_... or ag_test_sk_...");
+        }
+      }
+      
       if (missing.length > 0) {
         throw new Error(`Missing required fields: ${missing.join(", ")}`);
       }
       
-      const result = await api.channels.whatsapp.setup(whatsappCredentials);
+      // Prepare credentials for the selected provider
+      const credentials = whatsappProvider === "meta" 
+        ? {
+            access_token: whatsappCredentials.access_token,
+            phone_number_id: whatsappCredentials.phone_number_id,
+            waba_id: whatsappCredentials.waba_id,
+            app_id: whatsappCredentials.app_id,
+            app_secret: whatsappCredentials.app_secret,
+            verify_token: whatsappCredentials.verify_token,
+          }
+        : { api_key: whatsappCredentials.api_key };
+      
+      const result = await api.channels.whatsapp.setup({
+        provider: whatsappProvider,
+        credentials,
+      });
       setChannels((prev) => ({
         ...prev,
         whatsapp: {
@@ -603,11 +650,53 @@ const Settings = () => {
         app_id: "",
         app_secret: "",
         verify_token: "",
+        api_key: "",
       });
+      setWhatsappProvider("meta"); // Reset to default for next time
     } catch (err) {
       setWhatsappSetupError(err.message || "Failed to setup WhatsApp");
     } finally {
       setWhatsappSetupLoading(false);
+    }
+  };
+
+  const handleTelegramSetup = async () => {
+    setTelegramSetupError("");
+    setTelegramSetupLoading(true);
+    try {
+      if (!telegramCredentials.bot_token?.trim()) {
+        throw new Error("Telegram Bot token is required");
+      }
+      
+      // Validate token format (basic check - should contain a colon)
+      if (!telegramCredentials.bot_token.includes(":")) {
+        throw new Error("Invalid Telegram Bot token format");
+      }
+      
+      const result = await api.channels.telegram.setup({
+        credentials: {
+          bot_token: telegramCredentials.bot_token,
+        },
+      });
+      
+      setChannels((prev) => ({
+        ...prev,
+        telegram: {
+          enabled: result.channel.enabled,
+          status: result.channel.status,
+          displayName: result.channel.displayName || "",
+          lastConnectedAt: result.channel.lastConnectedAt,
+        },
+      }));
+      setTelegramWebhookUrl(result.webhook_url || "");
+      setShowTelegramSetup(false);
+      setTelegramCredentials({
+        bot_token: "",
+      });
+    } catch (err) {
+      setTelegramSetupError(err.message || "Failed to setup Telegram");
+    } finally {
+      setTelegramSetupLoading(false);
     }
   };
 
@@ -2318,7 +2407,9 @@ const Settings = () => {
               </div>
 
               <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
-                Enter your Meta Business API credentials
+                {whatsappProvider === "wagate" 
+                  ? "Enter your WAGate API key" 
+                  : "Enter your Meta Business API credentials"}
               </p>
             </div>
           </div>
@@ -2355,6 +2446,54 @@ const Settings = () => {
           </div>
         )}
 
+        {/* PROVIDER SELECTION */}
+        <div className="mb-5 rounded-2xl border border-violet-200 bg-gradient-to-r from-violet-50 to-fuchsia-50 p-4 dark:border-violet-900/40 dark:from-violet-950/20 dark:to-fuchsia-950/20">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400">
+              <Globe size={15} />
+            </div>
+
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-violet-900 dark:text-violet-300">
+                WhatsApp Provider
+              </p>
+              <p className="mt-1 text-[10px] leading-5 text-violet-700 dark:text-violet-400">
+                Choose how you want to connect WhatsApp to ThreadOS.
+              </p>
+              <div className="mt-3 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setWhatsappProvider("meta")}
+                  className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition ${
+                    whatsappProvider === "meta"
+                      ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-lg shadow-violet-500/20"
+                      : "bg-white/80 text-gray-700 hover:bg-violet-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-violet-950/40"
+                  }`}
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                    <MessageCircle size={12} />
+                  </span>
+                  <span>Meta Business API</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWhatsappProvider("wagate")}
+                  className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition ${
+                    whatsappProvider === "wagate"
+                      ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/20"
+                      : "bg-white/80 text-gray-700 hover:bg-violet-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-violet-950/40"
+                  }`}
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
+                    <Zap size={12} />
+                  </span>
+                  <span>WAGate.app</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* SECURITY NOTICE */}
         <div className="mb-5 rounded-2xl border border-violet-200 bg-gradient-to-r from-violet-50 to-fuchsia-50 p-4 dark:border-violet-900/40 dark:from-violet-950/20 dark:to-fuchsia-950/20">
           <div className="flex items-start gap-3">
@@ -2368,139 +2507,180 @@ const Settings = () => {
               </p>
 
               <p className="mt-1 text-[10px] leading-5 text-violet-700 dark:text-violet-400">
-                Your Meta credentials are used to establish the WhatsApp
-                Business connection with ThreadOS.
+                {whatsappProvider === "wagate"
+                  ? "Your WAGate API key is stored securely and is never displayed after saving."
+                  : "Your Meta credentials are used to establish the WhatsApp Business connection with ThreadOS."}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="space-y-5">
+        {whatsappProvider === "meta" ? (
+          /* ===================== META CREDENTIALS FORM ===================== */
+          <div className="space-y-5">
+            {/* ACCESS TOKEN */}
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                Access Token *
+              </label>
+              <input
+                type="password"
+                value={whatsappCredentials.access_token}
+                onChange={(e) =>
+                  setWhatsappCredentials({
+                    ...whatsappCredentials,
+                    access_token: e.target.value,
+                  })
+                }
+                placeholder="Meta long-lived access token"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-400 focus:bg-white focus:ring-4 focus:ring-green-500/10 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:hover:border-green-800 dark:focus:border-green-500 dark:focus:bg-gray-800"
+              />
+            </div>
 
-          {/* ACCESS TOKEN */}
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">
-              Access Token *
-            </label>
+            {/* PHONE NUMBER ID */}
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                Phone Number ID *
+              </label>
+              <input
+                type="text"
+                value={whatsappCredentials.phone_number_id}
+                onChange={(e) =>
+                  setWhatsappCredentials({
+                    ...whatsappCredentials,
+                    phone_number_id: e.target.value,
+                  })
+                }
+                placeholder="WhatsApp Business phone number ID"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-400 focus:bg-white focus:ring-4 focus:ring-green-500/10 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:hover:border-green-800 dark:focus:border-green-500 dark:focus:bg-gray-800"
+              />
+            </div>
 
-            <input
-              type="password"
-              value={whatsappCredentials.access_token}
-              onChange={(e) =>
-                setWhatsappCredentials({
-                  ...whatsappCredentials,
-                  access_token: e.target.value,
-                })
-              }
-              placeholder="Meta long-lived access token"
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-400 focus:bg-white focus:ring-4 focus:ring-green-500/10 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:hover:border-green-800 dark:focus:border-green-500 dark:focus:bg-gray-800"
-            />
+            {/* WABA ID */}
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                WhatsApp Business Account ID (WABA) *
+              </label>
+              <input
+                type="text"
+                value={whatsappCredentials.waba_id}
+                onChange={(e) =>
+                  setWhatsappCredentials({
+                    ...whatsappCredentials,
+                    waba_id: e.target.value,
+                  })
+                }
+                placeholder="WhatsApp Business Account ID"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-400 focus:bg-white focus:ring-4 focus:ring-green-500/10 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:hover:border-green-800 dark:focus:border-green-500 dark:focus:bg-gray-800"
+              />
+            </div>
+
+            {/* APP ID */}
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                Meta App ID
+              </label>
+              <input
+                type="text"
+                value={whatsappCredentials.app_id}
+                onChange={(e) =>
+                  setWhatsappCredentials({
+                    ...whatsappCredentials,
+                    app_id: e.target.value,
+                  })
+                }
+                placeholder="Meta app ID (optional)"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-blue-200 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:hover:border-blue-800 dark:focus:border-blue-500 dark:focus:bg-gray-800"
+              />
+            </div>
+
+            {/* APP SECRET */}
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                Meta App Secret *
+              </label>
+              <input
+                type="password"
+                value={whatsappCredentials.app_secret}
+                onChange={(e) =>
+                  setWhatsappCredentials({
+                    ...whatsappCredentials,
+                    app_secret: e.target.value,
+                  })
+                }
+                placeholder="Meta app secret"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-violet-200 focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-500/10 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:hover:border-violet-800 dark:focus:border-violet-500 dark:focus:bg-gray-800"
+              />
+            </div>
+
+            {/* VERIFY TOKEN */}
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                Webhook Verify Token *
+              </label>
+              <input
+                type="text"
+                value={whatsappCredentials.verify_token}
+                onChange={(e) =>
+                  setWhatsappCredentials({
+                    ...whatsappCredentials,
+                    verify_token: e.target.value,
+                  })
+                }
+                placeholder="Your custom verify token"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-orange-200 focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-500/10 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:hover:border-orange-800 dark:focus:border-orange-500 dark:focus:bg-gray-800"
+              />
+              <p className="mt-1.5 text-[10px] leading-4 text-gray-400">
+                Create a secure token in Meta Business Suite webhook settings.
+              </p>
+            </div>
           </div>
+        ) : (
+          /* ===================== WAGATE CREDENTIALS FORM ===================== */
+          <div className="space-y-5">
+            {/* WAGATE API KEY */}
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                WAGate API Key *
+              </label>
+              <input
+                type="password"
+                value={whatsappCredentials.api_key}
+                onChange={(e) =>
+                  setWhatsappCredentials({
+                    ...whatsappCredentials,
+                    api_key: e.target.value,
+                  })
+                }
+                placeholder="ag_live_sk_xxxxxxxxxxxx or ag_test_sk_xxxxxxxxxxxx"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-purple-200 focus:border-purple-400 focus:bg-white focus:ring-4 focus:ring-purple-500/10 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:hover:border-purple-800 dark:focus:border-purple-500 dark:focus:bg-gray-800"
+              />
+              <p className="mt-1.5 text-[10px] leading-4 text-gray-400">
+                Get your API key from WAGate Developer Studio → API Keys. Format: ag_live_sk_... or ag_test_sk_...
+              </p>
+            </div>
 
-          {/* PHONE NUMBER ID */}
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">
-              Phone Number ID *
-            </label>
-
-            <input
-              type="text"
-              value={whatsappCredentials.phone_number_id}
-              onChange={(e) =>
-                setWhatsappCredentials({
-                  ...whatsappCredentials,
-                  phone_number_id: e.target.value,
-                })
-              }
-              placeholder="WhatsApp Business phone number ID"
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-400 focus:bg-white focus:ring-4 focus:ring-green-500/10 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:hover:border-green-800 dark:focus:border-green-500 dark:focus:bg-gray-800"
-            />
+            {/* WAGATE INFO BOX */}
+            <div className="rounded-2xl border border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50 p-4 dark:border-purple-900/40 dark:from-purple-950/20 dark:to-pink-950/20">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400">
+                  <Info size={15} />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-purple-900 dark:text-purple-300">
+                    WAGate Setup Notes
+                  </p>
+                  <ul className="mt-2 space-y-1 text-[10px] leading-5 text-purple-700 dark:text-purple-400">
+                    <li>• WAGate handles the Meta WhatsApp Cloud API connection for you</li>
+                    <li>• Connect your WhatsApp number once in the WAGate dashboard</li>
+                    <li>• Webhook forwarding must be configured in your WAGate dashboard</li>
+                    <li>• API access requires WAGate Growth or Scale plan</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
-
-          {/* WABA ID */}
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">
-              WhatsApp Business Account ID (WABA) *
-            </label>
-
-            <input
-              type="text"
-              value={whatsappCredentials.waba_id}
-              onChange={(e) =>
-                setWhatsappCredentials({
-                  ...whatsappCredentials,
-                  waba_id: e.target.value,
-                })
-              }
-              placeholder="WhatsApp Business Account ID"
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-400 focus:bg-white focus:ring-4 focus:ring-green-500/10 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:hover:border-green-800 dark:focus:border-green-500 dark:focus:bg-gray-800"
-            />
-          </div>
-
-          {/* APP ID */}
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">
-              Meta App ID
-            </label>
-
-            <input
-              type="text"
-              value={whatsappCredentials.app_id}
-              onChange={(e) =>
-                setWhatsappCredentials({
-                  ...whatsappCredentials,
-                  app_id: e.target.value,
-                })
-              }
-              placeholder="Meta app ID (optional)"
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-blue-200 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:hover:border-blue-800 dark:focus:border-blue-500 dark:focus:bg-gray-800"
-            />
-          </div>
-
-          {/* APP SECRET */}
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">
-              Meta App Secret *
-            </label>
-
-            <input
-              type="password"
-              value={whatsappCredentials.app_secret}
-              onChange={(e) =>
-                setWhatsappCredentials({
-                  ...whatsappCredentials,
-                  app_secret: e.target.value,
-                })
-              }
-              placeholder="Meta app secret"
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-violet-200 focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-500/10 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:hover:border-violet-800 dark:focus:border-violet-500 dark:focus:bg-gray-800"
-            />
-          </div>
-
-          {/* VERIFY TOKEN */}
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">
-              Webhook Verify Token *
-            </label>
-
-            <input
-              type="text"
-              value={whatsappCredentials.verify_token}
-              onChange={(e) =>
-                setWhatsappCredentials({
-                  ...whatsappCredentials,
-                  verify_token: e.target.value,
-                })
-              }
-              placeholder="Your custom verify token"
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-orange-200 focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-500/10 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:hover:border-orange-800 dark:focus:border-orange-500 dark:focus:bg-gray-800"
-            />
-
-            <p className="mt-1.5 text-[10px] leading-4 text-gray-400">
-              Create a secure token in Meta Business Suite webhook settings.
-            </p>
-          </div>
-        </div>
+        )}
 
         {/* WEBHOOK URL */}
         {whatsappWebhookUrl && (
@@ -2516,7 +2696,9 @@ const Settings = () => {
                 </p>
 
                 <p className="mt-0.5 text-[10px] text-emerald-700 dark:text-emerald-400">
-                  Configure this URL in Meta Business Suite.
+                  {whatsappProvider === "wagate"
+                    ? "Configure this URL in your WAGate dashboard."
+                    : "Configure this URL in Meta Business Suite."}
                 </p>
 
                 <div className="mt-2 overflow-x-auto rounded-xl border border-emerald-200 bg-white/80 px-3 py-2 dark:border-emerald-900/40 dark:bg-gray-900/50">
@@ -2565,6 +2747,201 @@ const Settings = () => {
     </div>
   </div>
 )}
+
+            {/* =================================================
+                TELEGRAM SETUP MODAL
+            ================================================== */}
+
+            {showTelegramSetup && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+                <div className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-sky-200/70 bg-white shadow-2xl shadow-sky-900/10 dark:border-sky-900/40 dark:bg-gray-900">
+
+                  {/* MODAL HEADER */}
+                  <div className="relative shrink-0 overflow-hidden border-b border-sky-100 bg-gradient-to-r from-sky-50 via-cyan-50 to-teal-50 px-5 py-5 dark:border-sky-900/30 dark:from-sky-950/30 dark:via-cyan-950/20 dark:to-teal-950/20">
+                    <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-sky-400/10 blur-2xl" />
+
+                    <div className="relative flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-600 text-white shadow-lg shadow-sky-500/20">
+                          <Bot size={21} />
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h2 className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                              Connect Telegram Bot
+                            </h2>
+
+                            <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">
+                              Telegram
+                            </span>
+                          </div>
+
+                          <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                            Enter your BotFather token to connect your Telegram bot
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowTelegramSetup(false)}
+                        className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-400 transition hover:bg-white hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                        aria-label="Close Telegram setup"
+                      >
+                        <X size={17} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* MODAL FORM */}
+                  <div className="flex-1 overflow-y-auto px-5 py-5">
+
+                    {telegramSetupError && (
+                      <div className="mb-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-gradient-to-r from-red-50 to-rose-50 p-4 dark:border-red-900/40 dark:from-red-950/30 dark:to-rose-950/20">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400">
+                          <AlertTriangle size={15} />
+                        </div>
+
+                        <div>
+                          <p className="text-xs font-semibold text-red-800 dark:text-red-300">
+                            Connection failed
+                          </p>
+
+                          <p className="mt-1 text-[11px] leading-5 text-red-600 dark:text-red-400">
+                            {telegramSetupError}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* SECURITY NOTICE */}
+                    <div className="mb-5 rounded-2xl border border-sky-200 bg-gradient-to-r from-sky-50 to-cyan-50 p-4 dark:border-sky-900/40 dark:from-sky-950/20 dark:to-cyan-950/20">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-400">
+                          <Shield size={15} />
+                        </div>
+
+                        <div>
+                          <p className="text-xs font-semibold text-sky-900 dark:text-sky-300">
+                            Secure connection
+                          </p>
+
+                          <p className="mt-1 text-[10px] leading-5 text-sky-700 dark:text-sky-400">
+                            Your Telegram Bot token is stored securely and is never displayed after saving.
+                            The webhook will be automatically registered with Telegram.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* BOT TOKEN INPUT */}
+                    <div className="space-y-5">
+                      <div>
+                        <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                          BotFather Token *
+                        </label>
+                        <input
+                          type="password"
+                          value={telegramCredentials.bot_token}
+                          onChange={(e) =>
+                            setTelegramCredentials({
+                              ...telegramCredentials,
+                              bot_token: e.target.value,
+                            })
+                          }
+                          placeholder="123456789:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-sky-200 focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-500/10 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:hover:border-sky-800 dark:focus:border-sky-500 dark:focus:bg-gray-800"
+                          autoComplete="off"
+                        />
+                        <p className="mt-1.5 text-[10px] leading-4 text-gray-400">
+                          Get your token from <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" className="text-sky-600 hover:underline dark:text-sky-400">@BotFather</a> on Telegram.
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl border border-sky-200 bg-gradient-to-r from-sky-50 to-cyan-50 p-4 dark:border-sky-900/40 dark:from-sky-950/20 dark:to-cyan-950/20">
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-400">
+                            <Info size={15} />
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-sky-900 dark:text-sky-300">
+                              How to get your Bot token
+                            </p>
+                            <ul className="mt-2 space-y-1 text-[10px] leading-5 text-sky-700 dark:text-sky-400">
+                              <li>• Open Telegram and search for <strong>@BotFather</strong></li>
+                              <li>• Send <code className="bg-white/50 dark:bg-gray-800 px-1 rounded font-mono">/newbot</code> or select an existing bot</li>
+                              <li>• Copy the <strong>API token</strong> (format: <code className="bg-white/50 dark:bg-gray-800 px-1 rounded font-mono">123456789:ABC-DEF...</code>)</li>
+                              <li>• Paste it above and click Connect</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* WEBHOOK URL */}
+                    {telegramWebhookUrl && (
+                      <div className="mt-5 overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 dark:border-emerald-900/40 dark:from-emerald-950/20 dark:to-green-950/20">
+                        <div className="flex items-start gap-3 p-4">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400">
+                            <Globe size={15} />
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-emerald-900 dark:text-emerald-300">
+                              Webhook URL
+                            </p>
+
+                            <p className="mt-0.5 text-[10px] text-emerald-700 dark:text-emerald-400">
+                              This URL has been automatically registered with Telegram.
+                            </p>
+
+                            <div className="mt-2 overflow-x-auto rounded-xl border border-emerald-200 bg-white/80 px-3 py-2 dark:border-emerald-900/40 dark:bg-gray-900/50">
+                              <p className="break-all font-mono text-[10px] leading-4 text-emerald-700 dark:text-emerald-300">
+                                {telegramWebhookUrl}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* MODAL FOOTER */}
+                  <div className="flex shrink-0 items-center justify-end gap-3 border-t border-gray-100 bg-gray-50/80 px-5 py-4 dark:border-gray-800 dark:bg-gray-900">
+                    <button
+                      type="button"
+                      onClick={() => setShowTelegramSetup(false)}
+                      className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-xs font-semibold text-gray-700 transition hover:border-gray-300 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleTelegramSetup}
+                      disabled={telegramSetupLoading}
+                      className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-sky-500/20 transition hover:from-sky-600 hover:to-cyan-700 hover:shadow-sky-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {telegramSetupLoading ? (
+                        <>
+                          <Loader2
+                            size={14}
+                            className="animate-spin"
+                          />
+                          Connecting...
+                        </>
+                      ) : (
+                        <>
+                          <Bot size={14} />
+                          Connect Telegram
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* =================================================
                 STOREFRONT
