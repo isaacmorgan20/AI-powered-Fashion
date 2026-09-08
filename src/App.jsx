@@ -18,6 +18,7 @@ import Help from "./Components/Help";
 import Login from "./Pages/Login";
 import Signup from "./Pages/Signup";
 import PublicStorefront from "./Pages/PublicStorefront";
+import PrivacyPolicy from "./Pages/PrivacyPolicy";
 import useAuthStore from "./Store/AuthStore";
 import { useAppearance } from "./hooks/useAppearance";
 
@@ -36,6 +37,7 @@ const App = () => {
         {/* Public routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
