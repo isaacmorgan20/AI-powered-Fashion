@@ -49,6 +49,7 @@ const PublicStorefront = () => {
   const [chatMessage, setChatMessage] = useState("");
   const [chatMessages, setChatMessages] = useState([]);
   const [chatLoading, setChatLoading] = useState(false);
+  const [isCustomerTyping, setIsCustomerTyping] = useState(false);
 
   /* =======================================================
      LOAD STOREFRONT DATA
@@ -96,6 +97,7 @@ const PublicStorefront = () => {
       { sender: "customer", content: userMessage },
     ]);
     setChatMessage("");
+    setIsCustomerTyping(false);
     setChatLoading(true);
 
     try {
@@ -514,7 +516,10 @@ const PublicStorefront = () => {
               )}
             </div>
             <button
-              onClick={() => setChatOpen(false)}
+              onClick={() => {
+                setChatOpen(false);
+                setIsCustomerTyping(false);
+              }}
               className="text-gray-400 hover:text-gray-500"
             >
               <X size={16} />
@@ -556,10 +561,13 @@ const PublicStorefront = () => {
                     </div>
                   </div>
                 ))}
-                {chatLoading && (
+                {(chatLoading || isCustomerTyping) && (
                   <div className="flex justify-start">
                     <div className="rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-500">
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="flex items-center gap-1">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Typing...</span>
+                      </span>
                     </div>
                   </div>
                 )}
@@ -573,7 +581,10 @@ const PublicStorefront = () => {
               <input
                 type="text"
                 value={chatMessage}
-                onChange={(e) => setChatMessage(e.target.value)}
+                onChange={(e) => {
+                  setChatMessage(e.target.value);
+                  setIsCustomerTyping(e.target.value.length > 0);
+                }}
                 onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                 placeholder={
                   storefront.showAiAssistant
