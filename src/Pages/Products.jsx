@@ -20,6 +20,9 @@ import {
 } from "lucide-react";
 import { useProducts } from "../hooks/useProducts";
 import { useSettings } from "../hooks/useSettings";
+import { storage } from "../service/Firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import useAuthStore from "../Store/AuthStore";
 
 /* =========================================================
    HELPERS
@@ -102,6 +105,13 @@ const Products = () => {
     image: "",
   });
 
+  const [imageFile, setImageFile] = useState(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState("");
+
+  const { user } = useAuthStore();
+  const uid = user?.uid;
+
   /* =======================================================
      COUNTS
   ======================================================= */
@@ -176,6 +186,9 @@ const Products = () => {
     });
 
     setEditingProduct(null);
+    setImageFile(null);
+    setImageUploading(false);
+    setImageUploadError("");
   };
 
   const openAddForm = () => {
@@ -186,6 +199,7 @@ const Products = () => {
   const openEditForm = (product) => {
     setEditingProduct(product);
 
+    // Keep the existing image URL for display
     setFormData({
       name: product.name,
       category: product.category,
@@ -196,6 +210,11 @@ const Products = () => {
       description: product.description,
       image: product.image || "",
     });
+
+    // Clear any previously selected file
+    setImageFile(null);
+    setImageUploading(false);
+    setImageUploadError("");
 
     setShowProductForm(true);
   };
@@ -219,11 +238,27 @@ const Products = () => {
 
     if (!file) return;
 
-    const imageUrl = URL.createObjectURL(file);
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      setImageUploadError("Please select a valid image file");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setImageUploadError("Image size must be less than 5MB");
+      return;
+    }
+
+    setImageUploadError("");
+    setImageFile(file);
+
+    // Create a temporary preview URL for immediate UI feedback
+    const previewUrl = URL.createObjectURL(file);
 
     setFormData((current) => ({
       ...current,
-      image: imageUrl,
+      image: previewUrl,
     }));
   };
 
@@ -236,6 +271,54 @@ const Products = () => {
       formData.stock === ""
     ) {
       return;
+    }
+
+    // If there's a new image file, upload it first
+    let imageUrl = null;
+    if (imageFile) {
+      if (!uid) {
+        setImageUploadError("User not authenticated. Please log in again.");
+        return;
+      }
+
+      setImageUploading(true);
+      setImageUploadError("");
+
+      try {
+        // Determine the product ID to use for the storage path
+        // For existing products, use the existing ID
+        // For new products, we'll create the product first, then update
+        const productId = editingProduct?.id || `new-${Date.now()}`;
+
+        // Create storage reference: users/{uid}/products/{productId}/image
+        const fileExtension = imageFile.name.split(".").pop() || "jpg";
+        const storagePath = `users/${uid}/products/${productId}/image.${fileExtension}`;
+        const storageRef = ref(storage, storagePath);
+
+        // Upload the file
+        const snapshot = await uploadBytes(storageRef, imageFile, {
+          contentType: imageFile.type,
+        });
+
+        // Get the download URL
+        imageUrl = await getDownloadURL(snapshot.ref);
+      } catch (err) {
+        console.error("Failed to upload image:", err);
+        setImageUploadError("Failed to upload image. Please try again.");
+        setImageUploading(false);
+        return;
+      } finally {
+        setImageUploading(false);
+      }
+    } else if (formData.image && formData.image.startsWith("blob:")) {
+      // If the current image is a blob URL (from previous upload), don't save it
+      // Keep the existing image URL from the product (if editing) or set to null
+      imageUrl = editingProduct?.image && !editingProduct.image.startsWith("blob:")
+        ? editingProduct.image
+        : null;
+    } else {
+      // Use existing image URL (for editing without new image)
+      imageUrl = formData.image || null;
     }
 
     const price = Number(formData.price);
@@ -256,27 +339,36 @@ const Products = () => {
         .filter(Boolean),
       description: formData.description.trim(),
       status: getStatusFromStock(stock),
-      image: formData.image || null,
+      image: imageUrl,
     };
 
     try {
+      let savedProduct;
+
       if (editingProduct) {
-        const updated = await updateProduct(
-          editingProduct.id,
-          productData
-        );
-
-        if (
-          selectedProduct?.id ===
-          editingProduct.id
-        ) {
-          setSelectedProduct(updated);
-        }
+        // Update existing product
+        savedProduct = await updateProduct(editingProduct.id, productData);
       } else {
-        const newProduct =
-          await createProduct(productData);
+        // Create new product first
+        savedProduct = await createProduct(productData);
 
-        setSelectedProduct(newProduct);
+        // If we uploaded an image for a new product, we need to update it with the image URL
+        if (imageFile && imageUrl) {
+          try {
+            const updatedProduct = await updateProduct(savedProduct.id, { image: imageUrl });
+            savedProduct = updatedProduct;
+          } catch (updateErr) {
+            console.error("Failed to update product with image:", updateErr);
+            // Don't fail the whole operation, product was created
+          }
+        }
+      }
+
+      if (
+        selectedProduct?.id ===
+        editingProduct?.id
+      ) {
+        setSelectedProduct(savedProduct);
       }
 
       closeForm();
@@ -929,6 +1021,21 @@ const Products = () => {
 
                   </label>
                 </FormField>
+
+                {imageUploadError && (
+                  <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+                    {imageUploadError}
+                  </div>
+                )}
+
+                {imageUploading && (
+                  <div className="mb-4 rounded-lg bg-violet-50 px-3 py-2 text-sm text-violet-600 dark:bg-violet-950/20 dark:text-violet-400">
+                    <span className="flex items-center gap-1">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Uploading image...</span>
+                    </span>
+                  </div>
+                )}
 
                 {/* Name */}
 
