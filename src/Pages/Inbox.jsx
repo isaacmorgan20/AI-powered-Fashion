@@ -27,11 +27,13 @@ import {
   CheckCircle2,
   Zap,
   Circle,
+  Image as ImageIcon,
 } from "lucide-react";
 
 import { useConversations } from "../hooks/useConversations";
 import { useAIChat } from "../hooks/useAIChat";
 import { useSettings } from "../hooks/useSettings";
+import { api } from "../service/api";
 
 /* =========================================================
    CHANNEL STYLES
@@ -67,6 +69,12 @@ const channelStyles = {
       "bg-blue-50 text-blue-700 ring-1 ring-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:ring-blue-900",
     dot: "bg-blue-500",
   },
+
+  Telegram: {
+    badge:
+      "bg-blue-50 text-blue-700 ring-1 ring-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:ring-blue-900",
+    dot: "bg-blue-500",
+  },
 };
 
 /* =========================================================
@@ -93,6 +101,25 @@ const modeStyles = {
 /* =========================================================
    HELPERS
 ========================================================= */
+
+const getTelegramDisplayName = (conversation) => {
+  if (conversation.channel !== "Telegram" && conversation.channel !== "telegram") {
+    return conversation.name || "Unknown customer";
+  }
+  // Priority 1: telegram_username (display as @username, avoid @@)
+  if (conversation.telegram_username) {
+    const username = conversation.telegram_username;
+    return username.startsWith("@") ? username : `@${username}`;
+  }
+  // Priority 2: telegram_first_name + telegram_last_name
+  const firstName = conversation.telegram_first_name || "";
+  const lastName = conversation.telegram_last_name || "";
+  if (firstName || lastName) {
+    return `${firstName} ${lastName}`.trim();
+  }
+  // Priority 3: fallback to conversation.name
+  return conversation.name || "Unknown customer";
+};
 
 const getChannelStyle = (channel) => {
   return (
@@ -176,6 +203,10 @@ const Inbox = () => {
   const [mobileView, setMobileView] =
     useState("list");
 
+  // Product catalog for resolving product names to images
+  const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+
   /* =======================================================
      SELECTED CONVERSATION
   ======================================================= */
@@ -199,6 +230,15 @@ const Inbox = () => {
 
   const selectedProducts =
     selectedConversation?.productsDiscussed || [];
+
+  // Resolved product objects with images for AI Insight panel
+  const resolvedProducts = useMemo(() => {
+    if (!products.length || !selectedProducts.length) return [];
+    const productMap = new Map(products.map(p => [p.name, p]));
+    return selectedProducts
+      .map(name => productMap.get(name))
+      .filter(Boolean);
+  }, [products, selectedProducts]);
 
   /* =======================================================
      AUTO SELECT FIRST CONVERSATION
@@ -227,6 +267,26 @@ const Inbox = () => {
     selectedId,
     selectConversation,
   ]);
+
+  // Fetch product catalog when conversation changes
+  useEffect(() => {
+    let cancelled = false;
+    const fetchProducts = async () => {
+      if (!selectedConversation) return;
+      setProductsLoading(true);
+      try {
+        const data = await api.products.list();
+        if (!cancelled) setProducts(data);
+      } catch (err) {
+        console.error("Failed to fetch products for AI:", err);
+        if (!cancelled) setProducts([]);
+      } finally {
+        if (!cancelled) setProductsLoading(false);
+      }
+    };
+    fetchProducts();
+    return () => { cancelled = true; };
+  }, [selectedConversation?.id]);
 
   /* =======================================================
      FILTER CONVERSATIONS
@@ -505,6 +565,13 @@ const Inbox = () => {
           return;
         }
 
+        // Extract products mentioned by AI and merge with existing productsDiscussed
+        const productsMentioned = aiResponse.productsMentioned || [];
+        const existingProductsDiscussed = selectedConversation.productsDiscussed || [];
+        const mergedProductsDiscussed = [
+          ...new Set([...existingProductsDiscussed, ...productsMentioned])
+        ];
+
         const aiMessage = {
           id: `ai-${Date.now()}`,
           sender: "ai",
@@ -531,6 +598,7 @@ const Inbox = () => {
                     ...(conv.messages || []),
                     aiMessage,
                   ],
+                  productsDiscussed: mergedProductsDiscussed,
                 }
               : conv
           )
@@ -920,8 +988,7 @@ const Inbox = () => {
                         <div className="flex items-start justify-between gap-2">
 
                           <p className="min-w-0 truncate text-sm font-bold text-slate-900 dark:text-white">
-                            {conversation.name ||
-                              "Unknown customer"}
+                            {getTelegramDisplayName(conversation)}
                           </p>
 
                           <span className="shrink-0 text-[10px] font-medium text-slate-400">
@@ -974,11 +1041,11 @@ const Inbox = () => {
                               {conversation.mode ===
                               "ai" ? (
                                 <Bot size={9} />
-                              ) : conversation.mode ===
+) : conversation.mode ===
                                 "handoff" ? (
                                 <Clock3 size={9} />
                               ) : (
-                                <User size={9} />
+                                  <User size={9} />
                               )}
 
                               {conversation.mode ===
@@ -1094,8 +1161,7 @@ const Inbox = () => {
               <div className="flex items-center gap-2">
 
                 <h2 className="truncate text-sm font-bold text-slate-900 dark:text-white">
-                  {selectedConversation.name ||
-                    "Unknown customer"}
+                  {getTelegramDisplayName(selectedConversation)}
                 </h2>
 
                 <span
@@ -1544,9 +1610,12 @@ const Inbox = () => {
                     </p>
 
                     <p className="mt-0.5 text-[10px] text-slate-400">
-                      {selectedProducts.length >
-                      0
-                        ? `Products discussed: ${selectedProducts.length}`
+                      {productsLoading
+                        ? "Loading products..."
+                        : resolvedProducts.length > 0
+                        ? `Products discussed: ${resolvedProducts.length}`
+                        : selectedProducts.length > 0
+                        ? `Products discussed: ${selectedProducts.length} (images loading...)`
                         : "No products discussed yet"}
                     </p>
                   </div>
@@ -1554,43 +1623,73 @@ const Inbox = () => {
 
                 <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/70">
 
-                  <div className="flex items-center gap-3">
-
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-slate-700">
-                      <ShoppingBag
-                        size={19}
-                        className="text-violet-500"
-                      />
+                  {productsLoading ? (
+                    <div className="flex items-center gap-3">
+                      <Loader2 className="h-4 w-4 animate-spin text-violet-500" />
+                      <span className="text-xs text-slate-500">Loading product images...</span>
                     </div>
+                  ) : resolvedProducts.length > 0 ? (
+                    <div className="flex items-center gap-3">
 
-                    <div className="min-w-0 flex-1">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-slate-700">
+                        {resolvedProducts[0]?.image ? (
+                          <img
+                            src={resolvedProducts[0].image}
+                            alt={resolvedProducts[0].name}
+                            className="h-full w-full object-cover rounded-lg"
+                          />
+                        ) : (
+                          <ShoppingBag
+                            size={19}
+                            className="text-violet-500"
+                          />
+                        )}
+                      </div>
 
-                      <p className="truncate text-xs font-bold text-slate-800 dark:text-slate-100">
-                        {selectedProducts[0] ||
-                          "No product recommendations yet"}
-                      </p>
+                      <div className="min-w-0 flex-1">
 
-                      <p className="mt-0.5 text-[10px] text-slate-400">
-                        {selectedProducts.length >
-                        1
-                          ? `+${selectedProducts.length - 1} more discussed`
-                          : "Discussed in this conversation"}
-                      </p>
+                        <p className="truncate text-xs font-bold text-slate-800 dark:text-slate-100">
+                          {resolvedProducts[0]?.name || "Product"}
+                        </p>
+
+                        <p className="mt-0.5 text-[10px] text-slate-400">
+                          {resolvedProducts.length > 1
+                            ? `+${resolvedProducts.length - 1} more discussed`
+                            : "Discussed in this conversation"}
+                        </p>
+                      </div>
                     </div>
-
-                    {settings?.ai
-                      ?.orderAssistance !==
-                      false &&
-                      selectedProducts.length >
-                        0 && (
-                        <button
-                          type="button"
-                          className="hidden shrink-0 rounded-lg bg-violet-600 px-3 py-2 text-[10px] font-bold text-white transition hover:bg-violet-700 sm:block"
-                        >
-                          Create Order
-                        </button>
-                      )}
-                  </div>
+                  ) : selectedProducts.length > 0 ? (
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-slate-700">
+                        <ShoppingBag size={19} className="text-violet-500" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-bold text-slate-800 dark:text-slate-100">
+                          {selectedProducts[0]}
+                        </p>
+                        <p className="mt-0.5 text-[10px] text-slate-400">
+                          {selectedProducts.length > 1
+                            ? `+${selectedProducts.length - 1} more discussed`
+                            : "Discussed in this conversation (image not loaded)"}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-slate-700">
+                        <ShoppingBag size={19} className="text-violet-500" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-bold text-slate-800 dark:text-slate-100">
+                          No product recommendations yet
+                        </p>
+                        <p className="mt-0.5 text-[10px] text-slate-400">
+                          Discussed in this conversation
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1888,8 +1987,7 @@ const Inbox = () => {
               </div>
 
               <h4 className="mt-4 text-sm font-bold text-slate-900 dark:text-white">
-                {selectedConversation.name ||
-                  "Unknown customer"}
+                {getTelegramDisplayName(selectedConversation)}
               </h4>
 
               <p className="mt-1 text-xs text-slate-400">

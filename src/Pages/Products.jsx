@@ -20,9 +20,8 @@ import {
 } from "lucide-react";
 import { useProducts } from "../hooks/useProducts";
 import { useSettings } from "../hooks/useSettings";
-import { storage } from "../service/Firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import useAuthStore from "../Store/AuthStore";
+import { uploadProductImage } from "../service/Cloudinary";
 
 /* =========================================================
    HELPERS
@@ -106,11 +105,11 @@ const Products = () => {
   });
 
   const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [imageUploading, setImageUploading] = useState(false);
   const [imageUploadError, setImageUploadError] = useState("");
 
-  const { user } = useAuthStore();
-  const uid = user?.uid;
+  useAuthStore();
 
   /* =======================================================
      COUNTS
@@ -187,6 +186,7 @@ const Products = () => {
 
     setEditingProduct(null);
     setImageFile(null);
+    setImagePreview(null);
     setImageUploading(false);
     setImageUploadError("");
   };
@@ -213,6 +213,7 @@ const Products = () => {
 
     // Clear any previously selected file
     setImageFile(null);
+    setImagePreview(product.image || null);
     setImageUploading(false);
     setImageUploadError("");
 
@@ -255,11 +256,7 @@ const Products = () => {
 
     // Create a temporary preview URL for immediate UI feedback
     const previewUrl = URL.createObjectURL(file);
-
-    setFormData((current) => ({
-      ...current,
-      image: previewUrl,
-    }));
+    setImagePreview(previewUrl);
   };
 
   const handleSaveProduct = async (event) => {
@@ -273,57 +270,10 @@ const Products = () => {
       return;
     }
 
-    // If there's a new image file, upload it first
-    let imageUrl = null;
-    if (imageFile) {
-      if (!uid) {
-        setImageUploadError("User not authenticated. Please log in again.");
-        return;
-      }
-
-      setImageUploading(true);
-      setImageUploadError("");
-
-      try {
-        // Determine the product ID to use for the storage path
-        // For existing products, use the existing ID
-        // For new products, we'll create the product first, then update
-        const productId = editingProduct?.id || `new-${Date.now()}`;
-
-        // Create storage reference: users/{uid}/products/{productId}/image
-        const fileExtension = imageFile.name.split(".").pop() || "jpg";
-        const storagePath = `users/${uid}/products/${productId}/image.${fileExtension}`;
-        const storageRef = ref(storage, storagePath);
-
-        // Upload the file
-        const snapshot = await uploadBytes(storageRef, imageFile, {
-          contentType: imageFile.type,
-        });
-
-        // Get the download URL
-        imageUrl = await getDownloadURL(snapshot.ref);
-      } catch (err) {
-        console.error("Failed to upload image:", err);
-        setImageUploadError("Failed to upload image. Please try again.");
-        setImageUploading(false);
-        return;
-      } finally {
-        setImageUploading(false);
-      }
-    } else if (formData.image && formData.image.startsWith("blob:")) {
-      // If the current image is a blob URL (from previous upload), don't save it
-      // Keep the existing image URL from the product (if editing) or set to null
-      imageUrl = editingProduct?.image && !editingProduct.image.startsWith("blob:")
-        ? editingProduct.image
-        : null;
-    } else {
-      // Use existing image URL (for editing without new image)
-      imageUrl = formData.image || null;
-    }
-
     const price = Number(formData.price);
     const stock = Number(formData.stock);
 
+    // Prepare product data without image first
     const productData = {
       name: formData.name.trim(),
       category: formData.category,
@@ -339,44 +289,72 @@ const Products = () => {
         .filter(Boolean),
       description: formData.description.trim(),
       status: getStatusFromStock(stock),
-      image: imageUrl,
+      image: editingProduct?.image || null, // Preserve existing image by default
     };
+
+    // Safety: Ensure we never save a blob URL (blob: protocol)
+    // Blob URLs are temporary and only valid in current browser session
+    if (productData.image && productData.image.startsWith("blob:")) {
+      console.warn("Detected blob URL in product data, falling back to null");
+      productData.image = null;
+    }
 
     try {
       let savedProduct;
+      let productId = editingProduct?.id;
 
       if (editingProduct) {
-        // Update existing product
+        // UPDATE: Save product data first
         savedProduct = await updateProduct(editingProduct.id, productData);
       } else {
-        // Create new product first
+        // CREATE: Create product first to get ID
         savedProduct = await createProduct(productData);
+        productId = savedProduct.id;
+      }
 
-        // If we uploaded an image for a new product, we need to update it with the image URL
-        if (imageFile && imageUrl) {
-          try {
-            const updatedProduct = await updateProduct(savedProduct.id, { image: imageUrl });
-            savedProduct = updatedProduct;
-          } catch (updateErr) {
-            console.error("Failed to update product with image:", updateErr);
-            // Don't fail the whole operation, product was created
+      // Now handle image upload if a new file was selected
+      if (imageFile && productId) {
+        setImageUploading(true);
+        setImageUploadError("");
+
+        try {
+          const imageUrl = await uploadProductImage(imageFile);
+
+          // Safety: Verify we got a permanent HTTPS URL, not a blob URL
+          if (!imageUrl || imageUrl.startsWith("blob:")) {
+            throw new Error("Failed to obtain permanent Cloudinary URL");
           }
+
+          // Update product with the permanent Cloudinary URL
+          const updatedProduct = await updateProduct(productId, { image: imageUrl });
+          
+          if (selectedProduct?.id === productId) {
+            setSelectedProduct(updatedProduct);
+          }
+          
+          savedProduct = updatedProduct;
+          
+          // Clear the temporary preview blob URL after successful save
+          setImagePreview(null);
+        } catch (err) {
+          console.error("Failed to upload image:", err);
+          setImageUploadError("Failed to upload image. Please try again.");
+          // Don't return - product was saved successfully without image
+        } finally {
+          setImageUploading(false);
         }
       }
 
-      if (
-        selectedProduct?.id ===
-        editingProduct?.id
-      ) {
+      if (selectedProduct?.id === productId) {
         setSelectedProduct(savedProduct);
       }
 
       closeForm();
     } catch (err) {
-      console.error(
-        "Failed to save product:",
-        err
-      );
+      console.error("Failed to save product:", err);
+      // Show user-friendly error
+      const errorMsg = err.response?.data?.detail || err.message || "Failed to save product. Please try again.";
+      alert(errorMsg); // Simple alert for now - could be replaced with toast
     }
   };
 
@@ -970,7 +948,27 @@ const Products = () => {
 
                   <label className="group relative block cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-violet-200 bg-gradient-to-br from-violet-50 to-pink-50 dark:border-violet-800 dark:from-violet-950/20 dark:to-pink-950/20">
 
-                    {formData.image ? (
+                    {imagePreview ? (
+
+                      <div className="relative h-56 w-full">
+
+                        <img
+                          src={imagePreview}
+                          alt="Product preview"
+                          className="h-full w-full object-cover"
+                        />
+
+                        <div className="absolute inset-0 flex items-center justify-center bg-violet-950/40 opacity-0 transition group-hover:opacity-100">
+
+                          <span className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-violet-700 shadow-lg">
+                            Change image
+                          </span>
+
+                        </div>
+
+                      </div>
+
+                    ) : formData.image ? (
 
                       <div className="relative h-56 w-full">
 

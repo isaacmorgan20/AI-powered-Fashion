@@ -322,7 +322,7 @@ const SideBar = ({
                   ${
                     sidebarOpen
                       ? "items-center gap-3 px-2.5 py-2.5"
-                      : "items-center justify-center px-2 py-3"
+                      : "items-center justify-center px-1 py-2"
                   }
 
                   ${
@@ -874,7 +874,7 @@ const SideBar = ({
           absolute -right-3 top-[72px] z-50
           flex h-7 w-7
           items-center justify-center
-          rounded-full
+          rounded-full 
           border border-slate-200
           bg-white
           text-slate-500

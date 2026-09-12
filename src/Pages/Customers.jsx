@@ -49,6 +49,27 @@ const channelStyles = {
     "bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20",
   Website:
     "bg-cyan-50 text-cyan-700 border border-cyan-100 dark:bg-cyan-500/10 dark:text-cyan-300 dark:border-cyan-500/20",
+  Telegram:
+    "bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20",
+};
+
+const getTelegramDisplayName = (customer) => {
+  if (customer.channel !== "Telegram" && customer.channel !== "telegram") {
+    return customer.name || "Unknown customer";
+  }
+  // Priority 1: telegram_username (display as @username, avoid @@)
+  if (customer.telegram_username) {
+    const username = customer.telegram_username;
+    return username.startsWith("@") ? username : `@${username}`;
+  }
+  // Priority 2: telegram_first_name + telegram_last_name
+  const firstName = customer.telegram_first_name || "";
+  const lastName = customer.telegram_last_name || "";
+  if (firstName || lastName) {
+    return `${firstName} ${lastName}`.trim();
+  }
+  // Priority 3: fallback to customer.name
+  return customer.name || "Unknown customer";
 };
 
 /* =========================================================
@@ -641,7 +662,7 @@ const Customers = () => {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
                           <p className="min-w-0 truncate text-sm font-bold text-slate-900 dark:text-white">
-                            {customer.name}
+                            {getTelegramDisplayName(customer)}
                           </p>
 
                           <span className="shrink-0 whitespace-nowrap text-[10px] font-medium text-slate-400">
@@ -789,7 +810,7 @@ const Customers = () => {
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h2 className="truncate text-sm font-bold text-slate-900 dark:text-white sm:text-base">
-                  {selectedCustomer.name}
+                  {getTelegramDisplayName(selectedCustomer)}
                 </h2>
 
                 <span
@@ -879,7 +900,7 @@ const Customers = () => {
 
                     <div className="min-w-0 pb-1">
                       <h3 className="truncate text-base font-bold text-slate-900 dark:text-white">
-                        {selectedCustomer.name}
+                        {getTelegramDisplayName(selectedCustomer)}
                       </h3>
 
                       <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">

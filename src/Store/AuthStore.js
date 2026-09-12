@@ -37,6 +37,8 @@ const useAuthStore = create((set) => ({
 
         // 4) save to zustand for easy access in UI
         set({ user, profile: profileData });
+        // Reset settings store for new registration
+        useSettingsStore.setState({ settings: null, loading: true, error: null });
         
         // 5) Create server-side session
         try { await api.sessions.create(); } catch (e) { console.warn('Session creation failed:', e); }
@@ -54,6 +56,8 @@ const useAuthStore = create((set) => ({
 
         // 3) save to Zustand
         set({ user, profile: profileData });
+        // Reset settings store for new login
+        useSettingsStore.setState({ settings: null, loading: true, error: null });
         
         // 4) Create server-side session
         try { await api.sessions.create(); } catch (e) { console.warn('Session creation failed:', e); }
@@ -83,7 +87,6 @@ const useAuthStore = create((set) => ({
             // if logged out
             if (!user) {
                 set({ user: null, profile: null, loading: false});
-                useSettingsStore.setState({ settings: null, loading: true, error: null });
                 return;
             }
             // if logged in, fetch profile too
