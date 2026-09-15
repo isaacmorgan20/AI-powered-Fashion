@@ -1,10 +1,9 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import {
   Search,
   MoreHorizontal,
   Phone,
   Video,
-  UserRound,
   PanelRight,
   Send,
   Paperclip,
@@ -24,124 +23,71 @@ import {
   Loader2,
   AlertCircle,
   RotateCcw,
-  CheckCircle2,
-  Zap,
-  Circle,
-  Image as ImageIcon,
+  ExternalLink,
+  Globe,
+  AlertTriangle,
+  UserCheck,
 } from "lucide-react";
 
 import { useConversations } from "../hooks/useConversations";
 import { useAIChat } from "../hooks/useAIChat";
 import { useSettings } from "../hooks/useSettings";
-import { api } from "../service/api";
+import { useProducts } from "../hooks/useProducts";
 
 /* =========================================================
-   CHANNEL STYLES
+   CHANNEL BADGE & STYLES (WhatsApp, Telegram, IG, FB, Web)
 ========================================================= */
 
-const channelStyles = {
-  WhatsApp: {
-    badge:
-      "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:ring-emerald-900",
-    dot: "bg-emerald-500",
-  },
+const getChannelBadge = (channel) => {
+  const norm = String(channel || "Website").toLowerCase();
 
-  Instagram: {
-    badge:
-      "bg-pink-50 text-pink-700 ring-1 ring-pink-200 dark:bg-pink-950/40 dark:text-pink-400 dark:ring-pink-900",
-    dot: "bg-pink-500",
-  },
-
-  Facebook: {
-    badge:
-      "bg-blue-50 text-blue-700 ring-1 ring-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:ring-blue-900",
-    dot: "bg-blue-500",
-  },
-
-  Website: {
-    badge:
-      "bg-violet-50 text-violet-700 ring-1 ring-violet-200 dark:bg-violet-950/40 dark:text-violet-400 dark:ring-violet-900",
+  if (norm.includes("whatsapp")) {
+    return {
+      label: "WhatsApp",
+      style:
+        "bg-emerald-50 text-[#16A34A] border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800",
+      dot: "bg-[#16A34A]",
+      icon: MessageSquare,
+    };
+  }
+  if (norm.includes("telegram")) {
+    return {
+      label: "Telegram",
+      style:
+        "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800",
+      dot: "bg-sky-500",
+      icon: Send,
+    };
+  }
+  if (norm.includes("instagram")) {
+    return {
+      label: "Instagram",
+      style:
+        "bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-950/40 dark:text-pink-300 dark:border-pink-800",
+      dot: "bg-pink-500",
+      icon: MessageSquare,
+    };
+  }
+  if (norm.includes("facebook")) {
+    return {
+      label: "Facebook",
+      style:
+        "bg-blue-50 text-[#2563EB] border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
+      dot: "bg-[#2563EB]",
+      icon: MessageSquare,
+    };
+  }
+  return {
+    label: "Website",
+    style:
+      "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800",
     dot: "bg-violet-500",
-  },
-
-  telegram: {
-    badge:
-      "bg-blue-50 text-blue-700 ring-1 ring-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:ring-blue-900",
-    dot: "bg-blue-500",
-  },
-
-  Telegram: {
-    badge:
-      "bg-blue-50 text-blue-700 ring-1 ring-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:ring-blue-900",
-    dot: "bg-blue-500",
-  },
+    icon: Globe,
+  };
 };
 
 /* =========================================================
-   MODE STYLES
-========================================================= */
-
-const modeStyles = {
-  ai: {
-    badge:
-      "bg-violet-50 text-violet-700 ring-1 ring-violet-200 dark:bg-violet-950/40 dark:text-violet-400 dark:ring-violet-900",
-  },
-
-  human: {
-    badge:
-      "bg-blue-50 text-blue-700 ring-1 ring-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:ring-blue-900",
-  },
-
-  handoff: {
-    badge:
-      "bg-amber-50 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:ring-amber-900",
-  },
-};
-
-/* =========================================================
-   HELPERS
-========================================================= */
-
-const getTelegramDisplayName = (conversation) => {
-  if (conversation.channel !== "Telegram" && conversation.channel !== "telegram") {
-    return conversation.name || "Unknown customer";
-  }
-  // Priority 1: telegram_username (display as @username, avoid @@)
-  if (conversation.telegram_username) {
-    const username = conversation.telegram_username;
-    return username.startsWith("@") ? username : `@${username}`;
-  }
-  // Priority 2: telegram_first_name + telegram_last_name
-  const firstName = conversation.telegram_first_name || "";
-  const lastName = conversation.telegram_last_name || "";
-  if (firstName || lastName) {
-    return `${firstName} ${lastName}`.trim();
-  }
-  // Priority 3: fallback to conversation.name
-  return conversation.name || "Unknown customer";
-};
-
-const getChannelStyle = (channel) => {
-  return (
-    channelStyles[channel] || {
-      badge:
-        "bg-slate-50 text-slate-600 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
-      dot: "bg-slate-400",
-    }
-  );
-};
-
-const getModeStyle = (mode) => {
-  return (
-    modeStyles[mode] || {
-      badge:
-        "bg-slate-50 text-slate-600 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
-    }
-  );
-};
-
-/* =========================================================
-   COMPONENT
+   INBOX COMPONENT — FIXED VIEWPORT 3-PANE LAYOUT
 ========================================================= */
 
 const Inbox = () => {
@@ -158,215 +104,145 @@ const Inbox = () => {
     markResolved: apiMarkResolved,
     reopenConversation: apiReopenConversation,
     sendingStates = {},
+    isOnline,
   } = useConversations();
 
   const { sendToAI } = useAIChat();
   const { settings } = useSettings();
+  const { products = [] } = useProducts();
 
-  /* =======================================================
-     SETTINGS
-  ======================================================= */
+  const currency = settings?.general?.currency || "GHS";
+  const timezone = settings?.general?.timezone || "Africa/Accra";
+  const aiEnabled = settings?.ai?.enabled ?? true;
+  const autoReply = settings?.ai?.autoReply ?? true;
+  const allowCustomerChat = settings?.customer?.allowCustomerChat ?? true;
+  const sellerId = settings?.general?.sellerId || "store";
 
-  const timezone =
-    settings?.general?.timezone || "Africa/Accra";
+  const [selectedId, setSelectedId] = useState(null);
+  const [search, setSearch] = useState("");
+  const [message, setMessage] = useState("");
+  const [showCustomerPanel, setShowCustomerPanel] = useState(true);
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [channelFilter, setChannelFilter] = useState("All");
+  const [mobileView, setMobileView] = useState("list"); // 'list' | 'chat'
 
-  const aiEnabled =
-    settings?.ai?.enabled ?? true;
+  const messagesEndRef = useRef(null);
 
-  const autoReply =
-    settings?.ai?.autoReply ?? true;
+  // Map real products from catalog for instant photo & price lookup
+  const catalogMap = useMemo(() => {
+    const map = new Map();
+    if (Array.isArray(products)) {
+      products.forEach((p) => {
+        if (p.name) map.set(p.name.toLowerCase().trim(), p);
+        if (p.id) map.set(p.id, p);
+      });
+    }
+    return map;
+  }, [products]);
 
-  const allowCustomerChat =
-    settings?.customer?.allowCustomerChat ?? true;
-
-  /* =======================================================
-     STATE
-  ======================================================= */
-
-  const [selectedId, setSelectedId] =
-    useState(null);
-
-  const [search, setSearch] =
-    useState("");
-
-  const [message, setMessage] =
-    useState("");
-
-  const [isAgentTyping, setIsAgentTyping] = useState(false);
-
-  const [showCustomerPanel, setShowCustomerPanel] =
-    useState(true);
-
-  const [activeFilter, setActiveFilter] =
-    useState("All");
-
-  const [mobileView, setMobileView] =
-    useState("list");
-
-  // Product catalog for resolving product names to images
-  const [products, setProducts] = useState([]);
-  const [productsLoading, setProductsLoading] = useState(false);
-
-  /* =======================================================
-     SELECTED CONVERSATION
-  ======================================================= */
-
+  // Selected Conversation
   const selectedConversation = useMemo(() => {
-    return conversations.find(
-      (conversation) =>
-        conversation.id === selectedId
-    );
+    return conversations.find((c) => c.id === selectedId) || null;
   }, [conversations, selectedId]);
 
-  /* =======================================================
-     NORMALIZED DATA
-  ======================================================= */
+  // Safe fallback to ensure the three-pane shell never crashes
+  const activeConversation = selectedConversation || {
+    id: null,
+    name: "No conversation selected",
+    initials: "—",
+    status: "offline",
+    channel: "Inbox",
+    mode: "none",
+    conversationStatus: "idle",
+    messages: [],
+    productsDiscussed: [],
+    orders: [],
+    phone: "—",
+    email: "—",
+    location: "—",
+  };
 
-  const selectedMessages =
-    selectedConversation?.messages || [];
+  const hasSelectedConversation = Boolean(selectedConversation);
 
-  const selectedOrders =
-    selectedConversation?.orders || [];
-
-  const selectedProducts =
-    selectedConversation?.productsDiscussed || [];
-
-  // Resolved product objects with images for AI Insight panel
-  const resolvedProducts = useMemo(() => {
-    if (!products.length || !selectedProducts.length) return [];
-    const productMap = new Map(products.map(p => [p.name, p]));
-    return selectedProducts
-      .map(name => productMap.get(name))
-      .filter(Boolean);
-  }, [products, selectedProducts]);
-
-  /* =======================================================
-     AUTO SELECT FIRST CONVERSATION
-  ======================================================= */
-
+  // Auto-select first conversation on initial load if available
   useEffect(() => {
-    if (
-      conversations.length > 0 &&
-      !selectedId
-    ) {
-      const firstConversation =
-        conversations[0];
-
-      if (firstConversation?.id) {
-        setSelectedId(
-          firstConversation.id
-        );
-
-        selectConversation(
-          firstConversation.id
-        );
-      }
+    if (conversations.length > 0 && !selectedId) {
+      const firstId = conversations[0].id;
+      setSelectedId(firstId);
+      selectConversation(firstId);
     }
-  }, [
-    conversations,
-    selectedId,
-    selectConversation,
-  ]);
+  }, [conversations, selectedId, selectConversation]);
 
-  // Fetch product catalog when conversation changes
+  // Auto-scroll to bottom of messages
   useEffect(() => {
-    let cancelled = false;
-    const fetchProducts = async () => {
-      if (!selectedConversation) return;
-      setProductsLoading(true);
-      try {
-        const data = await api.products.list();
-        if (!cancelled) setProducts(data);
-      } catch (err) {
-        console.error("Failed to fetch products for AI:", err);
-        if (!cancelled) setProducts([]);
-      } finally {
-        if (!cancelled) setProductsLoading(false);
-      }
-    };
-    fetchProducts();
-    return () => { cancelled = true; };
-  }, [selectedConversation?.id]);
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [activeConversation.messages]);
+
+  // Lock parent layout scrolling so only the 3 panes can scroll independently
+  useEffect(() => {
+    const mainEl = document.querySelector("main");
+    if (mainEl) {
+      const prevOverflow = mainEl.style.overflow;
+      mainEl.style.overflow = "hidden";
+      return () => {
+        mainEl.style.overflow = prevOverflow;
+      };
+    }
+  }, []);
 
   /* =======================================================
-     FILTER CONVERSATIONS
+     FILTERING & SEARCH
   ======================================================= */
-
   const filteredConversations = useMemo(() => {
-    const value = search
-      .toLowerCase()
-      .trim();
+    const query = search.toLowerCase().trim();
 
-    return conversations.filter(
-      (conversation) => {
-        const name =
-          conversation?.name || "";
+    return conversations.filter((conversation) => {
+      const name = String(conversation.name || "").toLowerCase();
+      const lastMsg = String(conversation.lastMessage || "").toLowerCase();
+      const ch = String(conversation.channel || "").toLowerCase();
 
-        const lastMessage =
-          conversation?.lastMessage || "";
+      const matchesSearch =
+        !query ||
+        name.includes(query) ||
+        lastMsg.includes(query) ||
+        ch.includes(query);
 
-        const channel =
-          conversation?.channel || "";
-
-        const matchesSearch =
-          !value ||
-          name
-            .toLowerCase()
-            .includes(value) ||
-          lastMessage
-            .toLowerCase()
-            .includes(value) ||
-          channel
-            .toLowerCase()
-            .includes(value);
-
-        let matchesFilter = true;
-
-        if (activeFilter === "Unread") {
-          matchesFilter =
-            Number(conversation?.unread || 0) >
-            0;
-        }
-
-        if (activeFilter === "AI") {
-          matchesFilter =
-            conversation?.mode === "ai";
-        }
-
-        if (activeFilter === "Human") {
-          matchesFilter =
-            conversation?.mode === "human" ||
-            conversation?.mode === "handoff";
-        }
-
-        return (
-          matchesSearch &&
-          matchesFilter
-        );
+      let matchesFilter = true;
+      if (activeFilter === "Unread") {
+        matchesFilter = Number(conversation.unread || 0) > 0;
+      } else if (activeFilter === "AI") {
+        matchesFilter = conversation.mode === "ai";
+      } else if (activeFilter === "Human") {
+        matchesFilter =
+          conversation.mode === "human" || conversation.mode === "handoff";
       }
+
+      let matchesChannel = true;
+      if (channelFilter !== "All") {
+        matchesChannel = ch.includes(channelFilter.toLowerCase());
+      }
+
+      return matchesSearch && matchesFilter && matchesChannel;
+    });
+  }, [conversations, search, activeFilter, channelFilter]);
+
+  const unreadTotal = useMemo(() => {
+    return conversations.reduce(
+      (acc, c) => acc + (Number(c.unread || 0) > 0 ? 1 : 0),
+      0
     );
-  }, [
-    conversations,
-    search,
-    activeFilter,
-  ]);
+  }, [conversations]);
 
   /* =======================================================
-     SELECT CONVERSATION
+     SELECTION & NAVIGATION
   ======================================================= */
-
   const handleSelectConversation = (id) => {
-    if (!id) return;
-
     setSelectedId(id);
     selectConversation(id);
     setMobileView("chat");
-    setIsAgentTyping(false);
   };
-
-  /* =======================================================
-     MOBILE BACK
-  ======================================================= */
 
   const goBackToList = () => {
     setMobileView("list");
@@ -375,1892 +251,1115 @@ const Inbox = () => {
   /* =======================================================
      SEND MESSAGE
   ======================================================= */
-
   const handleSendMessage = async (event) => {
-    event?.preventDefault();
-
-    const trimmedMessage =
-      message.trim();
-
-    if (
-      !trimmedMessage ||
-      !selectedConversation ||
-      !allowCustomerChat
-    ) {
-      return;
-    }
+    event.preventDefault();
+    const trimmed = message.trim();
+    if (!trimmed || !hasSelectedConversation) return;
 
     setMessage("");
-    setIsAgentTyping(false);
 
     try {
-      await apiSendMessage(
-        selectedConversation.id,
-        trimmedMessage
-      );
+      await apiSendMessage(selectedConversation.id, trimmed);
     } catch (err) {
-      console.error(
-        "Failed to send message:",
-        err
-      );
-
-      /*
-       * Restore the message if sending fails.
-       * This makes retrying easier for the seller.
-       */
-      setMessage(trimmedMessage);
+      console.error("Failed to send message:", err);
     }
   };
 
   /* =======================================================
-     TAKE OVER
+     AI / HANDOFF ACTIONS
   ======================================================= */
-
   const handleTakeOver = async () => {
     if (!selectedId) return;
-
     try {
       await apiTakeOver(selectedId);
     } catch (err) {
-      console.error(
-        "Failed to take over:",
-        err
-      );
+      console.error("Failed to take over:", err);
     }
   };
-
-  /* =======================================================
-     RETURN TO AI
-  ======================================================= */
 
   const handleReturnToAI = async () => {
     if (!selectedId) return;
-
     try {
       await apiReturnToAI(selectedId);
     } catch (err) {
-      console.error(
-        "Failed to return to AI:",
-        err
-      );
+      console.error("Failed to return to AI:", err);
     }
   };
-
-  /* =======================================================
-     RESOLVE
-  ======================================================= */
 
   const handleMarkResolved = async () => {
     if (!selectedId) return;
-
     try {
       await apiMarkResolved(selectedId);
     } catch (err) {
-      console.error(
-        "Failed to mark resolved:",
-        err
-      );
+      console.error("Failed to mark resolved:", err);
     }
   };
-
-  /* =======================================================
-     REOPEN
-  ======================================================= */
 
   const handleReopenConversation = async () => {
     if (!selectedId) return;
-
     try {
-      await apiReopenConversation(
-        selectedId
-      );
+      await apiReopenConversation(selectedId);
     } catch (err) {
-      console.error(
-        "Failed to reopen:",
-        err
-      );
+      console.error("Failed to reopen conversation:", err);
     }
   };
 
   /* =======================================================
-     AI RESPONSE
+     AI AUTOMATIC RESPONSE HANDLING
   ======================================================= */
-
   useEffect(() => {
-    if (!aiEnabled || !autoReply) {
-      return;
-    }
-
+    if (!aiEnabled || !autoReply) return;
     if (
-      !selectedConversation ||
-      selectedConversation.mode !== "ai" ||
-      selectedMessages.length === 0
+      selectedConversation &&
+      selectedConversation.mode === "ai" &&
+      Array.isArray(selectedConversation.messages) &&
+      selectedConversation.messages.length > 0
     ) {
-      return;
-    }
-
-    const lastIndex =
-      selectedMessages.length - 1;
-
-    const lastMessage =
-      selectedMessages[lastIndex];
-
-    if (
-      !lastMessage ||
-      lastMessage.sender !== "customer"
-    ) {
-      return;
-    }
-
-    /*
-     * The customer message is the latest message,
-     * therefore an AI response cannot already exist
-     * after it.
-     */
-    const conversationHistory =
-      selectedMessages
-        .slice(-6)
-        .map((msg) => ({
-          id: msg.id,
-          sender: msg.sender,
-          content: msg.content,
-          time: msg.time,
-        }));
-
-    let cancelled = false;
-
-    sendToAI(
-      lastMessage.content,
-      selectedConversation.id,
-      conversationHistory
-    )
-      .then((aiResponse) => {
-        if (cancelled || !aiResponse) {
-          return;
-        }
-
-        if (
-          aiResponse.requiresHandoff
-        ) {
-          setConversations((current) =>
-            current.map((conv) =>
-              conv.id === selectedConversation.id
-                ? {
-                    ...conv,
-                    mode: "handoff",
-                    conversationStatus:
-                      "handed_off",
-                  }
-                : conv
-            )
-          );
-
-          return;
-        }
-
-        const responseText =
-          aiResponse.response || "";
-
-        if (!responseText) {
-          return;
-        }
-
-        // Extract products mentioned by AI and merge with existing productsDiscussed
-        const productsMentioned = aiResponse.productsMentioned || [];
-        const existingProductsDiscussed = selectedConversation.productsDiscussed || [];
-        const mergedProductsDiscussed = [
-          ...new Set([...existingProductsDiscussed, ...productsMentioned])
+      const lastMessage =
+        selectedConversation.messages[
+        selectedConversation.messages.length - 1
         ];
 
-        const aiMessage = {
-          id: `ai-${Date.now()}`,
-          sender: "ai",
-          content: responseText,
-          time: new Date().toLocaleTimeString(
-            [],
-            {
-              hour: "numeric",
-              minute: "2-digit",
-              timeZone: timezone,
-            }
-          ),
-        };
-
-        setConversations((current) =>
-          current.map((conv) =>
-            conv.id === selectedConversation.id
-              ? {
-                  ...conv,
-                  lastMessage:
-                    responseText,
-                  time: aiMessage.time,
-                  messages: [
-                    ...(conv.messages || []),
-                    aiMessage,
-                  ],
-                  productsDiscussed: mergedProductsDiscussed,
-                }
-              : conv
-          )
+      if (lastMessage?.sender === "customer") {
+        const hasAIResponse = selectedConversation.messages.some(
+          (msg, idx) =>
+            msg.sender === "ai" &&
+            idx > selectedConversation.messages.indexOf(lastMessage)
         );
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          console.error(
-            "AI response error:",
-            err
-          );
-        }
-      });
 
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    selectedConversation?.id,
-    selectedConversation?.mode,
-    selectedMessages,
-    aiEnabled,
-    autoReply,
-    sendToAI,
-    setConversations,
-    timezone,
-  ]);
+        if (!hasAIResponse) {
+          const conversationHistory = selectedConversation.messages
+            .slice(-6)
+            .map((msg) => ({
+              id: msg.id,
+              sender: msg.sender,
+              content: msg.content,
+              time: msg.time,
+            }));
 
-  /* =======================================================
-     EMPTY STATE
-  ======================================================= */
-
-  if (!selectedConversation) {
-    return (
-      <div className="flex h-full min-h-0 w-full items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="px-6 text-center">
-
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-            <MessageSquare
-              size={28}
-              className="text-violet-500"
-            />
-          </div>
-
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-            No conversation selected
-          </h2>
-
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Select a conversation to start chatting.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  const selectedChannelStyle =
-    getChannelStyle(
-      selectedConversation.channel
-    );
-
-  const selectedModeStyle =
-    getModeStyle(
-      selectedConversation.mode
-    );
-
-  /* =======================================================
-     PAGE
-  ======================================================= */
-
-  return (
-    <div className="flex h-full min-h-0 w-full min-w-0 overflow-hidden bg-slate-50 dark:bg-slate-950">
-
-      {/* ===================================================
-          LEFT — CONVERSATIONS
-      =================================================== */}
-
-      <aside
-        className={`
-          h-full
-          min-h-0
-          w-full
-          shrink-0
-          flex-col
-          border-r
-          border-slate-200
-          bg-white
-          dark:border-slate-800
-          dark:bg-slate-900
-
-          md:flex
-          md:w-[300px]
-
-          lg:w-[320px]
-
-          xl:w-[335px]
-
-          2xl:w-[350px]
-
-          ${
-            mobileView === "list"
-              ? "flex"
-              : "hidden md:flex"
-          }
-        `}
-      >
-
-        {/* LEFT HEADER */}
-
-        <div className="shrink-0 border-b border-slate-200 px-4 py-4 dark:border-slate-800 sm:px-5">
-
-          <div className="mb-4 flex items-center justify-between">
-
-            <div>
-              <div className="flex items-center gap-2">
-
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600 text-white shadow-sm shadow-violet-200 dark:shadow-none">
-                  <MessageSquare size={15} />
-                </div>
-
-                <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
-                  Inbox
-                </h1>
-              </div>
-
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                {conversations.length}{" "}
-                {conversations.length === 1
-                  ? "conversation"
-                  : "conversations"}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              aria-label="Inbox options"
-              className="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-            >
-              <MoreHorizontal size={19} />
-            </button>
-          </div>
-
-          {/* SEARCH */}
-
-          <div className="relative">
-
-            <Search
-              size={16}
-              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-            />
-
-            <input
-              type="text"
-              value={search}
-              onChange={(event) =>
-                setSearch(
-                  event.target.value
-                )
-              }
-              placeholder="Search conversations..."
-              className="
-                h-10
-                w-full
-                rounded-xl
-                border
-                border-slate-200
-                bg-slate-50
-                pl-10
-                pr-3
-                text-sm
-                text-slate-900
-                outline-none
-                transition
-                placeholder:text-slate-400
-                focus:border-violet-300
-                focus:bg-white
-                focus:ring-4
-                focus:ring-violet-50
-                dark:border-slate-700
-                dark:bg-slate-800
-                dark:text-white
-                dark:focus:border-violet-600
-                dark:focus:bg-slate-800
-                dark:focus:ring-violet-950
-              "
-            />
-          </div>
-
-          {/* FILTERS */}
-
-          <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1">
-
-            {[
-              "All",
-              "Unread",
-              "AI",
-              "Human",
-            ].map((filter) => (
-              <button
-                key={filter}
-                type="button"
-                onClick={() =>
-                  setActiveFilter(filter)
-                }
-                className={`
-                  shrink-0
-                  rounded-lg
-                  px-3
-                  py-1.5
-                  text-[11px]
-                  font-semibold
-                  transition
-
-                  ${
-                    activeFilter === filter
-                      ? "bg-violet-600 text-white shadow-sm shadow-violet-200 dark:shadow-none"
-                      : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
-                  }
-                `}
-              >
-                {filter}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* CONVERSATION LIST */}
-
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-
-          {loading ? (
-            <div className="px-5 py-14 text-center">
-
-              <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-950">
-                <Loader2
-                  size={21}
-                  className="animate-spin text-violet-500"
-                />
-              </div>
-
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                Loading conversations...
-              </p>
-            </div>
-          ) : error ? (
-            <div className="px-5 py-14 text-center">
-
-              <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/40">
-                <AlertCircle
-                  size={21}
-                  className="text-red-500"
-                />
-              </div>
-
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                Failed to load conversations
-              </p>
-
-              <p className="mt-1 text-xs leading-5 text-slate-400">
-                {String(error)}
-              </p>
-
-              <button
-                type="button"
-                onClick={refetch}
-                className="mt-4 rounded-lg bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-600 transition hover:bg-violet-100 dark:bg-violet-950 dark:text-violet-400"
-              >
-                Retry
-              </button>
-            </div>
-          ) : filteredConversations.length === 0 ? (
-            <div className="px-5 py-14 text-center">
-
-              <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
-                <Search
-                  size={20}
-                  className="text-slate-400"
-                />
-              </div>
-
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                No conversations found
-              </p>
-
-              <p className="mt-1 text-xs text-slate-400">
-                Try another search or filter.
-              </p>
-            </div>
-          ) : (
-            filteredConversations.map(
-              (conversation) => {
-                const active =
-                  conversation.id ===
-                  selectedId;
-
-                const conversationChannel =
-                  getChannelStyle(
-                    conversation.channel
-                  );
-
-                const conversationMode =
-                  getModeStyle(
-                    conversation.mode
-                  );
-
-                const unread =
-                  Number(
-                    conversation.unread || 0
-                  );
-
-                return (
-                  <button
-                    key={conversation.id}
-                    type="button"
-                    onClick={() =>
-                      handleSelectConversation(
-                        conversation.id
-                      )
-                    }
-                    className={`
-                      group
-                      relative
-                      w-full
-                      border-b
-                      border-slate-100
-                      px-4
-                      py-3.5
-                      text-left
-                      transition
-                      dark:border-slate-800
-
-                      ${
-                        active
-                          ? "bg-violet-50/70 dark:bg-violet-950/30"
-                          : "bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800/70"
+          sendToAI(
+            lastMessage.content,
+            selectedConversation.id,
+            conversationHistory
+          )
+            .then((aiResponse) => {
+              if (aiResponse.requiresHandoff) {
+                setConversations((current) =>
+                  current.map((conv) =>
+                    conv.id === selectedId
+                      ? {
+                        ...conv,
+                        mode: "handoff",
+                        conversationStatus: "handed_off",
                       }
-                    `}
-                  >
+                      : conv
+                  )
+                );
+              } else {
+                const aiMessage = {
+                  id: Date.now(),
+                  sender: "ai",
+                  content: aiResponse.response,
+                  time: new Date().toLocaleTimeString([], {
+                    hour: "numeric",
+                    minute: "2-digit",
+                    timeZone: timezone,
+                  }),
+                };
 
-                    {/* ACTIVE INDICATOR */}
-
-                    {active && (
-                      <span className="absolute bottom-0 left-0 top-0 w-0.5 bg-violet-600" />
-                    )}
-
-                    <div className="flex min-w-0 gap-3">
-
-                      {/* AVATAR */}
-
-                      <div className="relative shrink-0">
-
-                        <div
-                          className={`
-                            flex
-                            h-11
-                            w-11
-                            items-center
-                            justify-center
-                            rounded-xl
-                            text-xs
-                            font-bold
-                            shadow-sm
-
-                            ${
-                              active
-                                ? "bg-violet-600 text-white"
-                                : "bg-slate-900 text-white dark:bg-slate-700"
-                            }
-                          `}
-                        >
-                          {conversation.initials ||
-                            "?"}
-                        </div>
-
-                        {conversation.status ===
-                          "online" && (
-                          <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900">
-                            <span className="h-1.5 w-1.5 rounded-full bg-white" />
-                          </span>
-                        )}
-                      </div>
-
-                      {/* DETAILS */}
-
-                      <div className="min-w-0 flex-1">
-
-                        <div className="flex items-start justify-between gap-2">
-
-                          <p className="min-w-0 truncate text-sm font-bold text-slate-900 dark:text-white">
-                            {getTelegramDisplayName(conversation)}
-                          </p>
-
-                          <span className="shrink-0 text-[10px] font-medium text-slate-400">
-                            {conversation.time ||
-                              ""}
-                          </span>
-                        </div>
-
-                        {/* CHANNEL + MODE */}
-
-                        <div className="mt-1.5 flex min-w-0 items-center gap-1.5">
-
-                          <span
-                            className={`
-                              inline-flex
-                              shrink-0
-                              items-center
-                              gap-1
-                              rounded-md
-                              px-1.5
-                              py-0.5
-                              text-[9px]
-                              font-bold
-                              ${conversationChannel.badge}
-                            `}
-                          >
-                            <span
-                              className={`h-1.5 w-1.5 rounded-full ${conversationChannel.dot}`}
-                            />
-
-                            {conversation.channel ||
-                              "Unknown"}
-                          </span>
-
-                          {conversation.mode && (
-                            <span
-                              className={`
-                                inline-flex
-                                shrink-0
-                                items-center
-                                gap-1
-                                rounded-md
-                                px-1.5
-                                py-0.5
-                                text-[9px]
-                                font-bold
-                                ${conversationMode.badge}
-                              `}
-                            >
-                              {conversation.mode ===
-                              "ai" ? (
-                                <Bot size={9} />
-) : conversation.mode ===
-                                "handoff" ? (
-                                <Clock3 size={9} />
-                              ) : (
-                                  <User size={9} />
-                              )}
-
-                              {conversation.mode ===
-                              "ai"
-                                ? "AI"
-                                : conversation.mode ===
-                                  "handoff"
-                                ? "Handoff"
-                                : "Human"}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* LAST MESSAGE */}
-
-                        <div className="mt-2 flex items-center gap-2">
-
-                          <p
-                            className={`
-                              min-w-0
-                              flex-1
-                              truncate
-                              text-xs
-
-                              ${
-                                unread > 0
-                                  ? "font-semibold text-slate-800 dark:text-slate-200"
-                                  : "text-slate-500 dark:text-slate-400"
-                              }
-                            `}
-                          >
-                            {conversation.lastMessage ||
-                              "No messages yet"}
-                          </p>
-
-                          {unread > 0 && (
-                            <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-violet-600 px-1.5 text-[10px] font-bold text-white shadow-sm">
-                              {unread}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </button>
+                setConversations((current) =>
+                  current.map((conv) =>
+                    conv.id === selectedId
+                      ? {
+                        ...conv,
+                        lastMessage: aiResponse.response,
+                        time: aiMessage.time,
+                        messages: [...(conv.messages || []), aiMessage],
+                      }
+                      : conv
+                  )
                 );
               }
-            )
-          )}
-        </div>
-      </aside>
+            })
+            .catch((err) => {
+              console.error("AI response error:", err);
+            });
+        }
+      }
+    }
+  }, [
+    selectedConversation?.messages,
+    selectedConversation?.mode,
+    selectedId,
+    sendToAI,
+    aiEnabled,
+    autoReply,
+    timezone,
+    setConversations,
+    selectedConversation,
+  ]);
 
-      {/* ===================================================
-          MIDDLE — CHAT
-      =================================================== */}
-
-      <section
-        className={`
-          h-full
-          min-h-0
-          min-w-0
-          flex-1
-          flex-col
-          overflow-hidden
-          bg-slate-50
-          dark:bg-slate-950
-
-          ${
-            mobileView === "chat"
-              ? "flex"
-              : "hidden md:flex"
-          }
-        `}
-      >
-
-        {/* =================================================
-            CHAT HEADER
-        ================================================= */}
-
-        <header className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-5 sm:py-3.5">
-
-          <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
-
-            {/* MOBILE BACK */}
-
-            <button
-              type="button"
-              onClick={goBackToList}
-              aria-label="Back to conversations"
-              className="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white md:hidden"
-            >
-              <ArrowLeft size={18} />
-            </button>
-
-            {/* AVATAR */}
-
-            <div className="relative shrink-0">
-
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600 text-xs font-bold text-white shadow-sm">
-                {selectedConversation.initials ||
-                  "?"}
-              </div>
-
-              {selectedConversation.status ===
-                "online" && (
-                <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900" />
-              )}
-            </div>
-
-            {/* CUSTOMER */}
-
-            <div className="min-w-0">
-
-              <div className="flex items-center gap-2">
-
-                <h2 className="truncate text-sm font-bold text-slate-900 dark:text-white">
-                  {getTelegramDisplayName(selectedConversation)}
-                </h2>
-
-                <span
-                  className={`
-                    hidden
-                    items-center
-                    gap-1
-                    rounded-md
-                    px-1.5
-                    py-0.5
-                    text-[9px]
-                    font-bold
-                    sm:inline-flex
-                    ${selectedChannelStyle.badge}
-                  `}
-                >
-                  <span
-                    className={`h-1.5 w-1.5 rounded-full ${selectedChannelStyle.dot}`}
-                  />
-
-                  {selectedConversation.channel ||
-                    "Unknown"}
-                </span>
-              </div>
-
-              <div className="mt-0.5 flex items-center gap-2 text-[10px] text-slate-400 sm:text-xs">
-
-                <span className="flex items-center gap-1">
-
-                  <Circle
-                    size={6}
-                    className={
-                      selectedConversation.status ===
-                      "online"
-                        ? "fill-emerald-500 text-emerald-500"
-                        : "fill-slate-300 text-slate-300"
-                    }
-                  />
-
-                  {selectedConversation.status ===
-                  "online"
-                    ? "Online"
-                    : "Offline"}
-                </span>
-
-                <span>•</span>
-
-                <span className="capitalize">
-                  {(
-                    selectedConversation.conversationStatus ||
-                    "active"
-                  ).replace(
-                    /_/g,
-                    " "
-                  )}
-                </span>
-              </div>
-            </div>
+  return (
+    /* 
+      LAYOUT GUARANTEE:
+      The container cancels outer page margins with negative margins and locks
+      height to exactly calc(100vh - 4rem) so the page itself NEVER scrolls.
+      Only the 3 inner panes can scroll independently.
+    */
+    <div className="-m-4 sm:-m-6 lg:-m-8 flex h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] min-h-0 min-w-0 flex-col overflow-hidden bg-[#F8FAFC] dark:bg-slate-900 border-t border-[#E2E8F0] dark:border-slate-800">
+      {/* =====================================================
+          TOP INBOX UTILITY BAR (FIXED)
+      ====================================================== */}
+      <div className="shrink-0 h-14 border-b border-[#E2E8F0] dark:border-slate-800 px-4 sm:px-6 flex items-center justify-between bg-[#FFFFFF] dark:bg-slate-900 z-10">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB] dark:bg-blue-950/50 dark:text-blue-400">
+            <MessageSquare size={18} strokeWidth={2.2} />
           </div>
-
-          {/* ACTIONS */}
-
-          <div className="flex shrink-0 items-center gap-0.5">
-
-            <button
-              type="button"
-              title="Call"
-              aria-label="Call customer"
-              className="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
-            >
-              <Phone size={17} />
-            </button>
-
-            <button
-              type="button"
-              title="Video call"
-              aria-label="Video call customer"
-              className="hidden rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white sm:block"
-            >
-              <Video size={17} />
-            </button>
-
-            <button
-              type="button"
-              title="Customer details"
-              aria-label="Toggle customer details"
-              onClick={() =>
-                setShowCustomerPanel(
-                  (value) => !value
-                )
-              }
-              className={`
-                rounded-xl
-                p-2
-                transition
-
-                ${
-                  showCustomerPanel
-                    ? "bg-violet-50 text-violet-600 dark:bg-violet-950 dark:text-violet-400"
-                    : "text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
-                }
-              `}
-            >
-              <PanelRight size={17} />
-            </button>
-
-            <button
-              type="button"
-              title="More options"
-              aria-label="More options"
-              className="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
-            >
-              <MoreHorizontal size={17} />
-            </button>
+          <div className="flex items-center gap-2">
+            <h1 className="text-base font-bold text-[#0F172A] dark:text-white">
+              Inbox
+            </h1>
+            <span className="hidden sm:inline-flex rounded-full bg-[#EFF6FF] dark:bg-blue-950/60 border border-[#BFDBFE] dark:border-blue-800 px-2.5 py-0.5 text-[11px] font-semibold text-[#2563EB] dark:text-blue-300">
+              {conversations.length} total
+            </span>
+            {unreadTotal > 0 && (
+              <span className="rounded-full bg-[#DC2626] text-white px-2 py-0.5 text-[10px] font-bold">
+                {unreadTotal} unread
+              </span>
+            )}
           </div>
-        </header>
-
-        {/* =================================================
-            AI STATUS BAR
-        ================================================= */}
-
-        <div className="shrink-0 border-b border-slate-200 bg-white px-3 py-2.5 dark:border-slate-800 dark:bg-slate-900 sm:px-5">
-
-          {!aiEnabled ? (
-            <div className="flex items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400">
-
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
-                <Bot
-                  size={14}
-                  className="text-slate-500"
-                />
-              </span>
-
-              <span>
-                AI assistant is disabled
-              </span>
-            </div>
-          ) : !autoReply ? (
-            <div className="flex items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400">
-
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950">
-                <Bot
-                  size={14}
-                  className="text-violet-500"
-                />
-              </span>
-
-              <span>
-                Automatic replies are disabled
-              </span>
-            </div>
-          ) : selectedConversation.mode ===
-            "ai" ? (
-            <div className="flex items-center justify-between gap-3">
-
-              <div className="flex min-w-0 items-center gap-2.5">
-
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950">
-                  <Zap
-                    size={14}
-                    className="text-violet-600"
-                  />
-                </span>
-
-                <span className="truncate text-xs text-slate-500 dark:text-slate-400">
-
-                  <strong className="font-bold text-violet-700 dark:text-violet-400">
-                    AI is handling
-                  </strong>{" "}
-                  this conversation
-                </span>
-              </div>
-
-              {settings?.ai
-                ?.humanHandoff !== false && (
-                <button
-                  type="button"
-                  onClick={handleTakeOver}
-                  className="shrink-0 rounded-lg bg-violet-600 px-3 py-1.5 text-[10px] font-bold text-white shadow-sm shadow-violet-200 transition hover:bg-violet-700 dark:shadow-none"
-                >
-                  Take over
-                </button>
-              )}
-            </div>
-          ) : selectedConversation.mode ===
-            "human" ? (
-            <div className="flex items-center justify-between gap-3">
-
-              <div className="flex min-w-0 items-center gap-2.5">
-
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950">
-                  <User
-                    size={14}
-                    className="text-blue-600"
-                  />
-                </span>
-
-                <span className="truncate text-xs text-slate-500 dark:text-slate-400">
-
-                  <strong className="font-bold text-blue-700 dark:text-blue-400">
-                    You are handling
-                  </strong>{" "}
-                  this conversation
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleReturnToAI}
-                className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-              >
-                Return to AI
-              </button>
-            </div>
-          ) : selectedConversation.mode ===
-            "handoff" ? (
-            <div className="flex items-center justify-between gap-3">
-
-              <div className="flex min-w-0 items-center gap-2.5">
-
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-950">
-                  <Clock3
-                    size={14}
-                    className="text-amber-600"
-                  />
-                </span>
-
-                <span className="truncate text-xs text-slate-500 dark:text-slate-400">
-
-                  <strong className="font-bold text-amber-700 dark:text-amber-400">
-                    Human requested
-                  </strong>{" "}
-                  — this conversation needs attention.
-                </span>
-              </div>
-
-              {settings?.ai
-                ?.humanHandoff !== false && (
-                <button
-                  type="button"
-                  onClick={handleTakeOver}
-                  className="shrink-0 rounded-lg bg-amber-500 px-3 py-1.5 text-[10px] font-bold text-white shadow-sm transition hover:bg-amber-600"
-                >
-                  Take over
-                </button>
-              )}
-            </div>
-          ) : null}
         </div>
 
-        {/* =================================================
-            MESSAGE AREA
-        ================================================= */}
-
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-5 sm:px-5 sm:py-6">
-
-          <div className="mx-auto w-full max-w-3xl space-y-5">
-
-            {/* DATE */}
-
-            <div className="flex justify-center">
-
-              <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[10px] font-semibold text-slate-400 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                Today
-              </span>
-            </div>
-
-            {/* MESSAGES */}
-
-            {selectedMessages.length === 0 ? (
-              <div className="py-12 text-center">
-
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-slate-900">
-                  <MessageSquare
-                    size={20}
-                    className="text-slate-300"
-                  />
-                </div>
-
-                <p className="text-sm font-medium text-slate-500">
-                  No messages yet
-                </p>
-              </div>
-            ) : (
-              selectedMessages.map(
-                (item, index) => {
-                  const isCustomer =
-                    item.sender ===
-                    "customer";
-
-                  const isAI =
-                    item.sender === "ai";
-
-                  const isHuman =
-                    item.sender === "human";
-
-                  return (
-                    <div
-                      key={
-                        item.id ??
-                        `${selectedConversation.id}-${index}`
-                      }
-                      className={`flex ${
-                        isCustomer
-                          ? "justify-start"
-                          : "justify-end"
-                      }`}
-                    >
-
-                      <div
-                        className={`
-                          flex
-                          max-w-[92%]
-                          flex-col
-                          sm:max-w-[78%]
-
-                          ${
-                            isCustomer
-                              ? "items-start"
-                              : "items-end"
-                          }
-                        `}
-                      >
-
-                        {/* SENDER */}
-
-                        {!isCustomer && (
-                          <div
-                            className={`
-                              mb-1.5
-                              flex
-                              items-center
-                              gap-1.5
-                              text-[10px]
-                              font-bold
-
-                              ${
-                                isAI
-                                  ? "text-violet-500"
-                                  : "text-blue-500"
-                              }
-                            `}
-                          >
-                            {isAI ? (
-                              <>
-                                <span className="flex h-4 w-4 items-center justify-center rounded bg-violet-50 dark:bg-violet-950">
-                                  <Bot size={9} />
-                                </span>
-
-                                AI Assistant
-                              </>
-                            ) : (
-                              <>
-                                <span className="flex h-4 w-4 items-center justify-center rounded bg-blue-50 dark:bg-blue-950">
-                                  <User size={9} />
-                                </span>
-
-                                You
-                              </>
-                            )}
-                          </div>
-                        )}
-
-                        {/* MESSAGE */}
-
-                        <div
-                          className={`
-                            rounded-2xl
-                            px-4
-                            py-3
-                            text-sm
-                            leading-6
-                            shadow-sm
-
-                            ${
-                              isCustomer
-                                ? "rounded-tl-md border border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
-                                : isAI
-                                ? "rounded-tr-md bg-violet-600 text-white shadow-violet-100 dark:shadow-none"
-                                : "rounded-tr-md bg-slate-900 text-white dark:bg-slate-700"
-                            }
-                          `}
-                        >
-                          {item.content || ""}
-                        </div>
-
-                        {/* TIME */}
-
-                        <div className="mt-1.5 flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
-
-                          <span>
-                            {item.time || ""}
-                          </span>
-
-                          {isHuman && (
-                            <CheckCheck
-                              size={12}
-                              className="text-blue-500"
-                            />
-                          )}
-
-                          {isAI && (
-                            <Sparkles
-                              size={10}
-                              className="text-violet-400"
-                            />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }
+        {/* Right Status & Channel Pills */}
+        <div className="flex items-center gap-3 ">
+          {/* Channel Filters Pill Dropdown */}
+          <div className="hidden lg:flex items-center gap-1">
+            {["All", "WhatsApp", "Telegram", "Instagram", "Facebook", "Website"].map(
+              (ch) => (
+                <button
+                  key={ch}
+                  type="button"
+                  onClick={() => setChannelFilter(ch)}
+                  className={`px-2.5 py-1 rounded-sm text-xs font-semibold transition cursor-pointer ${channelFilter === ch
+                    ? "bg-blue-500 dark:bg-white dark:text-[#0F172A] shadow-xs"
+                    : " hover:bg-gray-200 hover:text-[#0F172A] hover:bg-[#F8FAFC] dark:text-slate-400 dark:hover:bg-slate-800"
+                    }`}
+                >
+                  {ch}
+                </button>
               )
             )}
+          </div>
 
-            {isAgentTyping && (
-              <div className="flex justify-end">
-                <div className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                  <span className="flex items-center gap-1">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Typing...</span>
+          {/* AI Active Indicator */}
+          <div className="inline-flex items-center gap-1.5 rounded-md bg-[#EFF6FF] dark:bg-blue-950/40 border border-[#BFDBFE] dark:border-blue-800 px-2.5 py-1 text-xs font-semibold text-[#2563EB] dark:text-blue-300">
+            <span className="h-2 w-2 rounded-full bg-[#16A34A] animate-pulse" />
+            <span>{aiEnabled ? "AI Active" : "AI Inactive"}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* =====================================================
+          THREE-PANE BODY (NO PAGE OVERFLOW)
+      ====================================================== */}
+      <div className="flex-1 min-h-0 flex overflow-hidden">
+        {/* ===================================================
+            PANE 1 (LEFT): CONVERSATION LIST (INDEPENDENT SCROLL)
+        ==================================================== */}
+        <aside
+          className={`
+            h-full min-h-0 w-full md:w-[320px] lg:w-[340px] xl:w-[360px] shrink-0 flex-col border-r border-[#E2E8F0] dark:border-slate-800 bg-[#FFFFFF] dark:bg-slate-900 overflow-hidden
+            ${mobileView === "list" ? "flex" : "hidden md:flex"}
+          `}
+        >
+          {/* Fixed Search & Filters Header */}
+          <div className="shrink-0 p-3.5 border-b border-[#E2E8F0] dark:border-slate-800 space-y-2.5 bg-[#FFFFFF] dark:bg-slate-900">
+            <div className="relative">
+              <Search
+                size={15}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none"
+              />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search conversations..."
+                className="w-full h-9 pl-9 pr-3 rounded-xl border border-[#E2E8F0] dark:border-slate-700 bg-[#F8FAFC] dark:bg-slate-800/60 text-xs text-[#0F172A] dark:text-white placeholder:text-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition"
+              />
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+              {["All", "Unread", "AI", "Human"].map((filter) => (
+                <button
+                  key={filter}
+                  type="button"
+                  onClick={() => setActiveFilter(filter)}
+                  className={`px-3 py-1 rounded-md text-[11px] font-semibold transition cursor-pointer shrink-0 ${activeFilter === filter
+                    ? "bg-[#2563EB] text-white shadow-xs"
+                    : "bg-[#F1F5F9] dark:bg-slate-800 text-[#64748] dark:text-slate-300 hover:bg-[#E2E8F0] dark:hover:bg-slate-700"
+                    }`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* SCROLL AREA 1: Only conversation list scrolls */}
+          <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-[#E2E8F0] dark:divide-slate-800">
+            {loading ? (
+              <div className="p-8 text-center space-y-2.5">
+                <Loader2
+                  size={24}
+                  className="mx-auto text-[#2563EB] animate-spin"
+                />
+                <p className="text-xs font-medium text-[#64748B] dark:text-slate-400">
+                  Loading conversations...
+                </p>
+              </div>
+            ) : error && conversations.length === 0 ? (
+              <div className="p-6 text-center space-y-2">
+                <AlertCircle size={24} className="mx-auto text-[#DC2626]" />
+                <p className="text-xs font-semibold text-[#0F172A] dark:text-slate-200">
+                  Failed to load conversations
+                </p>
+                <p className="text-[11px] text-[#64748B]">{error}</p>
+                <button
+                  type="button"
+                  onClick={refetch}
+                  className="mt-2 text-xs font-semibold text-[#2563EB] hover:underline inline-flex items-center gap-1"
+                >
+                  <RotateCcw size={12} />
+                  <span>Retry</span>
+                </button>
+              </div>
+            ) : (
+              <>
+                {(error || !isOnline) && conversations.length > 0 && (
+                  <div className="p-3 border-b border-amber-200 dark:border-amber-900/30 bg-amber-50/50 dark:bg-amber-950/20">
+                    <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-300">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900">
+                        <AlertTriangle size={12} />
+                      </span>
+                      <span>{!isOnline ? "Offline — showing saved data" : error}</span>
+                      {isOnline && error && (
+                        <button
+                          type="button"
+                          onClick={refetch}
+                          className="ml-auto text-xs font-semibold text-amber-700 hover:underline inline-flex items-center gap-1"
+                        >
+                          <RotateCcw size={11} />
+                          <span>Retry</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {filteredConversations.length === 0 ? (
+                  <div className="p-8 text-center space-y-2">
+                    <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-[#F1F5F9] dark:bg-slate-800 text-[#64748B]">
+                      <Search size={18} />
+                    </div>
+                    <p className="text-xs font-semibold text-[#0F172A] dark:text-slate-300">
+                      No conversations found
+                    </p>
+                    <p className="text-[11px] text-[#64748B]">
+                      Try another filter or search term.
+                    </p>
+                  </div>
+                ) : (
+                  filteredConversations.map((conv) => {
+                    const isSelected = conv.id === selectedId;
+                    const channelBadge = getChannelBadge(conv.channel);
+                    const unreadCount = Number(conv.unread || 0);
+
+                    return (
+                      <button
+                        key={conv.id}
+                        type="button"
+                        onClick={() => handleSelectConversation(conv.id)}
+                        className={`w-full text-left p-3.5 transition-all duration-150 flex items-start gap-3 cursor-pointer ${isSelected
+                          ? "bg-blue-50/70 dark:bg-blue-950/30 border-l-4 border-l-[#2563eb]"
+                          : "hover:bg-slate-50 dark:hover:bg-slate-800/60 border-l-4 border-l-transparent"
+                          }`}
+                      >
+                        {/* Customer Avatar with status dot */}
+                        <div className="relative shrink-0">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 dark:bg-slate-800 text-white font-bold text-xs shadow-xs">
+                            {conv.initials || "C"}
+                          </div>
+                          {conv.status === "online" && (
+                            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-500" />
+                          )}
+                        </div>
+
+                        {/* Metadata & Message */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-1">
+                            <h3
+                              className={`text-xs truncate ${unreadCount > 0
+                                ? "font-bold text-slate-900 dark:text-white"
+                                : "font-semibold text-slate-800 dark:text-slate-200"
+                                }`}
+                            >
+                              {conv.name || "Customer"}
+                            </h3>
+                            <span className="text-[10px] font-medium text-slate-400 shrink-0">
+                              {conv.time || ""}
+                            </span>
+                          </div>
+
+                          {/* Channel & Mode Badges */}
+                          <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[9px] font-semibold ${channelBadge.style}`}
+                            >
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${channelBadge.dot}`}
+                              />
+                              {channelBadge.label}
+                            </span>
+
+                            {conv.mode === "ai" && (
+                              <span className="inline-flex items-center gap-1 rounded-md bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 px-1.5 py-0.5 text-[9px] font-semibold text-purple-700 dark:text-purple-300">
+                                <Bot size={10} />
+                                AI
+                              </span>
+                            )}
+
+                            {conv.mode === "human" && (
+                              <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 text-[9px] font-semibold text-slate-700 dark:text-slate-300">
+                                <User size={10} />
+                                Agent
+                              </span>
+                            )}
+
+                            {conv.mode === "handoff" && (
+                              <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700 dark:text-amber-300">
+                                <AlertTriangle size={10} />
+                                Handoff
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Last Message Preview */}
+                          <div className="mt-1.5 flex items-center justify-between gap-2">
+                            <p
+                              className={`text-xs truncate ${unreadCount > 0
+                                ? "font-semibold text-slate-900 dark:text-white"
+                                : "text-slate-500 dark:text-slate-400"
+                                }`}
+                            >
+                              {conv.lastMessage || "No messages yet"}
+                            </p>
+
+                            {unreadCount > 0 && (
+                              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[#2563eb] px-1 text-[9px] font-bold text-white shrink-0">
+                                {unreadCount}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </>
+            )}
+          </div>
+        </aside>
+
+        {/* ===================================================
+            PANE 2 (CENTER): ACTIVE CHAT (INDEPENDENT SCROLL)
+        ==================================================== */}
+        <section
+          className={`
+            h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-slate-50/70 dark:bg-slate-950/50
+            ${mobileView === "chat" ? "flex" : "hidden md:flex"}
+          `}
+        >
+          {/* Fixed Chat Header */}
+          <header className="shrink-0 h-16 border-b border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 sm:px-6 flex items-center justify-between z-10">
+            <div className="flex items-center gap-3 min-w-0">
+              {/* Mobile Back Button */}
+              <button
+                type="button"
+                onClick={goBackToList}
+                className="md:hidden p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                aria-label="Back to conversations"
+              >
+                <ArrowLeft size={18} />
+              </button>
+
+              {/* Customer Avatar with status dot */}
+              <div className="relative shrink-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 dark:bg-slate-800 text-white font-bold text-xs shadow-xs">
+                  {activeConversation.initials || "C"}
+                </div>
+                {activeConversation.status === "online" && (
+                  <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-500" />
+                )}
+              </div>
+
+              {/* Customer Info */}
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                    {activeConversation.name}
+                  </h2>
+                  <span
+                    className={`rounded-md border px-2 py-0.5 text-[10px] font-semibold ${getChannelBadge(activeConversation.channel).style
+                      }`}
+                  >
+                    {getChannelBadge(activeConversation.channel).label}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  <span className="capitalize">
+                    {activeConversation.status === "online"
+                      ? "Online"
+                      : "Offline"}
+                  </span>
+                  <span>•</span>
+                  <span className="capitalize">
+                    {String(
+                      activeConversation.conversationStatus || "active"
+                    ).replace("_", " ")}
                   </span>
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* =================================================
-                AI INSIGHT
-            ================================================= */}
-
-            {settings?.ai
-              ?.productRecommendations !==
-              false && (
-              <div className="ml-auto w-full max-w-[94%] rounded-2xl border border-violet-100 bg-white p-4 shadow-sm dark:border-violet-900/50 dark:bg-slate-900 sm:max-w-[78%]">
-
-                <div className="mb-3 flex items-center gap-3">
-
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-sm">
-                    <Sparkles size={16} />
-                  </div>
-
-                  <div className="min-w-0">
-
-                    <p className="text-xs font-bold text-slate-900 dark:text-white">
-                      AI insight
-                    </p>
-
-                    <p className="mt-0.5 text-[10px] text-slate-400">
-                      {productsLoading
-                        ? "Loading products..."
-                        : resolvedProducts.length > 0
-                        ? `Products discussed: ${resolvedProducts.length}`
-                        : selectedProducts.length > 0
-                        ? `Products discussed: ${selectedProducts.length} (images loading...)`
-                        : "No products discussed yet"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/70">
-
-                  {productsLoading ? (
-                    <div className="flex items-center gap-3">
-                      <Loader2 className="h-4 w-4 animate-spin text-violet-500" />
-                      <span className="text-xs text-slate-500">Loading product images...</span>
-                    </div>
-                  ) : resolvedProducts.length > 0 ? (
-                    <div className="flex items-center gap-3">
-
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-slate-700">
-                        {resolvedProducts[0]?.image ? (
-                          <img
-                            src={resolvedProducts[0].image}
-                            alt={resolvedProducts[0].name}
-                            className="h-full w-full object-cover rounded-lg"
-                          />
-                        ) : (
-                          <ShoppingBag
-                            size={19}
-                            className="text-violet-500"
-                          />
-                        )}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-
-                        <p className="truncate text-xs font-bold text-slate-800 dark:text-slate-100">
-                          {resolvedProducts[0]?.name || "Product"}
-                        </p>
-
-                        <p className="mt-0.5 text-[10px] text-slate-400">
-                          {resolvedProducts.length > 1
-                            ? `+${resolvedProducts.length - 1} more discussed`
-                            : "Discussed in this conversation"}
-                        </p>
-                      </div>
-                    </div>
-                  ) : selectedProducts.length > 0 ? (
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-slate-700">
-                        <ShoppingBag size={19} className="text-violet-500" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-bold text-slate-800 dark:text-slate-100">
-                          {selectedProducts[0]}
-                        </p>
-                        <p className="mt-0.5 text-[10px] text-slate-400">
-                          {selectedProducts.length > 1
-                            ? `+${selectedProducts.length - 1} more discussed`
-                            : "Discussed in this conversation (image not loaded)"}
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-slate-700">
-                        <ShoppingBag size={19} className="text-violet-500" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-bold text-slate-800 dark:text-slate-100">
-                          No product recommendations yet
-                        </p>
-                        <p className="mt-0.5 text-[10px] text-slate-400">
-                          Discussed in this conversation
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* =================================================
-            COMPOSER
-        ================================================= */}
-
-        <div className="shrink-0 border-t border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:p-4">
-
-          {/* RESOLVED */}
-
-          {selectedConversation.conversationStatus ===
-            "resolved" && (
-            <div className="mx-auto mb-3 flex max-w-3xl items-center justify-between gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2.5 dark:border-emerald-900 dark:bg-emerald-950/30">
-
-              <div className="flex items-center gap-2 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
-
-                <CheckCircle2 size={14} />
-
-                Conversation resolved
-              </div>
-
+            {/* Actions */}
+            <div className="flex items-center gap-1 shrink-0">
               <button
                 type="button"
-                onClick={
-                  handleReopenConversation
-                }
-                className="text-[11px] font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+                title="Call Customer"
+                className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition"
               >
-                Reopen
+                <Phone size={16} />
               </button>
+              <button
+                type="button"
+                title="Video Call"
+                className="hidden sm:inline-flex p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition"
+              >
+                <Video size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCustomerPanel(!showCustomerPanel)}
+                title={
+                  showCustomerPanel
+                    ? "Hide Customer Panel"
+                    : "Show Customer Panel"
+                }
+                className={`p-2 rounded-xl transition ${showCustomerPanel
+                  ? "bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400"
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                  }`}
+              >
+                <PanelRight size={16} />
+              </button>
+            </div>
+          </header>
+
+          {/* Fixed AI Mode Banner */}
+          <div className="shrink-0 border-b border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xs px-4 py-2.5 flex items-center justify-between gap-3 z-10">
+            {!aiEnabled ? (
+              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500">
+                  <Bot size={14} />
+                </span>
+                <span>AI assistant is disabled in settings</span>
+              </div>
+            ) : !autoReply ? (
+              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500">
+                  <Bot size={14} />
+                </span>
+                <span>Automatic AI replies are paused</span>
+              </div>
+            ) : activeConversation.mode === "ai" ? (
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 min-w-0">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-400">
+                    <Bot size={14} />
+                  </span>
+                  <span className="truncate">
+                    <strong className="font-semibold text-slate-900 dark:text-white">
+                      AI is handling
+                    </strong>{" "}
+                    this conversation & customer inquiries
+                  </span>
+                </div>
+                {settings?.ai?.humanHandoff !== false && (
+                  <button
+                    type="button"
+                    onClick={handleTakeOver}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer shrink-0 shadow-xs"
+                  >
+                    <UserCheck size={13} />
+                    <span>Take over</span>
+                  </button>
+                )}
+              </div>
+            ) : activeConversation.mode === "human" ? (
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 min-w-0">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
+                    <User size={14} />
+                  </span>
+                  <span className="truncate">
+                    <strong className="font-semibold text-slate-900 dark:text-white">
+                      You are in control
+                    </strong>{" "}
+                    of this chat
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleReturnToAI}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-blue-200 bg-blue-50/60 dark:bg-blue-950/40 text-xs font-semibold text-blue-700 dark:text-blue-300 hover:bg-blue-100 transition cursor-pointer shrink-0"
+                >
+                  <Sparkles size={13} />
+                  <span>Return to AI</span>
+                </button>
+              </div>
+            ) : activeConversation.mode === "handoff" ? (
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-400 min-w-0">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-600">
+                    <Clock3 size={14} />
+                  </span>
+                  <span className="truncate font-semibold">
+                    Customer or AI requested human intervention!
+                  </span>
+                </div>
+                {settings?.ai?.humanHandoff !== false && (
+                  <button
+                    type="button"
+                    onClick={handleTakeOver}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition cursor-pointer shrink-0 shadow-xs"
+                  >
+                    <UserCheck size={13} />
+                    <span>Take over</span>
+                  </button>
+                )}
+              </div>
+            ) : null}
+          </div>
+
+          {/* SCROLL AREA 2: Only message history scrolls */}
+          {!hasSelectedConversation ? (
+            <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-8 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-slate-800 dark:text-blue-400 mb-3 shadow-xs">
+                <MessageSquare size={28} />
+              </div>
+              <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">
+                {loading
+                  ? "Loading your inbox..."
+                  : error && conversations.length === 0
+                    ? "Inbox is offline"
+                    : "Select a conversation"}
+              </h3>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-sm">
+                {loading
+                  ? "Connecting to message stream..."
+                  : error && conversations.length === 0
+                    ? "Couldn't connect to conversations service. The interface is ready to retry."
+                    : "Choose a customer from the left list to view chat history and start replying."}
+              </p>
+              {(error && conversations.length === 0) && (
+                <button
+                  type="button"
+                  onClick={refetch}
+                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#2563eb] text-white px-4 py-2 text-xs font-semibold shadow-sm hover:bg-blue-700 transition"
+                >
+                  <RotateCcw size={14} />
+                  Retry Connection
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-5">
+              {/* Date Separator */}
+              <div className="flex items-center justify-center">
+                <span className="rounded-full bg-slate-200/70 dark:bg-slate-800 px-3 py-1 text-[10px] font-semibold text-slate-600 dark:text-slate-400">
+                  Today
+                </span>
+              </div>
+
+              {(error || !isOnline) && (
+                <div className="flex items-center justify-center px-4 py-2 border-b border-amber-200/50 dark:border-amber-900/30 bg-amber-50/50 dark:bg-amber-950/20">
+                  <span className="flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-300">
+                    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900">
+                      <AlertTriangle size={10} />
+                    </span>
+                    <span>{!isOnline ? "Offline — showing saved data" : error}</span>
+                  </span>
+                </div>
+              )}
+
+              {/* Messages */}
+              {activeConversation.messages.map((item) => {
+                const isCustomer = item.sender === "customer";
+                const isAI = item.sender === "ai";
+                const isHuman = item.sender === "human";
+
+                return (
+                  <div
+                    key={item.id}
+                    className={`flex ${isCustomer ? "justify-start" : "justify-end"
+                      }`}
+                  >
+                    <div
+                      className={`flex max-w-[90%] sm:max-w-[75%] flex-col ${isCustomer ? "items-start" : "items-end"
+                        }`}
+                    >
+                      {/* Sender label */}
+                      {!isCustomer && (
+                        <div className="mb-1 flex items-center gap-1 text-[10px] font-semibold text-slate-400">
+                          {isAI ? (
+                            <>
+                              <Sparkles size={11} className="text-purple-500" />
+                              <span className="text-purple-600 dark:text-purple-400 font-semibold">
+                                ThreadOS AI
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <User size={11} className="text-blue-500" />
+                              <span className="text-slate-600 dark:text-slate-300 font-semibold">
+                                You (Agent)
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Bubble */}
+                      <div
+                        className={`rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-5 shadow-xs ${isCustomer
+                          ? "rounded-tl-xs bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200/80 dark:border-slate-700/80"
+                          : isAI
+                            ? "rounded-tr-xs bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+                            : "rounded-tr-xs bg-slate-900 dark:bg-slate-700 text-white"
+                          }`}
+                      >
+                        {item.content}
+                      </div>
+
+                      {/* Timestamp & checkmark */}
+                      <div className="mt-1 flex items-center gap-1 text-[10px] text-slate-400">
+                        <span>{item.time}</span>
+                        {isHuman && (
+                          <CheckCheck size={12} className="text-blue-500" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* ===================================================
+                  AI PRODUCT RECOMMENDATIONS (REAL CATALOG IMAGES)
+              ==================================================== */}
+              {settings?.ai?.productRecommendations !== false &&
+                activeConversation.productsDiscussed &&
+                activeConversation.productsDiscussed.length > 0 && (
+                  <div className="ml-auto w-full max-w-[92%] sm:max-w-[80%] rounded-2xl border border-blue-200 dark:border-blue-900/50 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
+                          <Sparkles size={14} />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-900 dark:text-white">
+                            AI Fashion Commerce Insight
+                          </p>
+                          <p className="text-[10px] text-slate-400">
+                            Products discussed with customer
+                          </p>
+                        </div>
+                      </div>
+                      <span className="rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 text-[10px] font-bold px-2 py-0.5 border border-blue-200/60 dark:border-blue-800">
+                        {activeConversation.productsDiscussed.length}{" "}
+                        recommended
+                      </span>
+                    </div>
+
+                    <div className="space-y-2">
+                      {activeConversation.productsDiscussed.map(
+                        (productName, idx) => {
+                          const catalogProduct = catalogMap.get(
+                            String(productName).toLowerCase().trim()
+                          );
+
+                          return (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                {/* Real Image or Icon */}
+                                <div className="h-12 w-12 rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0">
+                                  {catalogProduct?.image ? (
+                                    <img
+                                      src={catalogProduct.image}
+                                      alt={productName}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="flex h-full w-full items-center justify-center text-slate-400">
+                                      <ShoppingBag size={18} />
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                    {productName}
+                                  </p>
+                                  <p className="text-[11px] font-extrabold text-[#2563eb] mt-0.5">
+                                    {catalogProduct?.price
+                                      ? `${currency} ${Number(
+                                        catalogProduct.price
+                                      ).toFixed(2)}`
+                                      : "View Catalog"}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <a
+                                href={`/store/${sellerId}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-700 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 rounded-lg shadow-xs shrink-0"
+                              >
+                                <span>Store</span>
+                                <ExternalLink size={11} />
+                              </a>
+                            </div>
+                          );
+                        }
+                      )}
+                    </div>
+                  </div>
+                )}
+
+              <div ref={messagesEndRef} />
             </div>
           )}
 
-          {/* COMPOSER */}
-
-          <form
-            onSubmit={handleSendMessage}
-            className="mx-auto w-full max-w-3xl"
-          >
-
-            <div
-              className={`
-                overflow-hidden
-                rounded-2xl
-                border
-                border-slate-200
-                bg-white
-                shadow-sm
-                transition
-
-                focus-within:border-violet-300
-                focus-within:ring-4
-                focus-within:ring-violet-50
-
-                dark:border-slate-700
-                dark:bg-slate-900
-                dark:focus-within:border-violet-700
-                dark:focus-within:ring-violet-950
-
-                ${
-                  !allowCustomerChat
-                    ? "opacity-60"
-                    : ""
-                }
-              `}
-            >
-
-              <textarea
-                value={message}
-                onChange={(event) => {
-                  setMessage(event.target.value);
-                  setIsAgentTyping(event.target.value.length > 0);
-                }}
-                onKeyDown={(event) => {
-                  if (
-                    event.key === "Enter" &&
-                    !event.shiftKey
-                  ) {
-                    event.preventDefault();
-                    handleSendMessage(event);
-                  }
-                }}
-                rows={2}
-                placeholder={
-                  !allowCustomerChat
-                    ? "Customer chat is disabled"
-                    : "Write a message..."
-                }
-                disabled={
-                  !allowCustomerChat
-                }
-                className="
-                  w-full
-                  resize-none
-                  bg-transparent
-                  px-4
-                  pt-3.5
-                  text-sm
-                  text-slate-900
-                  outline-none
-                  placeholder:text-slate-400
-                  dark:text-white
-                  disabled:cursor-not-allowed
-                "
-              />
-
-              <div className="flex items-center justify-between px-2.5 pb-2.5 pt-2">
-
-                <div className="flex items-center gap-1">
-
-                  <button
-                    type="button"
-                    disabled={
-                      !allowCustomerChat
-                    }
-                    className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-violet-600 disabled:cursor-not-allowed dark:hover:bg-slate-800"
-                  >
-                    <Paperclip size={16} />
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={
-                      !allowCustomerChat
-                    }
-                    className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-violet-600 disabled:cursor-not-allowed dark:hover:bg-slate-800"
-                  >
-                    <Smile size={16} />
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-2">
-
-                  {selectedConversation.conversationStatus !==
-                    "resolved" && (
-                    <button
-                      type="button"
-                      onClick={
-                        handleMarkResolved
-                      }
-                      className="hidden rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-bold text-slate-500 transition hover:bg-slate-50 hover:text-slate-800 dark:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-white sm:block sm:text-xs"
-                    >
-                      Resolve
-                    </button>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={
-                      !message.trim() ||
-                      !allowCustomerChat ||
-                      sendingStates[
-                        selectedId
-                      ] === "sending"
-                    }
-                    className={`
-                      flex
-                      items-center
-                      gap-2
-                      rounded-lg
-                      px-3.5
-                      py-2
-                      text-[10px]
-                      font-bold
-                      text-white
-                      shadow-sm
-                      transition
-                      disabled:cursor-not-allowed
-                      disabled:opacity-40
-                      sm:text-xs
-
-                      ${
-                        sendingStates[
-                          selectedId
-                        ] === "sending"
-                          ? "bg-amber-500"
-                          : sendingStates[
-                              selectedId
-                            ] === "failed"
-                          ? "bg-red-500 hover:bg-red-600"
-                          : "bg-violet-600 hover:bg-violet-700"
-                      }
-                    `}
-                  >
-
-                    {sendingStates[
-                      selectedId
-                    ] === "sending"
-                      ? "Sending..."
-                      : sendingStates[
-                          selectedId
-                        ] === "failed"
-                      ? "Failed - Retry"
-                      : "Send"}
-
-                    {sendingStates[
-                      selectedId
-                    ] === "sending" ? (
-                      <Loader2
-                        size={13}
-                        className="animate-spin"
-                      />
-                    ) : sendingStates[
-                        selectedId
-                      ] === "failed" ? (
-                      <RotateCcw size={13} />
-                    ) : (
-                      <Send size={13} />
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <p className="mt-2 hidden text-center text-[10px] font-medium text-slate-400 sm:block">
-              Press Enter to send • Shift + Enter for a new line
-            </p>
-          </form>
-        </div>
-      </section>
-
-      {/* ===================================================
-          RIGHT — CUSTOMER DETAILS
-      =================================================== */}
-
-      {showCustomerPanel && (
-        <aside className="hidden h-full min-h-0 w-[285px] shrink-0 flex-col border-l border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 xl:flex 2xl:w-[320px]">
-
-          {/* HEADER */}
-
-          <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-
-            <div className="min-w-0">
-
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                Customer details
-              </h3>
-
-              <p className="mt-0.5 text-[10px] text-slate-400">
-                Customer profile
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() =>
-                setShowCustomerPanel(false)
-              }
-              aria-label="Close customer details"
-              className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
-            >
-              <X size={16} />
-            </button>
-          </div>
-
-          {/* DETAILS */}
-
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-
-            {/* PROFILE */}
-
-            <div className="border-b border-slate-100 px-5 py-6 text-center dark:border-slate-800">
-
-              <div className="relative mx-auto w-fit">
-
-                <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-xl font-bold text-white shadow-lg shadow-violet-100 dark:shadow-none">
-                  {selectedConversation.initials ||
-                    "?"}
-                </div>
-
-                <span
-                  className={`
-                    absolute
-                    -bottom-1
-                    -right-1
-                    h-5
-                    w-5
-                    rounded-full
-                    border-4
-                    border-white
-                    dark:border-slate-900
-
-                    ${
-                      selectedConversation.status ===
-                      "online"
-                        ? "bg-emerald-500"
-                        : "bg-slate-300"
-                    }
-                  `}
-                />
-              </div>
-
-              <h4 className="mt-4 text-sm font-bold text-slate-900 dark:text-white">
-                {getTelegramDisplayName(selectedConversation)}
-              </h4>
-
-              <p className="mt-1 text-xs text-slate-400">
-                {selectedConversation.status ===
-                "online"
-                  ? "Active now"
-                  : "Offline"}
-              </p>
-
-              {/* CONTACT */}
-
-              <div className="mt-5 space-y-2 text-left">
-
-                <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800">
-
-                  <Phone
-                    size={14}
-                    className="shrink-0 text-violet-500"
-                  />
-
-                  <span className="truncate text-xs font-medium text-slate-600 dark:text-slate-300">
-                    {selectedConversation.phone ||
-                      "No phone number"}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800">
-
-                  <Mail
-                    size={14}
-                    className="shrink-0 text-blue-500"
-                  />
-
-                  <span className="truncate text-xs font-medium text-slate-600 dark:text-slate-300">
-                    {selectedConversation.email ||
-                      "No email"}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800">
-
-                  <MapPin
-                    size={14}
-                    className="shrink-0 text-emerald-500"
-                  />
-
-                  <span className="truncate text-xs font-medium text-slate-600 dark:text-slate-300">
-                    {selectedConversation.location ||
-                      "No location"}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* STATS */}
-
-            <div className="grid grid-cols-2 border-b border-slate-100 dark:border-slate-800">
-
-              <div className="border-r border-slate-100 px-4 py-4 text-center dark:border-slate-800">
-
-                <div className="mx-auto mb-1 flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950">
-                  <ShoppingBag
-                    size={13}
-                    className="text-blue-500"
-                  />
-                </div>
-
-                <p className="text-lg font-bold text-slate-900 dark:text-white">
-                  {selectedOrders.length}
-                </p>
-
-                <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                  Orders
-                </p>
-              </div>
-
-              <div className="px-4 py-4 text-center">
-
-                <div className="mx-auto mb-1 flex h-7 w-7 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950">
-                  <Sparkles
-                    size={13}
-                    className="text-violet-500"
-                  />
-                </div>
-
-                <p className="text-lg font-bold text-slate-900 dark:text-white">
-                  {selectedProducts.length}
-                </p>
-
-                <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                  Products
-                </p>
-              </div>
-            </div>
-
-            {/* ORDERS */}
-
-            <div className="border-b border-slate-100 px-5 py-5 dark:border-slate-800">
-
-              <div className="mb-3 flex items-center justify-between">
-
-                <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Orders
-                </h4>
-
-                <ChevronDown
-                  size={14}
-                  className="text-slate-400"
-                />
-              </div>
-
-              {selectedOrders.length ===
-              0 ? (
-                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-5 text-center dark:border-slate-700 dark:bg-slate-800/50">
-
-                  <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-white dark:bg-slate-700">
-                    <ShoppingBag
-                      size={16}
-                      className="text-slate-300"
-                    />
-                  </div>
-
-                  <p className="text-xs font-medium text-slate-400">
-                    No orders yet
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-
-                  {selectedOrders.map(
-                    (order, index) => (
-                      <div
-                        key={
-                          order.id ??
-                          `order-${index}`
-                        }
-                        className="rounded-xl border border-slate-200 bg-white p-3 transition hover:border-violet-200 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800"
-                      >
-
-                        <div className="flex items-start justify-between gap-2">
-
-                          <div className="min-w-0">
-
-                            <p className="truncate text-xs font-bold text-slate-800 dark:text-slate-100">
-                              {order.product ||
-                                "Order"}
-                            </p>
-
-                            <p className="mt-1 text-[10px] font-medium text-slate-400">
-                              {order.id ||
-                                "Order ID unavailable"}
-                            </p>
-                          </div>
-
-                          <span className="shrink-0 text-xs font-bold text-slate-900 dark:text-white">
-                            {order.amount ||
-                              ""}
-                          </span>
-                        </div>
-
-                        <div className="mt-3">
-
-                          <span
-                            className={`
-                              inline-flex
-                              rounded-md
-                              px-2
-                              py-1
-                              text-[9px]
-                              font-bold
-
-                              ${
-                                order.status ===
-                                "Completed"
-                                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
-                                  : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
-                              }
-                            `}
-                          >
-                            {order.status ||
-                              "Pending"}
-                          </span>
-                        </div>
-                      </div>
-                    )
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* PRODUCTS */}
-
-            <div className="border-b border-slate-100 px-5 py-5 dark:border-slate-800">
-
-              <h4 className="mb-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Products discussed
-              </h4>
-
-              {selectedProducts.length ===
-              0 ? (
-                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-5 text-center dark:border-slate-700 dark:bg-slate-800/50">
-
-                  <ShoppingBag
-                    size={17}
-                    className="mx-auto mb-2 text-slate-300"
-                  />
-
-                  <p className="text-xs font-medium text-slate-400">
-                    No products discussed
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-
-                  {selectedProducts.map(
-                    (product, index) => (
-                      <div
-                        key={`${product}-${index}`}
-                        className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800"
-                      >
-
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm dark:bg-slate-700">
-                          <ShoppingBag
-                            size={14}
-                            className="text-violet-500"
-                          />
-                        </div>
-
-                        <p className="truncate text-xs font-semibold text-slate-700 dark:text-slate-200">
-                          {product}
-                        </p>
-                      </div>
-                    )
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* NOTES */}
-
-            <div className="px-5 py-5">
-
-              <div className="mb-3 flex items-center justify-between">
-
-                <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Notes
-                </h4>
-
+          {/* Fixed Bottom Message Composer */}
+          <div className="shrink-0 p-3 sm:p-4 border-t border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 z-10">
+            {activeConversation.conversationStatus === "resolved" && (
+              <div className="mb-2.5 flex items-center justify-between rounded-xl bg-slate-50 dark:bg-slate-800 px-3 py-2 border border-slate-200 dark:border-slate-700 text-xs">
+                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium">
+                  <CheckCheck size={14} className="text-emerald-500" />
+                  Conversation was marked resolved
+                </span>
                 <button
                   type="button"
-                  className="rounded-md px-2 py-1 text-[10px] font-bold text-violet-600 transition hover:bg-violet-50 dark:hover:bg-violet-950"
+                  onClick={handleReopenConversation}
+                  className="font-bold text-blue-600 hover:underline cursor-pointer"
                 >
-                  + Add
+                  Reopen
                 </button>
               </div>
+            )}
 
-              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-5 text-center dark:border-slate-700 dark:bg-slate-800/50">
+            <form
+              onSubmit={handleSendMessage}
+              className="w-full max-w-3xl mx-auto"
+            >
+              <div
+                className={`rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 p-2 transition focus-within:border-blue-500 focus-within:bg-white dark:focus-within:bg-slate-900 shadow-xs ${!hasSelectedConversation || !allowCustomerChat
+                  ? "opacity-60"
+                  : ""
+                  }`}
+              >
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage(e);
+                    }
+                  }}
+                  rows={2}
+                  disabled={!hasSelectedConversation || !allowCustomerChat || !isOnline}
+                  placeholder={
+                    !hasSelectedConversation
+                      ? "Select a conversation to reply..."
+                      : !allowCustomerChat
+                        ? "Customer chat is disabled in settings"
+                        : !isOnline
+                          ? "You're offline — reconnect to send messages"
+                          : "Type your reply... (Press Enter to send)"
+                  }
+                  className="w-full resize-none bg-transparent px-2 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed"
+                />
 
-                <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-white dark:bg-slate-700">
-                  <UserRound
-                    size={16}
-                    className="text-slate-300"
-                  />
+                <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      title="Attach file"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700 transition"
+                    >
+                      <Paperclip size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      title="Insert emoji"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700 transition"
+                    >
+                      <Smile size={15} />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {activeConversation.conversationStatus !== "resolved" &&
+                      hasSelectedConversation && (
+                        <button
+                          type="button"
+                          onClick={handleMarkResolved}
+                          className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                        >
+                          Resolve
+                        </button>
+                      )}
+
+                    <button
+                      type="submit"
+                      disabled={
+                        !hasSelectedConversation ||
+                        !message.trim() ||
+                        !allowCustomerChat ||
+                        !isOnline ||
+                        sendingStates[selectedId] === "sending"
+                      }
+                      className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-sm transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${sendingStates[selectedId] === "sending"
+                        ? "bg-amber-600"
+                        : sendingStates[selectedId] === "failed"
+                          ? "bg-rose-600"
+                          : "bg-[#2563eb] hover:bg-blue-700"
+                        }`}
+                    >
+                      <span>
+                        {sendingStates[selectedId] === "sending"
+                          ? "Sending..."
+                          : sendingStates[selectedId] === "failed"
+                            ? "Failed - Retry"
+                            : "Send"}
+                      </span>
+                      {sendingStates[selectedId] === "sending" ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : sendingStates[selectedId] === "failed" ? (
+                        <RotateCcw size={13} />
+                      ) : (
+                        <Send size={13} />
+                      )}
+                    </button>
+                  </div>
                 </div>
+              </div>
+            </form>
+          </div>
+        </section>
 
-                <p className="text-xs leading-5 text-slate-400">
-                  Add notes about this customer.
-                </p>
+        {/* ===================================================
+            PANE 3 (RIGHT): CUSTOMER PROFILE (INDEPENDENT SCROLL)
+        ==================================================== */}
+        {showCustomerPanel && (
+          <aside className="hidden xl:flex h-full min-h-0 w-[300px] 2xl:w-[340px] shrink-0 flex-col border-l border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
+            {/* Fixed Header */}
+            <div className="shrink-0 h-16 border-b border-slate-200/90 dark:border-slate-800 px-5 flex items-center justify-between bg-white dark:bg-slate-900 z-10">
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Customer Profile
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCustomerPanel(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* SCROLL AREA 3: Only customer details scroll */}
+            <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-5">
+              {/* Avatar & Name */}
+              <div className="text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-900 dark:bg-slate-800 text-white font-bold text-lg shadow-sm">
+                  {activeConversation.initials || "C"}
+                </div>
+                <h4 className="mt-3 text-sm font-bold text-slate-900 dark:text-white">
+                  {activeConversation.name}
+                </h4>
+                <div className="mt-1 flex items-center justify-center gap-1.5 text-xs text-slate-500">
+                  <span
+                    className={`h-2 w-2 rounded-full ${activeConversation.status === "online"
+                      ? "bg-emerald-500"
+                      : "bg-slate-300"
+                      }`}
+                  />
+                  <span>
+                    {activeConversation.status === "online"
+                      ? "Active now"
+                      : "Offline"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Contact Information Card */}
+              <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3 space-y-2.5 text-xs">
+                <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-300 truncate">
+                  <Phone size={14} className="text-slate-400 shrink-0" />
+                  <span className="truncate">
+                    {activeConversation.phone || "—"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-300 truncate">
+                  <Mail size={14} className="text-slate-400 shrink-0" />
+                  <span className="truncate">
+                    {activeConversation.email || "—"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-300 truncate">
+                  <MapPin size={14} className="text-slate-400 shrink-0" />
+                  <span className="truncate">
+                    {activeConversation.location || "—"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Quick stats */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3 text-center">
+                  <p className="text-lg font-bold text-slate-900 dark:text-white">
+                    {activeConversation.orders?.length || 0}
+                  </p>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase">
+                    Orders
+                  </p>
+                </div>
+                <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3 text-center">
+                  <p className="text-lg font-bold text-slate-900 dark:text-white">
+                    {activeConversation.productsDiscussed?.length || 0}
+                  </p>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase">
+                    Products
+                  </p>
+                </div>
+              </div>
+
+              {/* Products Discussed Section with real images */}
+              <div>
+                <h5 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2.5">
+                  Products Discussed
+                </h5>
+                {!activeConversation.productsDiscussed ||
+                  activeConversation.productsDiscussed.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-4 text-center">
+                    <ShoppingBag
+                      size={18}
+                      className="mx-auto text-slate-300 mb-1"
+                    />
+                    <p className="text-xs text-slate-400">
+                      No products discussed yet
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {activeConversation.productsDiscussed.map((prod, i) => {
+                      const cProd = catalogMap.get(
+                        String(prod).toLowerCase().trim()
+                      );
+                      return (
+                        <div
+                          key={i}
+                          className="flex items-center gap-2.5 p-2 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40"
+                        >
+                          <div className="h-10 w-10 rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0">
+                            {cProd?.image ? (
+                              <img
+                                src={cProd.image}
+                                alt={prod}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-slate-400">
+                                <ShoppingBag size={16} />
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                              {prod}
+                            </p>
+                            {cProd?.price && (
+                              <p className="text-[11px] font-extrabold text-[#2563eb]">
+                                {currency} {Number(cProd.price).toFixed(2)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Orders Section */}
+              <div>
+                <h5 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2.5">
+                  Order History
+                </h5>
+                {!activeConversation.orders ||
+                  activeConversation.orders.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-4 text-center">
+                    <ShoppingBag
+                      size={18}
+                      className="mx-auto text-slate-300 mb-1"
+                    />
+                    <p className="text-xs text-slate-400">No orders yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {activeConversation.orders.map((ord) => (
+                      <div
+                        key={ord.id}
+                        className="rounded-xl border border-slate-100 dark:border-slate-800 p-2.5 space-y-1.5"
+                      >
+                        <div className="flex items-start justify-between gap-1">
+                          <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                            {ord.product || "Product"}
+                          </p>
+                          <span className="text-xs font-bold text-slate-900 dark:text-white shrink-0">
+                            {ord.amount}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] text-slate-400">
+                          <span>{ord.id}</span>
+                          <span className="rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 font-semibold">
+                            {ord.status || "Completed"}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        </aside>
-      )}
+          </aside>
+        )}
+      </div>
     </div>
   );
 };

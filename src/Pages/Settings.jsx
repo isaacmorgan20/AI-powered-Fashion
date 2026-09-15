@@ -40,8 +40,10 @@ import {
   Loader2,
   X,
   Zap,
+  Edit3,
 } from "lucide-react";
 import { useSettings } from "../hooks/useSettings";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import useAuthStore from "../Store/AuthStore";
 import { api } from "../service/api";
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
@@ -120,6 +122,7 @@ const settingsSections = [
 
 const Settings = () => {
   const { settings, loading, error, saving, updateSettings, refetch } = useSettings();
+  const { isOnline } = useOnlineStatus();
   const profile = useAuthStore((s) => s.profile);
 
   /* =======================================================
@@ -1085,7 +1088,7 @@ const updateChannel = async (channelType, enabled) => {
     );
   }
 
-  if (error) {
+  if (error && !settings) {
     return (
       <div className="flex h-full min-h-0 w-full items-center justify-center bg-gradient-to-br from-rose-50 via-violet-50 to-sky-50 p-6 dark:from-slate-950 dark:via-violet-950/30 dark:to-slate-950">
         <div className="max-w-sm text-center">
@@ -1099,12 +1102,15 @@ const updateChannel = async (channelType, enabled) => {
   }
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-gradient-to-br from-violet-50 via-white to-sky-50 text-gray-900 dark:from-slate-950 dark:via-violet-950/20 dark:to-slate-950 dark:text-white">
+  <div className="flex flex-1 min-h-0 w-full max-w-none flex-col overflow-hidden bg-gradient-to-br from-violet-50 via-white to-sky-50
+  text-gray-900
+  dark:from-slate-950 dark:via-violet-950/20 dark:to-slate-950 dark:text-white
+">
       {/* =====================================================
           PAGE HEADER
       ====================================================== */}
 
-      <header className="flex shrink-0 items-center justify-between border-b border-violet-100 bg-white/90 px-4 py-4 shadow-sm backdrop-blur dark:border-violet-900/40 dark:bg-slate-900/90 sm:px-6">
+      <header className="flex shrink-0 items-center justify-between border-b border-violet-100 bg-white/90 border-1 px-4 py-4 shadow-sm backdrop-blur dark:border-violet-900/40 dark:bg-slate-900/90 sm:px-6">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-lg shadow-violet-500/20">
@@ -1164,6 +1170,25 @@ const updateChannel = async (channelType, enabled) => {
       {saveError && (
         <div className="shrink-0 border-b border-rose-100 bg-gradient-to-r from-rose-50 to-orange-50 px-4 py-2 text-xs font-medium text-rose-700 dark:border-rose-900/40 dark:from-rose-950/30 dark:to-orange-950/20 dark:text-rose-300">
           {saveError}
+        </div>
+      )}
+
+      {(error || !isOnline) && settings && (
+        <div className="shrink-0 border-b border-amber-200 dark:border-amber-900/30 bg-amber-50/50 dark:bg-amber-950/20 px-4 py-2 text-xs font-medium text-amber-700 dark:text-amber-300">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900">
+                <AlertTriangle size={12} />
+              </span>
+              {!isOnline ? "Offline — showing saved settings" : "Connection issue — using cached settings"}
+            </span>
+            {isOnline && error && (
+              <button onClick={refetch} className="text-xs font-semibold text-amber-700 hover:underline inline-flex items-center gap-1">
+                <RotateCcw size={11} />
+                <span>Retry</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
 

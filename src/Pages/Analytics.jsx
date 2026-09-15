@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   BarChart3,
   MessageSquare,
@@ -11,7 +11,6 @@ import {
   Users,
   ArrowUpRight,
   AlertTriangle,
-  ChevronDown,
   MessageCircle,
   Globe2,
   Share2,
@@ -24,6 +23,9 @@ import {
 } from "lucide-react";
 import { useAnalytics } from "../hooks/useAnalytics";
 import { useSettings } from "../hooks/useSettings";
+import {
+  Select,
+} from "../components/ui";
 
 /* =========================================================
    CHANNEL ICON
@@ -216,50 +218,47 @@ const Analytics = () => {
           <div className="min-w-0">
             <div className="flex items-center gap-3">
 
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/25">
-                <BarChart3
-                  size={20}
-                  strokeWidth={2}
-                />
-              </div>
+<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <BarChart3
+                size={20}
+                strokeWidth={2}
+              />
+            </div>
 
               <div>
-                <h1 className="truncate text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                <h1 className="text-lg font-bold text-text-primary">
                   Analytics
                 </h1>
 
                 <div className="mt-0.5 flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_7px_rgba(16,185,129,0.6)]" />
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="absolute inset-0 rounded-full bg-success animate-ping opacity-60" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-success" />
+                  </span>
 
-                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  <p className="mt-0.5 text-xs font-medium text-text-muted">
                     Business intelligence
                   </p>
                 </div>
               </div>
             </div>
 
-            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-2 text-xs text-text-muted">
               Track customer engagement, AI performance and sales.
             </p>
           </div>
 
           <div className="relative shrink-0">
-            <select
+            <Select
               value={range}
-              onChange={(event) =>
-                setRange(event.target.value)
-              }
-              className="appearance-none rounded-xl border border-violet-200 bg-violet-50/70 py-2.5 pl-4 pr-10 text-xs font-semibold text-violet-700 outline-none transition hover:border-violet-300 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 dark:border-violet-800 dark:bg-violet-900/20 dark:text-violet-300"
-            >
-              <option value="Today">Today</option>
-              <option value="7 days">7 days</option>
-              <option value="30 days">30 days</option>
-              <option value="90 days">90 days</option>
-            </select>
-
-            <ChevronDown
-              size={15}
-              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-violet-500"
+              onChange={setRange}
+              options={[
+                { value: "Today", label: "Today" },
+                { value: "7 days", label: "7 days" },
+                { value: "30 days", label: "30 days" },
+                { value: "90 days", label: "90 days" },
+              ]}
+              className="w-full sm:w-auto"
             />
           </div>
         </div>
@@ -1149,94 +1148,51 @@ const MetricCard = ({
 }) => {
   const accentMap = {
     info: {
-      iconBg:
-        "bg-blue-100 dark:bg-blue-900/30",
-      iconColor:
-        "text-blue-600 dark:text-blue-400",
-      border:
-        "border-blue-200 dark:border-blue-900/50",
-      top:
-        "from-blue-500 to-cyan-500",
-      shadow:
-        "shadow-blue-500/10",
+      iconBg: "bg-info/10",
+      iconColor: "text-info",
+      border: "border-info/20",
+      top: "from-info-500 to-info-600",
+      shadow: "shadow-info/10",
     },
 
     ai: {
-      iconBg:
-        "bg-violet-100 dark:bg-violet-900/30",
-      iconColor:
-        "text-violet-600 dark:text-violet-400",
-      border:
-        "border-violet-200 dark:border-violet-900/50",
-      top:
-        "from-violet-500 to-purple-600",
-      shadow:
-        "shadow-violet-500/10",
-    },
-
-    social: {
-      iconBg:
-        "bg-pink-100 dark:bg-pink-900/30",
-      iconColor:
-        "text-pink-600 dark:text-pink-400",
-      border:
-        "border-pink-200 dark:border-pink-900/50",
-      top:
-        "from-pink-500 to-rose-500",
-      shadow:
-        "shadow-pink-500/10",
-    },
-
-    order: {
-      iconBg:
-        "bg-emerald-100 dark:bg-emerald-900/30",
-      iconColor:
-        "text-emerald-600 dark:text-emerald-400",
-      border:
-        "border-emerald-200 dark:border-emerald-900/50",
-      top:
-        "from-emerald-500 to-teal-500",
-      shadow:
-        "shadow-emerald-500/10",
-    },
-
-    primary: {
-      iconBg:
-        "bg-violet-100 dark:bg-violet-900/30",
-      iconColor:
-        "text-violet-600 dark:text-violet-400",
-      border:
-        "border-violet-200 dark:border-violet-900/50",
-      top:
-        "from-violet-500 to-purple-600",
-      shadow:
-        "shadow-violet-500/10",
+      iconBg: "bg-primary/10",
+      iconColor: "text-primary",
+      border: "border-primary/20",
+      top: "from-primary-500 to-primary-600",
+      shadow: "shadow-primary/10",
     },
 
     success: {
-      iconBg:
-        "bg-emerald-100 dark:bg-emerald-900/30",
-      iconColor:
-        "text-emerald-600 dark:text-emerald-400",
-      border:
-        "border-emerald-200 dark:border-emerald-900/50",
-      top:
-        "from-emerald-500 to-teal-500",
-      shadow:
-        "shadow-emerald-500/10",
+      iconBg: "bg-success/10",
+      iconColor: "text-success",
+      border: "border-success/20",
+      top: "from-success-500 to-success-600",
+      shadow: "shadow-success/10",
     },
 
     warning: {
-      iconBg:
-        "bg-orange-100 dark:bg-orange-900/30",
-      iconColor:
-        "text-orange-600 dark:text-orange-400",
-      border:
-        "border-orange-200 dark:border-orange-900/50",
-      top:
-        "from-orange-500 to-amber-500",
-      shadow:
-        "shadow-orange-500/10",
+      iconBg: "bg-warning/10",
+      iconColor: "text-warning",
+      border: "border-warning/20",
+      top: "from-warning-500 to-warning-600",
+      shadow: "shadow-warning/10",
+    },
+
+    error: {
+      iconBg: "bg-error/10",
+      iconColor: "text-error",
+      border: "border-error/20",
+      top: "from-error-500 to-error-600",
+      shadow: "shadow-error/10",
+    },
+
+    primary: {
+      iconBg: "bg-primary/10",
+      iconColor: "text-primary",
+      border: "border-primary/20",
+      top: "from-primary-500 to-primary-600",
+      shadow: "shadow-primary/10",
     },
   };
 

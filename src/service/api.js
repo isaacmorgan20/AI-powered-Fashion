@@ -222,6 +222,14 @@ export const api = {
     }),
   },
 
+  // Search
+  search: {
+    global: (q, limit = 10) => {
+      const params = new URLSearchParams({ q, limit: limit.toString() });
+      return fetchWithAuth(`/search?${params}`);
+    },
+  },
+
   // Channels
   channels: {
     list: () => fetchWithAuth('/channels'),

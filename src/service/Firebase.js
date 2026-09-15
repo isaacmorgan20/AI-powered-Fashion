@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 // TODO: Add SDKs for Firebase products that you want to use
@@ -22,7 +22,21 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 // const analytics = getAnalytics(app);
-const db = getFirestore(app)
-const auth = getAuth(app)
-const storage = getStorage(app)
-export {auth, db, storage, getAuth}
+const db = getFirestore(app);
+const auth = getAuth(app);
+const storage = getStorage(app);
+
+// Enable Firestore offline persistence (IndexedDB)
+if (typeof window !== 'undefined') {
+  enableIndexedDbPersistence(db).catch((err) => {
+    if (err.code === 'failed-precondition') {
+      console.warn('Firestore persistence failed: Multiple tabs open, persistence can only be enabled in one tab at a time.');
+    } else if (err.code === 'unimplemented') {
+      console.warn('Firestore persistence not supported by this browser.');
+    } else {
+      console.error('Firestore persistence error:', err);
+    }
+  });
+}
+
+export { auth, db, storage, getAuth };

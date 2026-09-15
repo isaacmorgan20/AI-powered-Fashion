@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-primary: var(--color-bg-primary);
+  --color-bg-secondary: var(--color-bg-secondary);
+  --color-bg-tertiary: var(--color-bg-tertiary);
+  --color-bg-inverse: var(--color-bg-inverse);
+
+  --color-surface-primary: var(--color-surface-primary);
+  --color-surface-muted: var(--color-surface-muted);
+  --color-surface-hover: var(--color-surface-hover);
+
+  --color-border-light: var(--color-border-light);
+  --color-border-medium: var(--color-border-medium);
+  --color-border-focus: var(--color-border-focus);
+
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-inverse: var(--color-text-inverse);
+
+  --color-primary: var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-primary-light: var(--color-primary-light);
+  --color-primary-foreground: var(--color-primary-foreground);
+
+  --color-success: var(--color-success);
+  --color-success-light: var(--color-success-light);
+  --color-success-foreground: var(--color-success-foreground);
+
+  --color-warning: var(--color-warning);
+  --color-warning-light: var(--color-warning-light);
+  --color-warning-foreground: var(--color-warning-foreground);
+
+  --color-error: var(--color-error);
+  --color-error-light: var(--color-error-light);
+  --color-error-foreground: var(--color-error-foreground);
+
+  --color-info: var(--color-info);
+  --color-info-light: var(--color-info-light);
+  --color-info-foreground: var(--color-info-foreground);
+
+  --color-ai: var(--color-ai);
+  --color-ai-light: var(--color-ai-light);
+  --color-ai-foreground: var(--color-ai-foreground);
+
+  --color-sidebar-bg: var(--color-sidebar-bg);
+  --color-sidebar-text: var(--color-sidebar-text);
+  --color-sidebar-text-muted: var(--color-sidebar-text-muted);
+  --color-sidebar-active-bg: var(--color-sidebar-active-bg);
+  --color-sidebar-active-text: var(--color-sidebar-active-text);
+  --color-sidebar-border: var(--color-sidebar-border);
+  --color-sidebar-indicator: var(--color-sidebar-indicator);
+
+  --color-channel-whatsapp: var(--color-channel-whatsapp);
+  --color-channel-whatsapp-light: var(--color-channel-whatsapp-light);
+  --color-channel-instagram: var(--color-channel-instagram);
+  --color-channel-instagram-light: var(--color-channel-instagram-light);
+  --color-channel-facebook: var(--color-channel-facebook);
+  --color-channel-facebook-light: var(--color-channel-facebook-light);
+  --color-channel-website: var(--color-channel-website);
+  --color-channel-website-light: var(--color-channel-website-light);
+  --color-channel-telegram: var(--color-channel-telegram);
+  --color-channel-telegram-light: var(--color-channel-telegram-light);
+
+  --radius-sm: 0.25rem;
+  --radius: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+  --shadow-focus: 0 0 0 3px var(--color-primary-light);
+
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-10: 2.5rem;
+  --spacing-12: 3rem;
+  --spacing-16: 4rem;
+  --spacing-20: 5rem;
+  --spacing-24: 6rem;
+
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+
+  --leading-xs: 1rem;
+  --leading-sm: 1.25rem;
+  --leading-base: 1.5rem;
+  --leading-lg: 1.75rem;
+  --leading-xl: 1.75rem;
+  --leading-2xl: 2rem;
+  --leading-3xl: 2.25rem;
+  --leading-4xl: 2.5rem;
+
+  --transition-fast: 150ms ease-out;
+  --transition: 200ms ease-out;
+  --transition-slow: 300ms ease-out;
+
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+}
+
+@custom-variant dark (&:is(.dark *));

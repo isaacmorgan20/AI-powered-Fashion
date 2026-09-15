@@ -378,7 +378,7 @@ const SideBar = ({
                       `}
                     >
                       <Icon
-                        size={18}
+                        size={5}
                         strokeWidth={isActive ? 2.25 : 1.9}
                       />
 
@@ -392,7 +392,7 @@ const SideBar = ({
                             rounded-full
                             border-2 border-white
                             px-1
-                            text-[8px] font-bold text-white
+                            text-[5px] font-bold text-white
                             dark:border-slate-950
                             ${colors.badge}
                           `}
@@ -409,7 +409,7 @@ const SideBar = ({
                         <div className="flex items-center gap-2">
                           <span
                             className={`
-                              truncate text-[13px]
+                              truncate text-[10px]
                               transition-colors duration-200
                               ${
                                 isActive
@@ -454,7 +454,7 @@ const SideBar = ({
                     {/* Hover arrow */}
                     {sidebarOpen && (
                       <ChevronRight
-                        size={14}
+                        size={10}
                         className={`
                           shrink-0
                           text-slate-300
@@ -488,7 +488,7 @@ const SideBar = ({
           {sidebarOpen && (
             <span
               className="
-                text-[9px] font-bold uppercase
+                text-[5px] font-bold uppercase
                 tracking-[0.14em]
                 text-slate-400
                 dark:text-slate-600
@@ -555,7 +555,7 @@ const SideBar = ({
                 `}
               >
                 <HelpCircle
-                  size={18}
+                  size={15}
                   strokeWidth={isActive ? 2.2 : 1.9}
                 />
               </div>
@@ -564,7 +564,7 @@ const SideBar = ({
                 <div className="min-w-0 flex-1">
                   <div
                     className={`
-                      truncate text-[13px] font-semibold
+                      truncate text-[10px] font-semibold
                       ${
                         isActive
                           ? "text-violet-700 dark:text-violet-300"
@@ -578,7 +578,7 @@ const SideBar = ({
                   <div
                     className="
                       mt-0.5 truncate
-                      text-[11px] font-medium
+                      text-[7px] font-medium
                       text-slate-400
                       dark:text-slate-500
                     "

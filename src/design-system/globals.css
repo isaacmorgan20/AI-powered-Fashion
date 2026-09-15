@@ -1,0 +1,473 @@
+@import "./theme.css";
+
+:root {
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f8fafc;
+  --color-bg-tertiary: #f1f5f9;
+  --color-bg-inverse: #0f172a;
+
+  --color-surface-primary: #ffffff;
+  --color-surface-muted: #f1f5f9;
+  --color-surface-hover: #e2e8f0;
+
+  --color-border-light: #e2e8f0;
+  --color-border-medium: #cbd5e1;
+  --color-border-focus: #2563eb;
+
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #ffffff;
+
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-light: #dbeafe;
+  --color-primary-foreground: #ffffff;
+
+  --color-success: #059669;
+  --color-success-light: #d1fae5;
+  --color-success-foreground: #ffffff;
+
+  --color-warning: #d97706;
+  --color-warning-light: #fef3c7;
+  --color-warning-foreground: #92400e;
+
+  --color-error: #dc2626;
+  --color-error-light: #fee2e2;
+  --color-error-foreground: #ffffff;
+
+  --color-info: #0284c7;
+  --color-info-light: #e0f2fe;
+  --color-info-foreground: #ffffff;
+
+  --color-ai: #7c3aed;
+  --color-ai-light: #ede9fe;
+  --color-ai-foreground: #ffffff;
+
+  --color-sidebar-bg: #0f172a;
+  --color-sidebar-text: #f1f5f9;
+  --color-sidebar-text-muted: #94a3b8;
+  --color-sidebar-active-bg: #1e293b;
+  --color-sidebar-active-text: #ffffff;
+  --color-sidebar-border: #1e293b;
+  --color-sidebar-indicator: #2563eb;
+
+  --color-channel-whatsapp: #25d366;
+  --color-channel-whatsapp-light: #dcfce7;
+  --color-channel-instagram: #e1306c;
+  --color-channel-instagram-light: #fce7f3;
+  --color-channel-facebook: #1877f2;
+  --color-channel-facebook-light: #dbeafe;
+  --color-channel-website: #2563eb;
+  --color-channel-website-light: #dbeafe;
+  --color-channel-telegram: #2563eb;
+  --color-channel-telegram-light: #dbeafe;
+}
+
+.dark {
+  --color-bg-primary: #0f172a;
+  --color-bg-secondary: #111827;
+  --color-bg-tertiary: #1f2937;
+  --color-bg-inverse: #ffffff;
+
+  --color-surface-primary: #1e293b;
+  --color-surface-muted: #334155;
+  --color-surface-hover: #334155;
+
+  --color-border-light: #334155;
+  --color-border-medium: #475569;
+  --color-border-focus: #3b82f6;
+
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #64748b;
+  --color-text-inverse: #0f172a;
+
+  --color-primary: #3b82f6;
+  --color-primary-hover: #60a5fa;
+  --color-primary-light: #1e3a5f;
+  --color-primary-foreground: #ffffff;
+
+  --color-success: #10b981;
+  --color-success-light: #064e3b;
+  --color-success-foreground: #ffffff;
+
+  --color-warning: #f59e0b;
+  --color-warning-light: #78350f;
+  --color-warning-foreground: #ffffff;
+
+  --color-error: #ef4444;
+  --color-error-light: #7f1d1d;
+  --color-error-foreground: #ffffff;
+
+  --color-info: #06b6d4;
+  --color-info-light: #164e63;
+  --color-info-foreground: #ffffff;
+
+  --color-ai: #a78bfa;
+  --color-ai-light: #3c2a5e;
+  --color-ai-foreground: #ffffff;
+
+  --color-sidebar-bg: #08101a;
+  --color-sidebar-text: #f1f5f9;
+  --color-sidebar-text-muted: #94a3b8;
+  --color-sidebar-active-bg: #1e293b;
+  --color-sidebar-active-text: #ffffff;
+  --color-sidebar-border: #1e293b;
+  --color-sidebar-indicator: #3b82f6;
+
+  --color-channel-whatsapp: #25d366;
+  --color-channel-whatsapp-light: #064e3b;
+  --color-channel-instagram: #e1306c;
+  --color-channel-instagram-light: #500724;
+  --color-channel-facebook: #1877f2;
+  --color-channel-facebook-light: #1e3a5f;
+  --color-channel-website: #3b82f6;
+  --color-channel-website-light: #1e3a5f;
+  --color-channel-telegram: #3b82f6;
+  --color-channel-telegram-light: #1e3a5f;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
+  transition: background-color var(--transition), color var(--transition);
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+::selection {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.dark ::selection {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+img,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--color-primary-hover);
+}
+
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+pre {
+  overflow-x: auto;
+  padding: var(--spacing-4);
+  background-color: var(--color-surface-muted);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+}
+
+.dark pre {
+  background-color: var(--color-surface-muted);
+  border-color: var(--color-border-medium);
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-medium) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: var(--color-border-medium);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-muted);
+}
+
+.scrollbar-thin::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes ping {
+  75%,
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 200ms ease-out;
+}
+
+.animate-slideUp {
+  animation: slideUp 250ms ease-out;
+}
+
+.animate-slideDown {
+  animation: slideDown 250ms ease-out;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 200ms ease-out;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-ping {
+  animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.transition-fast {
+  transition: all var(--transition-fast);
+}
+
+.transition-smooth {
+  transition: all var(--transition);
+}
+
+.transition-slow {
+  transition: all var(--transition-slow);
+}
+
+.transition-colors {
+  transition: color var(--transition), background-color var(--transition), border-color var(--transition), fill var(--transition), stroke var(--transition);
+}
+
+.transition-transform {
+  transition: transform var(--transition);
+}
+
+.transition-shadow {
+  transition: box-shadow var(--transition);
+}
+
+.hover-lift {
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-primary), 0 0 0 4px var(--color-bg-primary);
+}
+
+.dark .focus-ring:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-primary), 0 0 0 4px var(--color-bg-primary);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.btn-loading {
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+}
+
+.btn-loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' stroke='currentColor' stroke-width='3' stroke-linecap='round' fill='none' stroke-dasharray='31 31' stroke-dashoffset='31'%3E%3CanimateTransform attributeName='transform' type='rotate' from='0 12 12' to='360 12 12' dur='1s' repeatCount='indefinite'/%3E%3C/circle%3E%3C/svg%3E") center / 1.25rem no-repeat;
+  animation: spin 1s linear infinite;
+}
+
+.compact .p-5 {
+  padding: 1rem !important;
+}
+
+.compact .p-6 {
+  padding: 1rem !important;
+}
+
+.compact .p-4 {
+  padding: 0.75rem !important;
+}
+
+.compact .px-5 {
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+
+.compact .px-6 {
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+
+.compact .py-4 {
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.75rem !important;
+}
+
+.compact .py-5 {
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
+}
+
+.compact .gap-5 {
+  gap: 0.75rem !important;
+}
+
+.compact .gap-3 {
+  gap: 0.5rem !important;
+}
+
+.compact .space-y-5 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.75rem * calc(1 - var(--tw-space-y-reverse))) !important;
+}
+
+.compact .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1rem !important;
+}
+
+.compact .rounded-2xl {
+  border-radius: 0.75rem !important;
+}
+
+.compact header {
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.75rem !important;
+}
+
+.compact .rounded-xl {
+  border-radius: 0.5rem !important;
+}

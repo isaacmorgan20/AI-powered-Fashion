@@ -1,26 +1,60 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../service/api';
 import { useSettings } from './useSettings';
+import { useOnlineStatus } from './useOnlineStatus';
+
+const CACHE_KEY = 'threados_conversations_cache';
+const CACHE_TIMESTAMP_KEY = 'threados_conversations_cache_ts';
+const CACHE_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
+
+function loadCachedConversations() {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+    if (cached && timestamp) {
+      const age = Date.now() - parseInt(timestamp, 10);
+      if (age < CACHE_MAX_AGE) {
+        return JSON.parse(cached);
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load cached conversations:', e);
+  }
+  return null;
+}
+
+function saveConversationsToCache(data) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+    localStorage.setItem(CACHE_TIMESTAMP_KEY, String(Date.now()));
+  } catch (e) {
+    console.warn('Failed to cache conversations:', e);
+  }
+}
 
 export function useConversations() {
-  const [conversations, setConversations] = useState([]);
+  const [conversations, setConversations] = useState(() => loadCachedConversations() || []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sendingStates, setSendingStates] = useState({}); // conversationId -> 'sending' | 'failed' | 'sent'
+  const [sendingStates, setSendingStates] = useState({});
   const { settings } = useSettings();
+  const { isOnline } = useOnlineStatus();
   const timezone = settings?.general?.timezone || "Africa/Accra";
   
-  // Ref to track if initial load is complete (to avoid loading flicker on polls)
   const isInitialLoadComplete = useRef(false);
-  // Ref for polling interval cleanup
   const pollingIntervalRef = useRef(null);
 
   const fetchConversations = useCallback(async (isPolling = false) => {
+    if (!isOnline && !isPolling) {
+      setLoading(false);
+      return;
+    }
     try {
       if (!isPolling) {
         setLoading(true);
       }
       const data = await api.conversations.list();
+      saveConversationsToCache(data);
       
       setConversations((current) => {
         // Merge conversations by ID to preserve local state (unread, messages, etc.)
@@ -60,23 +94,35 @@ export function useConversations() {
       setError(null);
       isInitialLoadComplete.current = true;
     } catch (err) {
-      setError(err.message);
+      const isNetworkError = err.message?.includes('Failed to fetch') || 
+                             err.message?.includes('NetworkError') || 
+                             err.message?.includes('Network request failed') ||
+                             !navigator.onLine;
+      if (isNetworkError && conversations.length > 0) {
+        setError('Offline — showing saved data');
+      } else {
+        setError(err.message);
+      }
       console.error('Failed to fetch conversations:', err);
     } finally {
       if (!isPolling) {
         setLoading(false);
       }
     }
-  }, []);
+  }, [conversations.length, isOnline]);
 
   // Initial load
   useEffect(() => {
+    const cached = loadCachedConversations();
+    if (cached && cached.length > 0) {
+      setLoading(false);
+    }
     fetchConversations(false);
   }, [fetchConversations]);
 
   // Start polling after initial load
   useEffect(() => {
-    const POLL_INTERVAL = 4000; // 4 seconds
+    const POLL_INTERVAL = 30000; // 30 seconds (reduced from 4s to reduce Firestore quota usage)
     
     // Wait for initial load before starting polling
     const checkAndStartPolling = () => {
@@ -295,5 +341,6 @@ export function useConversations() {
     markResolved,
     reopenConversation,
     sendingStates,
+    isOnline,
   };
 }
