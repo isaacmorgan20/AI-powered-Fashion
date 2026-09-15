@@ -25,7 +25,7 @@ import { useAnalytics } from "../hooks/useAnalytics";
 import { useSettings } from "../hooks/useSettings";
 import {
   Select,
-} from "../components/ui";
+} from "../Components/ui";
 
 /* =========================================================
    CHANNEL ICON

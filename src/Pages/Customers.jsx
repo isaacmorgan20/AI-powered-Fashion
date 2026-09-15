@@ -36,7 +36,7 @@ import {
   EmptyState,
   Spinner,
   Divider,
-} from "../components/ui";
+} from "../Components/ui";
 
 /* =========================================================
    HELPERS
