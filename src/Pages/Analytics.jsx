@@ -25,6 +25,7 @@ import { useAnalytics } from "../hooks/useAnalytics";
 import { useSettings } from "../hooks/useSettings";
 import {
   Select,
+  SocialIcon,
 } from "../Components/ui";
 
 /* =========================================================
@@ -32,45 +33,24 @@ import {
 ========================================================= */
 
 const ChannelIcon = ({ name }) => {
-  if (name === "WhatsApp") {
-    return (
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 ring-1 ring-emerald-100 dark:bg-emerald-900/20 dark:ring-emerald-800/50">
-        <MessageCircle
-          size={18}
-          className="text-emerald-600 dark:text-emerald-400"
-        />
-      </div>
-    );
-  }
+  const norm = String(name || "").toLowerCase();
 
-  if (name === "Instagram") {
-    return (
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-pink-50 ring-1 ring-pink-100 dark:bg-pink-900/20 dark:ring-pink-800/50">
-        <Share2
-          size={18}
-          className="text-pink-600 dark:text-pink-400"
-        />
-      </div>
-    );
-  }
-
-  if (name === "Facebook") {
-    return (
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 ring-1 ring-blue-100 dark:bg-blue-900/20 dark:ring-blue-800/50">
-        <Share2
-          size={18}
-          className="text-blue-600 dark:text-blue-400"
-        />
-      </div>
-    );
+  let bgStyle = "bg-slate-50 ring-slate-100 dark:bg-slate-900/20 dark:ring-slate-800/50";
+  if (norm.includes("whatsapp")) {
+    bgStyle = "bg-emerald-50 ring-emerald-100 dark:bg-emerald-900/20 dark:ring-emerald-800/50";
+  } else if (norm.includes("instagram")) {
+    bgStyle = "bg-pink-50 ring-pink-100 dark:bg-pink-900/20 dark:ring-pink-800/50";
+  } else if (norm.includes("facebook")) {
+    bgStyle = "bg-blue-50 ring-blue-100 dark:bg-blue-900/20 dark:ring-blue-800/50";
+  } else if (norm.includes("telegram")) {
+    bgStyle = "bg-sky-50 ring-sky-100 dark:bg-sky-900/20 dark:ring-sky-800/50";
+  } else if (norm.includes("website")) {
+    bgStyle = "bg-violet-50 ring-violet-100 dark:bg-violet-900/20 dark:ring-violet-800/50";
   }
 
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 ring-1 ring-violet-100 dark:bg-violet-900/20 dark:ring-violet-800/50">
-      <Globe2
-        size={18}
-        className="text-violet-600 dark:text-violet-400"
-      />
+    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 ${bgStyle}`}>
+      <SocialIcon name={name} size={20} />
     </div>
   );
 };

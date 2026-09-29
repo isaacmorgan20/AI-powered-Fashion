@@ -10,7 +10,16 @@ import { api } from "../../service/api";
 const TopBar = ({ sidebarOpen, onMobileMenuOpen }) => {
   const { user, logout } = useAuthStore();
   const { isOnline, showReconnected } = useOnlineStatus();
-  const { events: notifications, loading, unreadCount, refetch } = useNotifications();
+  const { 
+    events: notifications, 
+    loading, 
+    unreadCount, 
+    refetch, 
+    markRead,
+    requestNotificationPermission,
+    handleNotificationClick,
+    notificationSettings 
+  } = useNotifications();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -225,9 +234,26 @@ const TopBar = ({ sidebarOpen, onMobileMenuOpen }) => {
               <div className="absolute right-0 mt-2 w-80 origin-top-right rounded-xl border border-border-light bg-surface-primary shadow-lg animate-slideDown">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border-light">
                   <h3 className="text-sm font-semibold text-text-primary">Notifications</h3>
-                  {unreadCount > 0 && (
-                    <Badge variant="info" className="text-xs">{unreadCount} new</Badge>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {unreadCount > 0 && (
+                      <Badge variant="info" className="text-xs">{unreadCount} new</Badge>
+                    )}
+                    {notificationSettings?.browserNotifications && 'Notification' in window && Notification.permission !== 'granted' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs py-1 px-2"
+                        onClick={async () => {
+                          const result = await requestNotificationPermission();
+                          if (result.success) {
+                            refetch(); // Refresh to update UI
+                          }
+                        }}
+                      >
+                        Enable Browser Notifications
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <div className="max-h-96 overflow-y-auto">
                   {loading ? (
@@ -245,7 +271,11 @@ const TopBar = ({ sidebarOpen, onMobileMenuOpen }) => {
                       {notifications.map((notification) => (
                         <li
                           key={notification.id}
-                          className={`px-4 py-3 transition-colors ${!notification.read ? "bg-primary/5" : ""}`}
+                          className={`px-4 py-3 transition-colors cursor-pointer ${!notification.read ? "bg-primary/5" : "hover:bg-surface-muted"}`}
+                          onClick={() => handleNotificationClick(notification)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNotificationClick(notification); } }}
                         >
                           <div className="flex items-start gap-3">
                             <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${!notification.read ? "bg-primary/10" : "bg-surface-muted"}`}>
@@ -284,6 +314,13 @@ const TopBar = ({ sidebarOpen, onMobileMenuOpen }) => {
                                   return date.toLocaleDateString();
                                 })()}
                               </p>
+                              {notification.metadata?.channel && (
+                                <p className="mt-0.5 text-[10px] text-text-muted flex items-center gap-1">
+                                  <span className="px-1.5 py-0.5 rounded bg-surface-muted text-[9px] font-medium uppercase">
+                                    {notification.metadata.channel}
+                                  </span>
+                                </p>
+                              )}
                             </div>
                             {!notification.read && (
                               <span className="flex h-2 w-2 shrink-0 rounded-full bg-primary" />

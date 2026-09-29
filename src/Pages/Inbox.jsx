@@ -27,8 +27,22 @@ import {
   Globe,
   AlertTriangle,
   UserCheck,
+  Copy,
+  Check,
+  Calendar,
+  Activity,
+  Tag,
 } from "lucide-react";
-
+import {
+  WhatsAppIcon,
+  InstagramIcon,
+  FacebookIcon,
+  TelegramIcon,
+  TikTokIcon,
+  XIcon,
+  WebsiteIcon,
+  SocialIcon,
+} from "../Components/ui";
 import { useConversations } from "../hooks/useConversations";
 import { useAIChat } from "../hooks/useAIChat";
 import { useSettings } from "../hooks/useSettings";
@@ -47,7 +61,7 @@ const getChannelBadge = (channel) => {
       style:
         "bg-emerald-50 text-[#16A34A] border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800",
       dot: "bg-[#16A34A]",
-      icon: MessageSquare,
+      icon: WhatsAppIcon,
     };
   }
   if (norm.includes("telegram")) {
@@ -56,7 +70,7 @@ const getChannelBadge = (channel) => {
       style:
         "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800",
       dot: "bg-sky-500",
-      icon: Send,
+      icon: TelegramIcon,
     };
   }
   if (norm.includes("instagram")) {
@@ -65,7 +79,7 @@ const getChannelBadge = (channel) => {
       style:
         "bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-950/40 dark:text-pink-300 dark:border-pink-800",
       dot: "bg-pink-500",
-      icon: MessageSquare,
+      icon: InstagramIcon,
     };
   }
   if (norm.includes("facebook")) {
@@ -74,7 +88,25 @@ const getChannelBadge = (channel) => {
       style:
         "bg-blue-50 text-[#2563EB] border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
       dot: "bg-[#2563EB]",
-      icon: MessageSquare,
+      icon: FacebookIcon,
+    };
+  }
+  if (norm.includes("tiktok")) {
+    return {
+      label: "TikTok",
+      style:
+        "bg-slate-100 text-slate-900 border-slate-300 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700",
+      dot: "bg-slate-900 dark:bg-slate-100",
+      icon: TikTokIcon,
+    };
+  }
+  if (norm.includes("twitter") || norm.includes("x")) {
+    return {
+      label: "X (Twitter)",
+      style:
+        "bg-slate-100 text-slate-900 border-slate-300 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700",
+      dot: "bg-slate-900 dark:bg-slate-100",
+      icon: XIcon,
     };
   }
   return {
@@ -82,7 +114,7 @@ const getChannelBadge = (channel) => {
     style:
       "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800",
     dot: "bg-violet-500",
-    icon: Globe,
+    icon: WebsiteIcon,
   };
 };
 
@@ -122,6 +154,8 @@ const Inbox = () => {
   const [search, setSearch] = useState("");
   const [message, setMessage] = useState("");
   const [showCustomerPanel, setShowCustomerPanel] = useState(true);
+  const [showCustomerMenu, setShowCustomerMenu] = useState(false);
+  const [copiedPhone, setCopiedPhone] = useState(false);
   const [activeFilter, setActiveFilter] = useState("All");
   const [channelFilter, setChannelFilter] = useState("All");
   const [mobileView, setMobileView] = useState("list"); // 'list' | 'chat'
@@ -433,19 +467,26 @@ const Inbox = () => {
         {/* Right Status & Channel Pills */}
         <div className="flex items-center gap-3 ">
           {/* Channel Filters Pill Dropdown */}
-          <div className="hidden lg:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-1.5">
             {["All", "WhatsApp", "Telegram", "Instagram", "Facebook", "Website"].map(
               (ch) => (
                 <button
                   key={ch}
                   type="button"
                   onClick={() => setChannelFilter(ch)}
-                  className={`px-2.5 py-1 rounded-sm text-xs font-semibold transition cursor-pointer ${channelFilter === ch
-                    ? "bg-blue-500 dark:bg-white dark:text-[#0F172A] shadow-xs"
-                    : " hover:bg-gray-200 hover:text-[#0F172A] hover:bg-[#F8FAFC] dark:text-slate-400 dark:hover:bg-slate-800"
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition cursor-pointer ${channelFilter === ch
+                    ? "bg-blue-600 text-white dark:bg-white dark:text-[#0F172A] shadow-xs"
+                    : "hover:bg-gray-200 hover:text-[#0F172A] hover:bg-[#F8FAFC] dark:text-slate-400 dark:hover:bg-slate-800"
                     }`}
                 >
-                  {ch}
+                  {ch !== "All" && (
+                    <SocialIcon
+                      name={ch}
+                      size={14}
+                      colorMode={channelFilter === ch ? "monochrome" : "colored"}
+                    />
+                  )}
+                  <span>{ch}</span>
                 </button>
               )
             )}
@@ -615,9 +656,7 @@ const Inbox = () => {
                             <span
                               className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[9px] font-semibold ${channelBadge.style}`}
                             >
-                              <span
-                                className={`h-1.5 w-1.5 rounded-full ${channelBadge.dot}`}
-                              />
+                              <channelBadge.icon size={11} />
                               {channelBadge.label}
                             </span>
 
@@ -705,7 +744,11 @@ const Inbox = () => {
               {/* Customer Info */}
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white truncate flex items-center gap-1.5">
+                    {(() => {
+                      const ChannelIcon = getChannelBadge(activeConversation.channel).icon;
+                      return <ChannelIcon size={15} className="shrink-0" />;
+                    })()}
                     {activeConversation.name}
                   </h2>
                   <span
@@ -1175,139 +1218,316 @@ const Inbox = () => {
             PANE 3 (RIGHT): CUSTOMER PROFILE (INDEPENDENT SCROLL)
         ==================================================== */}
         {showCustomerPanel && (
-          <aside className="hidden xl:flex h-full min-h-0 w-[300px] 2xl:w-[340px] shrink-0 flex-col border-l border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
+          <aside className="hidden xl:flex h-full min-h-0 w-[310px] 2xl:w-[350px] shrink-0 flex-col border-l border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-xs">
             {/* Fixed Header */}
-            <div className="shrink-0 h-16 border-b border-slate-200/90 dark:border-slate-800 px-5 flex items-center justify-between bg-white dark:bg-slate-900 z-10">
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <div className="shrink-0 h-16 border-b border-slate-200/90 dark:border-slate-800 px-4 flex items-center justify-between bg-white dark:bg-slate-900 z-20 relative">
+              <div className="flex items-center gap-2">
+                <User size={15} className="text-slate-400 shrink-0" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Customer Profile
                 </h3>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowCustomerPanel(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-              >
-                <X size={16} />
-              </button>
+
+              <div className="flex items-center gap-1">
+                {/* Actions Menu Trigger ⋯ */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomerMenu((prev) => !prev)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                    title="Customer Actions"
+                  >
+                    <MoreHorizontal size={16} />
+                  </button>
+
+                  {/* Actions Dropdown */}
+                  {showCustomerMenu && (
+                    <div className="absolute right-0 mt-1.5 w-48 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl py-1.5 z-50 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (activeConversation.phone && activeConversation.phone !== "—") {
+                            navigator.clipboard.writeText(activeConversation.phone);
+                            setCopiedPhone(true);
+                            setTimeout(() => setCopiedPhone(false), 2000);
+                          }
+                          setShowCustomerMenu(false);
+                        }}
+                        className="w-full text-left px-3 py-2 flex items-center gap-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 cursor-pointer"
+                      >
+                        {copiedPhone ? <Check size={14} className="text-emerald-500 shrink-0" /> : <Copy size={14} className="text-slate-400 shrink-0" />}
+                        <span>{copiedPhone ? "Phone Copied!" : "Copy Phone Number"}</span>
+                      </button>
+
+                      {activeConversation.mode === "ai" ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            apiTakeOver(activeConversation.id);
+                            setShowCustomerMenu(false);
+                          }}
+                          className="w-full text-left px-3 py-2 flex items-center gap-2 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 cursor-pointer"
+                        >
+                          <User size={14} className="shrink-0" />
+                          <span>Take Over Chat</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            apiReturnToAI(activeConversation.id);
+                            setShowCustomerMenu(false);
+                          }}
+                          className="w-full text-left px-3 py-2 flex items-center gap-2 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 cursor-pointer"
+                        >
+                          <Bot size={14} className="shrink-0" />
+                          <span>Return to AI</span>
+                        </button>
+                      )}
+
+                      <div className="my-1 border-t border-slate-100 dark:border-slate-700" />
+
+                      {activeConversation.conversationStatus === "resolved" ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            apiReopenConversation(activeConversation.id);
+                            setShowCustomerMenu(false);
+                          }}
+                          className="w-full text-left px-3 py-2 flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer"
+                        >
+                          <RotateCcw size={14} className="shrink-0" />
+                          <span>Reopen Ticket</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            apiMarkResolved(activeConversation.id);
+                            setShowCustomerMenu(false);
+                          }}
+                          className="w-full text-left px-3 py-2 flex items-center gap-2 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer"
+                        >
+                          <CheckCheck size={14} className="shrink-0" />
+                          <span>Mark Resolved</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Close Panel Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowCustomerPanel(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                  title="Close Profile Panel"
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
 
-            {/* SCROLL AREA 3: Only customer details scroll */}
-            <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-5">
-              {/* Avatar & Name */}
-              <div className="text-center">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-900 dark:bg-slate-800 text-white font-bold text-lg shadow-sm">
-                  {activeConversation.initials || "C"}
+            {/* SCROLL AREA 3: Customer profile workspace */}
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
+              {/* 1. Profile Header & Avatar */}
+              <div className="relative rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-gradient-to-b from-slate-50 to-white dark:from-slate-800/60 dark:to-slate-900 p-4 text-center shadow-2xs">
+                <div className="relative mx-auto h-16 w-16">
+                  <div className="flex h-full w-full items-center justify-center rounded-2xl bg-gradient-to-br from-slate-800 to-slate-950 dark:from-slate-700 dark:to-slate-900 text-white font-bold text-xl shadow-sm ring-2 ring-blue-500/20">
+                    {activeConversation.initials || "C"}
+                  </div>
+                  <span
+                    className={`absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-white dark:border-slate-900 ${
+                      activeConversation.status === "online" ? "bg-emerald-500" : "bg-slate-400"
+                    }`}
+                    title={activeConversation.status === "online" ? "Active Now" : "Offline"}
+                  />
                 </div>
-                <h4 className="mt-3 text-sm font-bold text-slate-900 dark:text-white">
+
+                <h4 className="mt-3 text-sm font-bold text-slate-900 dark:text-white truncate">
                   {activeConversation.name}
                 </h4>
-                <div className="mt-1 flex items-center justify-center gap-1.5 text-xs text-slate-500">
-                  <span
-                    className={`h-2 w-2 rounded-full ${activeConversation.status === "online"
-                      ? "bg-emerald-500"
-                      : "bg-slate-300"
-                      }`}
-                  />
-                  <span>
-                    {activeConversation.status === "online"
-                      ? "Active now"
-                      : "Offline"}
+
+                <div className="mt-1.5 flex items-center justify-center gap-2 flex-wrap">
+                  {/* Channel Badge */}
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-medium text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                    <SocialIcon name={activeConversation.channel} size={13} />
+                    <span>{activeConversation.channel || "Website"}</span>
+                  </span>
+
+                  {/* Online Status Pill */}
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                    activeConversation.status === "online"
+                      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                      : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
+                  }`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${activeConversation.status === "online" ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
+                    <span>{activeConversation.status === "online" ? "Active Now" : "Offline"}</span>
                   </span>
                 </div>
               </div>
 
-              {/* Contact Information Card */}
-              <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3 space-y-2.5 text-xs">
-                <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-300 truncate">
-                  <Phone size={14} className="text-slate-400 shrink-0" />
-                  <span className="truncate">
-                    {activeConversation.phone || "—"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-300 truncate">
-                  <Mail size={14} className="text-slate-400 shrink-0" />
-                  <span className="truncate">
-                    {activeConversation.email || "—"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-300 truncate">
-                  <MapPin size={14} className="text-slate-400 shrink-0" />
-                  <span className="truncate">
-                    {activeConversation.location || "—"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Quick stats */}
-              <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3 text-center">
-                  <p className="text-lg font-bold text-slate-900 dark:text-white">
+              {/* 2. Professional Commerce Stats Cards */}
+              <div className="grid grid-cols-3 gap-2">
+                {/* Orders Stat Card */}
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-800/50 p-2.5 text-center shadow-2xs transition hover:border-emerald-200 dark:hover:border-emerald-800">
+                  <div className="mx-auto flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 mb-1">
+                    <ShoppingBag size={14} />
+                  </div>
+                  <p className="text-base font-extrabold text-slate-900 dark:text-white leading-tight">
                     {activeConversation.orders?.length || 0}
                   </p>
-                  <p className="text-[10px] font-semibold text-slate-400 uppercase">
+                  <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight mt-0.5">
                     Orders
                   </p>
                 </div>
-                <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3 text-center">
-                  <p className="text-lg font-bold text-slate-900 dark:text-white">
+
+                {/* Products Stat Card */}
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-800/50 p-2.5 text-center shadow-2xs transition hover:border-blue-200 dark:hover:border-blue-800">
+                  <div className="mx-auto flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 mb-1">
+                    <Sparkles size={14} />
+                  </div>
+                  <p className="text-base font-extrabold text-slate-900 dark:text-white leading-tight">
                     {activeConversation.productsDiscussed?.length || 0}
                   </p>
-                  <p className="text-[10px] font-semibold text-slate-400 uppercase">
+                  <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight mt-0.5">
                     Products
+                  </p>
+                </div>
+
+                {/* Messages Stat Card */}
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-800/50 p-2.5 text-center shadow-2xs transition hover:border-purple-200 dark:hover:border-purple-800">
+                  <div className="mx-auto flex h-7 w-7 items-center justify-center rounded-lg bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400 mb-1">
+                    <MessageSquare size={14} />
+                  </div>
+                  <p className="text-base font-extrabold text-slate-900 dark:text-white leading-tight">
+                    {activeConversation.messages?.length || 0}
+                  </p>
+                  <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight mt-0.5">
+                    Messages
                   </p>
                 </div>
               </div>
 
-              {/* Products Discussed Section with real images */}
-              <div>
-                <h5 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2.5">
-                  Products Discussed
+              {/* 3. Customer Details Section */}
+              <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 p-3.5 space-y-2.5 text-xs">
+                <h5 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                  Customer Details
                 </h5>
-                {!activeConversation.productsDiscussed ||
-                  activeConversation.productsDiscussed.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-4 text-center">
-                    <ShoppingBag
-                      size={18}
-                      className="mx-auto text-slate-300 mb-1"
-                    />
-                    <p className="text-xs text-slate-400">
+
+                {/* Phone */}
+                {activeConversation.phone && activeConversation.phone !== "—" && (
+                  <div className="flex items-center justify-between text-slate-700 dark:text-slate-300">
+                    <div className="flex items-center gap-2 truncate">
+                      <Phone size={13} className="text-slate-400 shrink-0" />
+                      <span className="truncate font-medium">{activeConversation.phone}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(activeConversation.phone);
+                        setCopiedPhone(true);
+                        setTimeout(() => setCopiedPhone(false), 2000);
+                      }}
+                      className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 hover:underline shrink-0 cursor-pointer"
+                    >
+                      {copiedPhone ? "Copied" : "Copy"}
+                    </button>
+                  </div>
+                )}
+
+                {/* Email */}
+                {activeConversation.email && activeConversation.email !== "—" && (
+                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 truncate">
+                    <Mail size={13} className="text-slate-400 shrink-0" />
+                    <span className="truncate font-medium">{activeConversation.email}</span>
+                  </div>
+                )}
+
+                {/* Channel */}
+                <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 truncate">
+                  <SocialIcon name={activeConversation.channel} size={13} className="shrink-0" />
+                  <span className="truncate font-medium">{activeConversation.channel || "Website"}</span>
+                </div>
+
+                {/* Last Active */}
+                {(activeConversation.time || activeConversation.lastActive) && (
+                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 truncate">
+                    <Clock3 size={13} className="text-slate-400 shrink-0" />
+                    <span className="truncate text-slate-500">
+                      Last active: <strong className="text-slate-800 dark:text-slate-200 font-semibold">{activeConversation.time || activeConversation.lastActive}</strong>
+                    </span>
+                  </div>
+                )}
+
+                {/* Location */}
+                {activeConversation.location && activeConversation.location !== "—" && (
+                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 truncate">
+                    <MapPin size={13} className="text-slate-400 shrink-0" />
+                    <span className="truncate font-medium">{activeConversation.location}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* 4. Products Discussed Cards */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h5 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    Products Discussed
+                  </h5>
+                  <span className="rounded-full bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 px-2 py-0.5 text-[10px] font-bold">
+                    {activeConversation.productsDiscussed?.length || 0}
+                  </span>
+                </div>
+
+                {!activeConversation.productsDiscussed || activeConversation.productsDiscussed.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-4 text-center">
+                    <ShoppingBag size={20} className="mx-auto text-slate-300 dark:text-slate-600 mb-1" />
+                    <p className="text-xs font-medium text-slate-400 dark:text-slate-500">
                       No products discussed yet
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-2">
                     {activeConversation.productsDiscussed.map((prod, i) => {
-                      const cProd = catalogMap.get(
-                        String(prod).toLowerCase().trim()
-                      );
+                      const cProd = catalogMap.get(String(prod).toLowerCase().trim());
                       return (
                         <div
                           key={i}
-                          className="flex items-center gap-2.5 p-2 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40"
+                          className="group flex items-center gap-3 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-800/50 hover:border-blue-300 dark:hover:border-blue-700 transition shadow-2xs"
                         >
-                          <div className="h-10 w-10 rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0">
+                          <div className="h-11 w-11 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-700 shrink-0 relative border border-slate-200/60 dark:border-slate-700">
                             {cProd?.image ? (
                               <img
                                 src={cProd.image}
                                 alt={prod}
-                                className="h-full w-full object-cover"
+                                className="h-full w-full object-cover group-hover:scale-105 transition duration-200"
                               />
                             ) : (
-                              <div className="flex h-full w-full items-center justify-center text-slate-400">
-                                <ShoppingBag size={16} />
+                              <div className="flex h-full w-full items-center justify-center text-slate-400 dark:text-slate-500">
+                                <ShoppingBag size={18} />
                               </div>
                             )}
                           </div>
+
                           <div className="min-w-0 flex-1">
-                            <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                            <p className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
                               {prod}
                             </p>
-                            {cProd?.price && (
-                              <p className="text-[11px] font-extrabold text-[#2563eb]">
-                                {currency} {Number(cProd.price).toFixed(2)}
-                              </p>
-                            )}
+                            <div className="mt-0.5 flex items-center gap-2 text-[11px]">
+                              {cProd?.price ? (
+                                <span className="font-extrabold text-blue-600 dark:text-blue-400">
+                                  {currency} {Number(cProd.price).toFixed(2)}
+                                </span>
+                              ) : (
+                                <span className="text-slate-400 text-[10px] font-medium">In catalog</span>
+                              )}
+                              {cProd?.stock != null && (
+                                <span className="text-[10px] text-slate-400">
+                                  • {cProd.stock} in stock
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );
@@ -1316,38 +1536,40 @@ const Inbox = () => {
                 )}
               </div>
 
-              {/* Orders Section */}
-              <div>
-                <h5 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2.5">
-                  Order History
-                </h5>
-                {!activeConversation.orders ||
-                  activeConversation.orders.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-4 text-center">
-                    <ShoppingBag
-                      size={18}
-                      className="mx-auto text-slate-300 mb-1"
-                    />
-                    <p className="text-xs text-slate-400">No orders yet</p>
+              {/* 5. Order History Section */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h5 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    Order History
+                  </h5>
+                  <span className="rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-bold">
+                    {activeConversation.orders?.length || 0}
+                  </span>
+                </div>
+
+                {!activeConversation.orders || activeConversation.orders.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-4 text-center">
+                    <ShoppingBag size={20} className="mx-auto text-slate-300 dark:text-slate-600 mb-1" />
+                    <p className="text-xs font-medium text-slate-400 dark:text-slate-500">No orders yet</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
                     {activeConversation.orders.map((ord) => (
                       <div
                         key={ord.id}
-                        className="rounded-xl border border-slate-100 dark:border-slate-800 p-2.5 space-y-1.5"
+                        className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-800/50 p-2.5 space-y-1.5 shadow-2xs"
                       >
                         <div className="flex items-start justify-between gap-1">
-                          <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
-                            {ord.product || "Product"}
+                          <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                            {ord.product || "Order Item"}
                           </p>
-                          <span className="text-xs font-bold text-slate-900 dark:text-white shrink-0">
+                          <span className="text-xs font-extrabold text-slate-900 dark:text-white shrink-0">
                             {ord.amount}
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-[10px] text-slate-400">
                           <span>{ord.id}</span>
-                          <span className="rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 font-semibold">
+                          <span className="rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 font-semibold">
                             {ord.status || "Completed"}
                           </span>
                         </div>
@@ -1355,6 +1577,95 @@ const Inbox = () => {
                     ))}
                   </div>
                 )}
+              </div>
+
+              {/* 6. Recent Activity Timeline */}
+              <div className="space-y-2.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+                <h5 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                  Recent Activity
+                </h5>
+
+                <div className="relative pl-3.5 space-y-3.5 border-l border-slate-200 dark:border-slate-800 ml-1.5 text-xs">
+                  {/* Activity Node 1: Latest Message */}
+                  {activeConversation.messages && activeConversation.messages.length > 0 && (
+                    <div className="relative">
+                      <span className="absolute -left-[19px] top-1 h-2.5 w-2.5 rounded-full bg-blue-500 ring-4 ring-white dark:ring-slate-900" />
+                      <p className="font-semibold text-slate-900 dark:text-white leading-tight">
+                        Latest message sent
+                      </p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[210px] mt-0.5">
+                        "{activeConversation.messages[activeConversation.messages.length - 1]?.text}"
+                      </p>
+                      <span className="text-[10px] text-slate-400 mt-0.5 block">
+                        {activeConversation.messages[activeConversation.messages.length - 1]?.time || activeConversation.time || "Recently"}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Activity Node 2: Products Discussed event */}
+                  {activeConversation.productsDiscussed && activeConversation.productsDiscussed.length > 0 && (
+                    <div className="relative">
+                      <span className="absolute -left-[19px] top-1 h-2.5 w-2.5 rounded-full bg-purple-500 ring-4 ring-white dark:ring-slate-900" />
+                      <p className="font-semibold text-slate-900 dark:text-white leading-tight">
+                        Discussed {activeConversation.productsDiscussed.length} product{activeConversation.productsDiscussed.length > 1 ? "s" : ""}
+                      </p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[210px] mt-0.5">
+                        {activeConversation.productsDiscussed.join(", ")}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Activity Node 3: Order History event */}
+                  {activeConversation.orders && activeConversation.orders.length > 0 && (
+                    <div className="relative">
+                      <span className="absolute -left-[19px] top-1 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-4 ring-white dark:ring-slate-900" />
+                      <p className="font-semibold text-slate-900 dark:text-white leading-tight">
+                        Placed {activeConversation.orders.length} order{activeConversation.orders.length > 1 ? "s" : ""}
+                      </p>
+                      <span className="text-[10px] text-slate-400 mt-0.5 block">
+                        {activeConversation.orders[0]?.product} ({activeConversation.orders[0]?.amount})
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Activity Node 4: First Contacted */}
+                  <div className="relative">
+                    <span className="absolute -left-[19px] top-1 h-2.5 w-2.5 rounded-full bg-slate-400 ring-4 ring-white dark:ring-slate-900" />
+                    <p className="font-semibold text-slate-900 dark:text-white leading-tight">
+                      Contacted via {activeConversation.channel || "Website"}
+                    </p>
+                    <span className="text-[10px] text-slate-400 mt-0.5 block">
+                      Conversation initiated
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 7. AI Context & Commerce Insights */}
+              <div className="rounded-2xl border border-purple-200/80 dark:border-purple-900/40 bg-gradient-to-br from-purple-50/50 via-indigo-50/30 to-blue-50/40 dark:from-purple-950/20 dark:via-indigo-950/20 dark:to-slate-900 p-3.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-purple-700 dark:text-purple-300 font-bold text-xs">
+                    <Sparkles size={14} className="shrink-0" />
+                    <span>AI Assistant Context</span>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                    activeConversation.mode === "ai"
+                      ? "bg-purple-100 text-purple-700 dark:bg-purple-900/60 dark:text-purple-300"
+                      : "bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300"
+                  }`}>
+                    {activeConversation.mode === "ai" ? "Autopilot On" : "Human Agent"}
+                  </span>
+                </div>
+
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                  {activeConversation.memory || activeConversation.notes ? (
+                    activeConversation.memory || activeConversation.notes
+                  ) : activeConversation.productsDiscussed && activeConversation.productsDiscussed.length > 0 ? (
+                    `Customer is inquiring about ${activeConversation.productsDiscussed[0]}. AI is configured to provide pricing & catalog details.`
+                  ) : (
+                    "Active conversation ready for automated AI response or live merchant support."
+                  )}
+                </p>
               </div>
             </div>
           </aside>

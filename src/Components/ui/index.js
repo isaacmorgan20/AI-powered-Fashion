@@ -10,3 +10,16 @@ export { Divider } from "./Divider";
 export { Skeleton } from "./Skeleton";
 export { EmptyState } from "./EmptyState";
 export { Spinner } from "./Spinner";
+export {
+  SocialIcon,
+  WhatsAppIcon,
+  InstagramIcon,
+  FacebookIcon,
+  TelegramIcon,
+  TikTokIcon,
+  XIcon,
+  YouTubeIcon,
+  PinterestIcon,
+  LinkedInIcon,
+  WebsiteIcon,
+} from "./SocialIcon";
