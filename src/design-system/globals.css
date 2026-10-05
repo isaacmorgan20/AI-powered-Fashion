@@ -64,70 +64,6 @@
   --color-channel-telegram-light: #dbeafe;
 }
 
-.dark {
-  --color-bg-primary: #0f172a;
-  --color-bg-secondary: #111827;
-  --color-bg-tertiary: #1f2937;
-  --color-bg-inverse: #ffffff;
-
-  --color-surface-primary: #1e293b;
-  --color-surface-muted: #334155;
-  --color-surface-hover: #334155;
-
-  --color-border-light: #334155;
-  --color-border-medium: #475569;
-  --color-border-focus: #3b82f6;
-
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #cbd5e1;
-  --color-text-muted: #64748b;
-  --color-text-inverse: #0f172a;
-
-  --color-primary: #3b82f6;
-  --color-primary-hover: #60a5fa;
-  --color-primary-light: #1e3a5f;
-  --color-primary-foreground: #ffffff;
-
-  --color-success: #10b981;
-  --color-success-light: #064e3b;
-  --color-success-foreground: #ffffff;
-
-  --color-warning: #f59e0b;
-  --color-warning-light: #78350f;
-  --color-warning-foreground: #ffffff;
-
-  --color-error: #ef4444;
-  --color-error-light: #7f1d1d;
-  --color-error-foreground: #ffffff;
-
-  --color-info: #06b6d4;
-  --color-info-light: #164e63;
-  --color-info-foreground: #ffffff;
-
-  --color-ai: #a78bfa;
-  --color-ai-light: #3c2a5e;
-  --color-ai-foreground: #ffffff;
-
-  --color-sidebar-bg: #08101a;
-  --color-sidebar-text: #f1f5f9;
-  --color-sidebar-text-muted: #94a3b8;
-  --color-sidebar-active-bg: #1e293b;
-  --color-sidebar-active-text: #ffffff;
-  --color-sidebar-border: #1e293b;
-  --color-sidebar-indicator: #3b82f6;
-
-  --color-channel-whatsapp: #25d366;
-  --color-channel-whatsapp-light: #064e3b;
-  --color-channel-instagram: #e1306c;
-  --color-channel-instagram-light: #500724;
-  --color-channel-facebook: #1877f2;
-  --color-channel-facebook-light: #1e3a5f;
-  --color-channel-website: #3b82f6;
-  --color-channel-website-light: #1e3a5f;
-  --color-channel-telegram: #3b82f6;
-  --color-channel-telegram-light: #1e3a5f;
-}
-
 *,
 *::before,
 *::after {
@@ -157,11 +93,6 @@ body {
 }
 
 ::selection {
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
-}
-
-.dark ::selection {
   background-color: var(--color-primary-light);
   color: var(--color-primary);
 }
@@ -205,11 +136,6 @@ pre {
   background-color: var(--color-surface-muted);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border-light);
-}
-
-.dark pre {
-  background-color: var(--color-surface-muted);
-  border-color: var(--color-border-medium);
 }
 
 .scrollbar-thin {
@@ -373,10 +299,6 @@ pre {
 
 .focus-ring:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--color-primary), 0 0 0 4px var(--color-bg-primary);
-}
-
-.dark .focus-ring:focus-visible {
   box-shadow: 0 0 0 2px var(--color-primary), 0 0 0 4px var(--color-bg-primary);
 }
 

@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../service/api';
 import { useSettings } from './useSettings';
 import useAuthStore from '../Store/AuthStore';
+import { db } from '../service/Firebase';
+import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 
 export function useNotifications() {
   const [events, setEvents] = useState([]);
@@ -20,6 +22,50 @@ export function useNotifications() {
   useEffect(() => {
     notificationSettingsRef.current = notificationSettings;
   }, [notificationSettings]);
+
+  // Convert Firestore Timestamp to milliseconds
+  const normalizeTimestamp = (timestamp) => {
+    if (!timestamp) return null;
+    // Firestore Timestamp object has toDate() method or seconds/nanoseconds properties
+    if (typeof timestamp.toDate === 'function') {
+      return timestamp.toDate().getTime();
+    }
+    if (typeof timestamp.seconds === 'number') {
+      return timestamp.seconds * 1000 + Math.floor((timestamp.nanoseconds || 0) / 1e6);
+    }
+    if (typeof timestamp === 'number') {
+      return timestamp;
+    }
+    return null;
+  };
+
+  // Normalize notification data from Firestore
+  const normalizeNotification = (doc) => {
+    const data = doc.data();
+    const normalized = { id: doc.id, ...data };
+    // Convert createdAt to milliseconds
+    if (normalized.createdAt) {
+      normalized.createdAt = normalizeTimestamp(normalized.createdAt);
+    }
+    // Ensure metadata is a plain object
+    if (normalized.metadata && typeof normalized.metadata === 'object') {
+      normalized.metadata = { ...normalized.metadata };
+    }
+    // Sanitize: remove any React SyntheticEvent-like properties that could cause render errors
+    // These properties indicate a React event object was accidentally merged into the data
+    const syntheticEventKeys = [
+      '_reactName', '_targetInst', 'nativeEvent', 'target', 'currentTarget',
+      'eventPhase', 'bubbles', 'cancelable', 'timeStamp', 'defaultPrevented',
+      'isTrusted', 'isDefaultPrevented', 'isPropagationStopped'
+    ];
+    syntheticEventKeys.forEach(key => {
+      delete normalized[key];
+      if (normalized.metadata && typeof normalized.metadata === 'object') {
+        delete normalized.metadata[key];
+      }
+    });
+    return normalized;
+  };
 
   // Send browser notification
   const sendBrowserNotification = useCallback((title, message, data = {}) => {
@@ -72,9 +118,9 @@ export function useNotifications() {
         setLoading(false);
       }
     }
-}, []);
- 
- // Initial fetch
+  }, []);
+  
+  // Initial fetch
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
@@ -84,29 +130,28 @@ export function useNotifications() {
     if (!user?.uid) return;
 
     let unsubscribe = null;
-    let db = null;
 
     const setupListener = async () => {
       try {
-        const { getFirestoreClient } = await import('../service/Firebase');
-        const firestore = getFirestoreClient();
-        db = firestore;
-        
         // Initial fetch (already done by initial fetch effect, but ensures data)
         fetchEvents();
 
-        // Subscribe to real-time updates
-        const notificationsRef = db.collection('users').document(user.uid).collection('notifications')
-          .orderBy('createdAt', 'desc')
-          .limit(50);
+        // Subscribe to real-time updates using modular Firestore SDK
+        const notificationsCol = collection(db, 'users', user.uid, 'notifications');
+        const notificationsQuery = query(
+          notificationsCol,
+          orderBy('createdAt', 'desc'),
+          limit(50)
+        );
 
-        unsubscribe = notificationsRef.onSnapshot(
+        unsubscribe = onSnapshot(
+          notificationsQuery,
           (snapshot) => {
             if (!isMountedRef.current) return;
             
             snapshot.docChanges().forEach((change) => {
               if (change.type === 'added') {
-                const newEvent = { id: change.doc.id, ...change.doc.data() };
+                const newEvent = normalizeNotification(change.doc);
                 
                 // Prevent duplicate notifications
                 if (seenNotificationIdsRef.current.has(newEvent.id)) {
@@ -131,7 +176,7 @@ export function useNotifications() {
                   });
                 }
               } else if (change.type === 'modified') {
-                const updatedEvent = { id: change.doc.id, ...change.doc.data() };
+                const updatedEvent = normalizeNotification(change.doc);
                 setEvents((current) =>
                   current.map((e) => (e.id === updatedEvent.id ? updatedEvent : e))
                 );

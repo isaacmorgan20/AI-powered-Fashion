@@ -13,16 +13,18 @@ import {
   AlertTriangle,
   MessageCircle,
   Globe2,
-  Share2,
   CheckCircle2,
   UserRound,
   Sparkles,
   Package,
   Loader2,
   AlertCircle,
+  WifiOff,
 } from "lucide-react";
+
 import { useAnalytics } from "../hooks/useAnalytics";
 import { useSettings } from "../hooks/useSettings";
+
 import {
   Select,
   SocialIcon,
@@ -35,22 +37,29 @@ import {
 const ChannelIcon = ({ name }) => {
   const norm = String(name || "").toLowerCase();
 
-  let bgStyle = "bg-slate-50 ring-slate-100 dark:bg-slate-900/20 dark:ring-slate-800/50";
+  let bgStyle = "bg-slate-50 ring-slate-200";
+
   if (norm.includes("whatsapp")) {
-    bgStyle = "bg-emerald-50 ring-emerald-100 dark:bg-emerald-900/20 dark:ring-emerald-800/50";
+    bgStyle = "bg-emerald-50 ring-emerald-100";
   } else if (norm.includes("instagram")) {
-    bgStyle = "bg-pink-50 ring-pink-100 dark:bg-pink-900/20 dark:ring-pink-800/50";
+    bgStyle = "bg-slate-50 ring-slate-200";
   } else if (norm.includes("facebook")) {
-    bgStyle = "bg-blue-50 ring-blue-100 dark:bg-blue-900/20 dark:ring-blue-800/50";
+    bgStyle = "bg-blue-50 ring-blue-100";
   } else if (norm.includes("telegram")) {
-    bgStyle = "bg-sky-50 ring-sky-100 dark:bg-sky-900/20 dark:ring-sky-800/50";
+    bgStyle = "bg-sky-50 ring-sky-100";
   } else if (norm.includes("website")) {
-    bgStyle = "bg-violet-50 ring-violet-100 dark:bg-violet-900/20 dark:ring-violet-800/50";
+    bgStyle = "bg-primary/5 ring-primary/10";
   }
 
   return (
-    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 ${bgStyle}`}>
-      <SocialIcon name={name} size={20} />
+    <div
+      className={`
+        flex h-10 w-10 shrink-0 items-center justify-center
+        rounded-xl ring-1
+        ${bgStyle}
+      `}
+    >
+      <SocialIcon name={name} size={19} />
     </div>
   );
 };
@@ -63,12 +72,17 @@ const Analytics = () => {
   const [range, setRange] = useState("30 days");
   const [showAllGaps, setShowAllGaps] = useState(false);
 
-  const { data, loading, error, refetch } = useAnalytics(range);
+  const { data, loading, error, refetch, isUsingCache, isOnline } = useAnalytics(range);
   const { settings } = useSettings();
+
   const currency = settings?.general?.currency || "GHS";
 
+  /* =======================================================
+     CALCULATIONS
+  ======================================================= */
+
   const aiRate = useMemo(() => {
-    if (!data?.conversations) return 0;
+    if (!data?.conversations) return "0.0";
 
     return (
       (data.aiResolved / data.conversations) *
@@ -84,7 +98,7 @@ const Analytics = () => {
   }, [aiRate]);
 
   const conversionRate = useMemo(() => {
-    if (!data?.funnel?.conversations) return 0;
+    if (!data?.funnel?.conversations) return "0.0";
 
     return (
       (data.funnel.completedOrders /
@@ -94,7 +108,7 @@ const Analytics = () => {
   }, [data]);
 
   const handoffRate = useMemo(() => {
-    if (!data?.conversations) return 0;
+    if (!data?.conversations) return "0.0";
 
     return (
       (data.handoffs /
@@ -111,22 +125,26 @@ const Analytics = () => {
       : data.knowledgeGaps.slice(0, 3);
   }, [data, showAllGaps]);
 
+  /* =======================================================
+     LOADING
+  ======================================================= */
+
   if (loading) {
     return (
-      <div className="flex h-full min-h-0 w-full items-center justify-center bg-gradient-to-br from-violet-50 via-white to-pink-50 dark:from-surface-950 dark:via-surface-900 dark:to-violet-950/20">
-        <div className="rounded-2xl border border-violet-100 bg-white/90 px-8 py-7 text-center shadow-xl shadow-violet-500/10 dark:border-violet-900/40 dark:bg-surface-900/90">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-900/30">
+      <div className="flex h-full min-h-0 w-full items-center justify-center bg-surface-primary p-6">
+        <div className="w-full max-w-sm rounded-2xl border border-border-light bg-white p-8 text-center shadow-sm">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
             <Loader2
-              size={25}
-              className="animate-spin text-violet-600 dark:text-violet-400"
+              size={23}
+              className="animate-spin text-primary"
             />
           </div>
 
-          <p className="mt-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
+          <p className="mt-4 text-sm font-semibold text-text-primary">
             Loading analytics...
           </p>
 
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs leading-5 text-text-muted">
             Preparing your business insights
           </p>
         </div>
@@ -134,28 +152,42 @@ const Analytics = () => {
     );
   }
 
-  if (error) {
+  /* =======================================================
+     ERROR
+  ======================================================= */
+
+  const isOfflineError = error?.startsWith?.('Offline');
+
+  if (error && (!isOfflineError || !data)) {
     return (
-      <div className="flex h-full min-h-0 w-full items-center justify-center bg-gradient-to-br from-rose-50 via-white to-orange-50 p-6 dark:from-surface-950 dark:via-surface-900 dark:to-rose-950/20">
-        <div className="max-w-sm rounded-2xl border border-rose-100 bg-white p-7 text-center shadow-xl shadow-rose-500/10 dark:border-rose-900/40 dark:bg-surface-900">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 dark:bg-rose-900/30">
+      <div className="flex h-full min-h-0 w-full items-center justify-center bg-surface-primary p-6">
+        <div className="w-full max-w-sm rounded-2xl border border-error/20 bg-white p-7 text-center shadow-sm">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-error/10">
             <AlertCircle
-              size={25}
-              className="text-rose-600 dark:text-rose-400"
+              size={24}
+              className="text-error"
             />
           </div>
 
-          <h3 className="mt-4 text-sm font-semibold text-slate-800 dark:text-slate-100">
+          <h3 className="mt-4 text-sm font-semibold text-text-primary">
             Failed to load analytics
           </h3>
 
-          <p className="mt-2 text-xs leading-5 text-slate-400">
+          <p className="mt-2 text-xs leading-5 text-text-muted">
             {error}
           </p>
 
           <button
+            type="button"
             onClick={refetch}
-            className="mt-4 rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-violet-700 hover:shadow-md"
+            className="
+              mt-5 rounded-lg
+              bg-primary px-4 py-2
+              text-xs font-semibold text-white
+              shadow-sm
+              transition-colors
+              hover:bg-primary/90
+            "
           >
             Retry
           </button>
@@ -164,95 +196,151 @@ const Analytics = () => {
     );
   }
 
+  /* =======================================================
+     NO DATA (offline with no cache, or truly empty)
+  ======================================================= */
+
   if (!data) {
+    const isOfflineNoCache = isOfflineError && !isOnline;
     return (
-      <div className="flex h-full min-h-0 w-full items-center justify-center bg-gradient-to-br from-violet-50 via-white to-pink-50 dark:from-surface-950 dark:via-surface-900 dark:to-violet-950/20">
-        <div className="rounded-2xl border border-slate-200 bg-white px-8 py-7 text-center shadow-lg dark:border-slate-700 dark:bg-surface-900">
-          <BarChart3
-            size={28}
-            className="mx-auto text-violet-500"
-          />
+      <div className="flex h-full min-h-0 w-full items-center justify-center bg-surface-primary p-6">
+        <div className="w-full max-w-sm rounded-2xl border border-border-light bg-white p-8 text-center shadow-sm">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+            {isOfflineNoCache ? (
+              <WifiOff size={25} className="text-primary" />
+            ) : (
+              <BarChart3 size={25} className="text-primary" />
+            )}
+          </div>
 
-          <p className="mt-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
-            No analytics data
+          <p className="mt-4 text-sm font-semibold text-text-primary">
+            {isOfflineNoCache ? "You're offline" : "No analytics data"}
           </p>
 
-          <p className="mt-1 text-xs text-slate-400">
-            There is currently no data available for this period.
+          <p className="mt-1 text-xs leading-5 text-text-muted">
+            {isOfflineNoCache
+              ? "Analytics will appear here after your first successful connection."
+              : "There is currently no data available for this period."}
           </p>
+
+          {isOfflineNoCache && (
+            <button
+              type="button"
+              onClick={refetch}
+              className="
+                mt-5 rounded-lg
+                bg-primary px-4 py-2
+                text-xs font-semibold text-white
+                shadow-sm
+                transition-colors
+                hover:bg-primary/90
+              "
+            >
+              Try again
+            </button>
+          )}
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-gradient-to-br from-violet-50/60 via-slate-50 to-pink-50/50 dark:from-surface-950 dark:via-surface-900 dark:to-violet-950/20">
+  /* =======================================================
+     PAGE
+  ======================================================= */
 
+  return (
+    <div
+      className="
+        flex h-full min-h-0 w-full flex-col
+        overflow-hidden
+        bg-surface-primary
+      "
+    >
       {/* ===================================================
-          FIXED HEADER
+          HEADER
       ==================================================== */}
 
-      <header className="shrink-0 border-b border-violet-100/80 bg-white/95 px-4 py-4 shadow-sm backdrop-blur-xl dark:border-surface-700 dark:bg-surface-900/95 sm:px-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <header className="z-10 shrink-0 border-b border-border-light bg-white">
+        <div className="px-4 py-4 sm:px-6 lg:px-7">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
-          <div className="min-w-0">
-            <div className="flex items-center gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-3">
 
-<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <BarChart3
-                size={20}
-                strokeWidth={2}
-              />
-            </div>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-sm">
+                  <BarChart3
+                    size={20}
+                    strokeWidth={2}
+                  />
+                </div>
 
-              <div>
-                <h1 className="text-lg font-bold text-text-primary">
-                  Analytics
-                </h1>
+                <div className="min-w-0">
+                  <h1 className="text-lg font-bold tracking-tight text-text-primary">
+                    Analytics
+                  </h1>
 
-                <div className="mt-0.5 flex items-center gap-2">
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="absolute inset-0 rounded-full bg-success animate-ping opacity-60" />
-                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-success" />
-                  </span>
-
-                  <p className="mt-0.5 text-xs font-medium text-text-muted">
-                    Business intelligence
+                  <p className="mt-0.5 text-xs text-text-muted">
+                    Track customer engagement, sales and AI performance.
                   </p>
                 </div>
               </div>
             </div>
 
-            <p className="mt-2 text-xs text-text-muted">
-              Track customer engagement, AI performance and sales.
-            </p>
-          </div>
-
-          <div className="relative shrink-0">
-            <Select
-              value={range}
-              onChange={setRange}
-              options={[
-                { value: "Today", label: "Today" },
-                { value: "7 days", label: "7 days" },
-                { value: "30 days", label: "30 days" },
-                { value: "90 days", label: "90 days" },
-              ]}
-              className="w-full sm:w-auto"
-            />
+            <div className="w-full shrink-0 sm:w-auto">
+              <Select
+                value={range}
+                onChange={(e) => setRange(e.target.value)}
+                options={[
+                  {
+                    value: "Today",
+                    label: "Today",
+                  },
+                  {
+                    value: "7 days",
+                    label: "7 days",
+                  },
+                  {
+                    value: "30 days",
+                    label: "30 days",
+                  },
+                  {
+                    value: "90 days",
+                    label: "90 days",
+                  },
+                ]}
+                className="w-full sm:w-[150px]"
+              />
+            </div>
           </div>
         </div>
       </header>
 
+      {isUsingCache && !isOnline && (
+        <div className="flex items-center justify-center gap-2 border-b border-warning/30 bg-warning/5 px-4 py-2.5 text-xs font-medium text-warning">
+          <WifiOff size={12} className="shrink-0" />
+          <span>Offline — Showing saved data</span>
+        </div>
+      )}
+
       {/* ===================================================
-          ONLY MAIN CONTENT SCROLLS
+          SCROLLABLE CONTENT AREA
       ==================================================== */}
 
-      <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <div className="mx-auto w-full max-w-[1800px] space-y-5 p-4 sm:p-5 lg:p-6">
+      <main
+        className="
+          min-h-0
+          flex-1
+          overflow-y-auto
+          overflow-x-hidden
+          touch-pan-y
+          overscroll-y-auto
+          [scrollbar-gutter:stable]
+        "
+      >
+        <div className="mx-auto w-full max-w-[1800px] space-y-5 p-4 pb-8 sm:p-5 sm:pb-10 lg:p-6 lg:pb-12">
 
           {/* =================================================
-              METRICS
+              KPI CARDS
           ================================================== */}
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -274,7 +362,7 @@ const Analytics = () => {
               change={data.aiResolvedChange}
               positive={true}
               description={`${data.aiResolved.toLocaleString()} conversations handled by AI`}
-              accent="ai"
+              accent="primary"
             />
 
             <MetricCard
@@ -298,103 +386,109 @@ const Analytics = () => {
               change={data.revenueChange}
               positive={true}
               description="vs previous period"
-              accent="order"
+              accent="success"
             />
           </div>
 
           {/* =================================================
-              CONVERSATIONS + INTENTS
+              REVENUE / CONVERSATIONS + CUSTOMER INTENT
           ================================================== */}
 
           <div className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
 
-            {/* Conversation trend */}
+            {/* Conversation Trend */}
 
-            <section className="overflow-hidden rounded-2xl border border-violet-100 bg-white shadow-sm shadow-violet-500/5 transition hover:shadow-md dark:border-surface-700 dark:bg-surface-900">
+            <section className="overflow-hidden rounded-2xl border border-border-light bg-white shadow-sm">
 
-              <div className="flex items-start justify-between gap-4 border-b border-violet-50 bg-gradient-to-r from-violet-50/70 to-transparent px-5 py-4 dark:border-surface-700 dark:from-violet-950/20">
+              <div className="flex flex-col gap-3 border-b border-border-light px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
 
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/30">
+
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                       <TrendingUp
-                        size={14}
-                        className="text-violet-600 dark:text-violet-400"
+                        size={15}
+                        className="text-primary"
                       />
                     </div>
 
-                    <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                      Conversations
+                    <h2 className="text-sm font-semibold text-text-primary">
+                      Conversation overview
                     </h2>
                   </div>
 
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="mt-1 text-xs text-text-muted">
                     Customer conversations over time
                   </p>
                 </div>
 
-                <span className="shrink-0 rounded-full bg-violet-100 px-3 py-1 text-[10px] font-bold text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+                <span className="w-fit rounded-lg border border-border-light bg-surface-muted px-2.5 py-1.5 text-[10px] font-semibold text-text-secondary">
                   {range}
                 </span>
               </div>
 
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <SimpleLineChart
                   values={data.conversationChart}
                 />
               </div>
             </section>
 
-            {/* Intent */}
+            {/* Customer Intent */}
 
-            <section className="overflow-hidden rounded-2xl border border-pink-100 bg-white shadow-sm shadow-pink-500/5 transition hover:shadow-md dark:border-surface-700 dark:bg-surface-900">
+            <section className="overflow-hidden rounded-2xl border border-border-light bg-white shadow-sm">
 
-              <div className="border-b border-pink-50 bg-gradient-to-r from-pink-50/70 to-transparent px-5 py-4 dark:border-surface-700 dark:from-pink-950/20">
+              <div className="border-b border-border-light px-5 py-4">
 
                 <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-pink-100 dark:bg-pink-900/30">
+
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                     <MessageCircle
-                      size={14}
-                      className="text-pink-600 dark:text-pink-400"
+                      size={15}
+                      className="text-primary"
                     />
                   </div>
 
-                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                  <h2 className="text-sm font-semibold text-text-primary">
                     Customer intent
                   </h2>
                 </div>
 
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-text-muted">
                   What customers ask about most
                 </p>
               </div>
 
-              <div className="space-y-4 p-5">
+              <div className="space-y-5 p-5">
                 {data.intents.map((intent, index) => {
                   const intentColors = [
-                    "bg-pink-500",
-                    "bg-violet-500",
-                    "bg-blue-500",
-                    "bg-orange-500",
-                    "bg-emerald-500",
+                    "bg-primary",
+                    "bg-info",
+                    "bg-success",
+                    "bg-warning",
+                    "bg-slate-400",
                   ];
 
                   return (
                     <div key={intent.name}>
                       <div className="mb-1.5 flex items-center justify-between gap-3">
 
-                        <span className="truncate text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        <span className="truncate text-xs font-semibold text-text-secondary">
                           {intent.name}
                         </span>
 
-                        <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                        <span className="shrink-0 text-[10px] font-semibold text-text-muted">
                           {intent.value}%
                         </span>
                       </div>
 
-                      <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                      <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
                         <div
-                          className={`h-full rounded-full ${intentColors[index % intentColors.length]} transition-all duration-500`}
+                          className={`
+                            h-full rounded-full
+                            ${intentColors[index % intentColors.length]}
+                            transition-all duration-500
+                          `}
                           style={{
                             width: `${intent.value}%`,
                           }}
@@ -411,41 +505,43 @@ const Analytics = () => {
               SALES FUNNEL
           ================================================== */}
 
-          <section className="overflow-hidden rounded-2xl border border-emerald-100 bg-white shadow-sm shadow-emerald-500/5 dark:border-surface-700 dark:bg-surface-900">
+          <section className="overflow-hidden rounded-2xl border border-border-light bg-white shadow-sm">
 
-            <div className="flex flex-col gap-3 border-b border-emerald-50 bg-gradient-to-r from-emerald-50/70 via-transparent to-transparent px-5 py-4 dark:border-surface-700 dark:from-emerald-950/20 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 border-b border-border-light px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
 
               <div>
                 <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
                     <ShoppingBag
-                      size={14}
-                      className="text-emerald-600 dark:text-emerald-400"
+                      size={15}
+                      className="text-primary"
                     />
                   </div>
 
-                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                  <h2 className="text-sm font-semibold text-text-primary">
                     Conversation → Purchase
                   </h2>
                 </div>
 
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-text-muted">
                   How customer conversations move toward completed orders
                 </p>
               </div>
 
-              <div className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+              <div className="w-fit rounded-lg bg-success/10 px-3 py-1.5 text-xs font-semibold text-success">
                 {conversionRate}% conversion
               </div>
             </div>
 
             <div className="grid md:grid-cols-4">
+
               <FunnelStep
                 number="01"
                 label="Conversations"
                 value={data.funnel.conversations}
                 icon={MessageSquare}
-                accent="violet"
+                accent="primary"
               />
 
               <FunnelStep
@@ -453,7 +549,7 @@ const Analytics = () => {
                 label="Product interest"
                 value={data.funnel.productInterest}
                 icon={ShoppingBag}
-                accent="pink"
+                accent="info"
               />
 
               <FunnelStep
@@ -461,7 +557,7 @@ const Analytics = () => {
                 label="Order attempts"
                 value={data.funnel.orderAttempts}
                 icon={Package}
-                accent="orange"
+                accent="warning"
               />
 
               <FunnelStep
@@ -469,7 +565,7 @@ const Analytics = () => {
                 label="Completed orders"
                 value={data.funnel.completedOrders}
                 icon={CheckCircle2}
-                accent="emerald"
+                accent="success"
                 last
               />
             </div>
@@ -481,34 +577,35 @@ const Analytics = () => {
 
           <div className="grid gap-5 xl:grid-cols-2">
 
-            {/* Products */}
+            {/* Top Products */}
 
-            <section className="overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm shadow-orange-500/5 dark:border-surface-700 dark:bg-surface-900">
+            <section className="overflow-hidden rounded-2xl border border-border-light bg-white shadow-sm">
 
-              <div className="flex items-center justify-between border-b border-orange-50 bg-gradient-to-r from-orange-50/70 to-transparent px-5 py-4 dark:border-surface-700 dark:from-orange-950/20">
+              <div className="flex items-center justify-between border-b border-border-light px-5 py-4">
 
                 <div>
                   <div className="flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900/30">
+
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-warning/10">
                       <Package
-                        size={14}
-                        className="text-orange-600 dark:text-orange-400"
+                        size={15}
+                        className="text-warning"
                       />
                     </div>
 
-                    <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                    <h2 className="text-sm font-semibold text-text-primary">
                       Top products
                     </h2>
                   </div>
 
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="mt-1 text-xs text-text-muted">
                     Products generating the most interest
                   </p>
                 </div>
 
                 <Package
                   size={18}
-                  className="text-orange-400"
+                  className="text-text-muted"
                 />
               </div>
 
@@ -516,114 +613,122 @@ const Analytics = () => {
                 <table className="w-full min-w-[520px]">
 
                   <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/60">
+                    <tr className="border-b border-border-light bg-surface-muted">
 
-                      <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                      <th className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-text-muted">
                         Product
                       </th>
 
-                      <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                      <th className="px-3 py-3 text-right text-[10px] font-semibold uppercase tracking-wide text-text-muted">
                         Enquiries
                       </th>
 
-                      <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                      <th className="px-3 py-3 text-right text-[10px] font-semibold uppercase tracking-wide text-text-muted">
                         Orders
                       </th>
 
-                      <th className="px-5 py-3 text-right text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                      <th className="px-5 py-3 text-right text-[10px] font-semibold uppercase tracking-wide text-text-muted">
                         Revenue
                       </th>
                     </tr>
                   </thead>
 
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tbody className="divide-y divide-border-light">
 
                     {data.topProducts.map(
                       (product, index) => (
                         <tr
                           key={product.name}
-                          className="transition hover:bg-orange-50/40 dark:hover:bg-orange-950/10"
+                          className="transition-colors hover:bg-surface-muted/60"
                         >
                           <td className="px-5 py-4">
 
                             <div className="flex items-center gap-3">
 
-                              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold ${
-                                index === 0
-                                  ? "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400"
-                                  : index === 1
-                                  ? "bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400"
-                                  : index === 2
-                                  ? "bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400"
-                                  : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-                              }`}>
+                              <div
+                                className={`
+                                  flex h-9 w-9 shrink-0
+                                  items-center justify-center
+                                  rounded-lg
+                                  text-xs font-bold
+                                  ${
+                                    index === 0
+                                      ? "bg-primary/10 text-primary"
+                                      : index === 1
+                                      ? "bg-info/10 text-info"
+                                      : index === 2
+                                      ? "bg-warning/10 text-warning"
+                                      : "bg-surface-muted text-text-muted"
+                                  }
+                                `}
+                              >
                                 {index + 1}
                               </div>
 
                               <div className="min-w-0">
-
-                                <p className="truncate text-xs font-bold text-slate-900 dark:text-slate-100">
+                                <p className="truncate text-xs font-semibold text-text-primary">
                                   {product.name}
                                 </p>
 
-                                <p className="mt-0.5 text-[10px] text-slate-400">
+                                <p className="mt-0.5 text-[10px] text-text-muted">
                                   Product interest
                                 </p>
                               </div>
                             </div>
                           </td>
 
-                          <td className="px-3 py-4 text-right text-xs font-semibold text-slate-700 dark:text-slate-300">
+                          <td className="px-3 py-4 text-right text-xs font-medium text-text-secondary">
                             {product.enquiries.toLocaleString()}
                           </td>
 
-                          <td className="px-3 py-4 text-right text-xs font-semibold text-slate-700 dark:text-slate-300">
+                          <td className="px-3 py-4 text-right text-xs font-medium text-text-secondary">
                             {product.orders.toLocaleString()}
                           </td>
 
-                          <td className="px-5 py-4 text-right text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                          <td className="px-5 py-4 text-right text-xs font-semibold text-success">
                             {currency}{" "}
                             {product.revenue.toLocaleString()}
                           </td>
                         </tr>
                       )
                     )}
+
                   </tbody>
                 </table>
               </div>
             </section>
 
-            {/* Channels */}
+            {/* Channel Performance */}
 
-            <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm shadow-blue-500/5 dark:border-surface-700 dark:bg-surface-900">
+            <section className="overflow-hidden rounded-2xl border border-border-light bg-white shadow-sm">
 
-              <div className="border-b border-blue-50 bg-gradient-to-r from-blue-50/70 to-transparent px-5 py-4 dark:border-surface-700 dark:from-blue-950/20">
+              <div className="border-b border-border-light px-5 py-4">
 
                 <div className="flex items-center gap-2">
 
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
                     <Globe2
-                      size={14}
-                      className="text-blue-600 dark:text-blue-400"
+                      size={15}
+                      className="text-primary"
                     />
                   </div>
 
-                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                  <h2 className="text-sm font-semibold text-text-primary">
                     Channel performance
                   </h2>
                 </div>
 
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-text-muted">
                   Where customer conversations originate
                 </p>
               </div>
 
-              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              <div className="divide-y divide-border-light">
 
                 {data.channels.map((channel) => (
                   <div
                     key={channel.name}
-                    className="px-5 py-4 transition hover:bg-blue-50/30 dark:hover:bg-blue-950/10"
+                    className="px-5 py-4 transition-colors hover:bg-surface-muted/50"
                   >
                     <div className="flex items-center gap-3">
 
@@ -635,42 +740,50 @@ const Analytics = () => {
 
                         <div className="flex items-center justify-between gap-3">
 
-                          <p className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                          <p className="text-xs font-semibold text-text-primary">
                             {channel.name}
                           </p>
 
-                          <p className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                          <p className="text-xs font-semibold text-primary">
                             {channel.value}%
                           </p>
                         </div>
 
-                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-muted">
+
                           <div
-                            className={`h-full rounded-full ${
-                              channel.name === "WhatsApp"
-                                ? "bg-emerald-500"
-                                : channel.name === "Instagram"
-                                ? "bg-pink-500"
-                                : channel.name === "Facebook"
-                                ? "bg-blue-500"
-                                : "bg-violet-500"
-                            }`}
+                            className={`
+                              h-full rounded-full
+                              ${
+                                String(channel.name)
+                                  .toLowerCase()
+                                  .includes("whatsapp")
+                                  ? "bg-emerald-500"
+                                  : String(channel.name)
+                                      .toLowerCase()
+                                      .includes("facebook")
+                                  ? "bg-blue-500"
+                                  : String(channel.name)
+                                      .toLowerCase()
+                                      .includes("telegram")
+                                  ? "bg-sky-500"
+                                  : "bg-primary"
+                              }
+                            `}
                             style={{
                               width: `${channel.value}%`,
                             }}
                           />
                         </div>
 
-                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-slate-400">
+                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-text-muted">
 
                           <span>
-                            {channel.conversations.toLocaleString()}{" "}
-                            conversations
+                            {channel.conversations.toLocaleString()} conversations
                           </span>
 
                           <span>
-                            {channel.orders.toLocaleString()}{" "}
-                            orders
+                            {channel.orders.toLocaleString()} orders
                           </span>
 
                           <span>
@@ -682,6 +795,7 @@ const Analytics = () => {
                     </div>
                   </div>
                 ))}
+
               </div>
             </section>
           </div>
@@ -692,27 +806,27 @@ const Analytics = () => {
 
           <div className="grid gap-5 xl:grid-cols-2">
 
-            {/* AI */}
+            {/* AI Performance */}
 
-            <section className="overflow-hidden rounded-2xl border border-violet-100 bg-white shadow-sm shadow-violet-500/5 dark:border-surface-700 dark:bg-surface-900">
+            <section className="overflow-hidden rounded-2xl border border-border-light bg-white shadow-sm">
 
-              <div className="border-b border-violet-50 bg-gradient-to-r from-violet-50/70 to-transparent px-5 py-4 dark:border-surface-700 dark:from-violet-950/20">
+              <div className="border-b border-border-light px-5 py-4">
 
                 <div className="flex items-center gap-2">
 
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/30">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
                     <Sparkles
-                      size={14}
-                      className="text-violet-600 dark:text-violet-400"
+                      size={15}
+                      className="text-primary"
                     />
                   </div>
 
-                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                  <h2 className="text-sm font-semibold text-text-primary">
                     AI performance
                   </h2>
                 </div>
 
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-text-muted">
                   How the AI is handling customer conversations
                 </p>
               </div>
@@ -723,7 +837,7 @@ const Analytics = () => {
                   icon={Bot}
                   label="AI handled"
                   value={data.aiResolved.toLocaleString()}
-                  accent="violet"
+                  accent="primary"
                 />
 
                 <MiniMetric
@@ -733,57 +847,57 @@ const Analytics = () => {
                     data.conversations -
                     data.aiResolved
                   ).toLocaleString()}
-                  accent="blue"
+                  accent="info"
                 />
 
                 <MiniMetric
                   icon={CheckCircle2}
                   label="Resolution rate"
                   value={`${aiRate}%`}
-                  accent="emerald"
+                  accent="success"
                 />
 
                 <MiniMetric
                   icon={Clock3}
                   label="Avg. response"
                   value={`${data.responseTime}s`}
-                  accent="orange"
+                  accent="warning"
                 />
               </div>
 
-              <div className="mx-5 mb-5 rounded-xl border border-violet-100 bg-gradient-to-br from-violet-50 to-pink-50/60 p-4 dark:border-violet-900/30 dark:from-violet-950/20 dark:to-pink-950/10">
+              <div className="mx-5 mb-5 rounded-xl border border-border-light bg-surface-muted/50 p-4">
 
                 <div className="flex items-center justify-between gap-3">
 
                   <div>
-                    <p className="text-xs font-bold text-slate-900 dark:text-white">
+                    <p className="text-xs font-semibold text-text-primary">
                       AI vs human
                     </p>
 
-                    <p className="mt-1 text-[10px] text-slate-400">
+                    <p className="mt-1 text-[10px] text-text-muted">
                       Conversation handling
                     </p>
                   </div>
 
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/30">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
                     <Bot
                       size={16}
-                      className="text-violet-600 dark:text-violet-400"
+                      className="text-primary"
                     />
                   </div>
                 </div>
 
-                <div className="mt-4 flex h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                <div className="mt-4 flex h-3 overflow-hidden rounded-full bg-slate-200">
 
                   <div
-                    className="h-full bg-gradient-to-r from-violet-500 to-purple-600 transition-all duration-500"
+                    className="h-full bg-primary transition-all duration-500"
                     style={{
                       width: `${aiRate}%`,
                     }}
                   />
 
                   <div
-                    className="h-full bg-slate-300 transition-all duration-500 dark:bg-slate-600"
+                    className="h-full bg-slate-300 transition-all duration-500"
                     style={{
                       width: `${humanRate}%`,
                     }}
@@ -792,38 +906,38 @@ const Analytics = () => {
 
                 <div className="mt-2 flex items-center justify-between text-[10px] font-semibold">
 
-                  <span className="text-violet-600 dark:text-violet-400">
+                  <span className="text-primary">
                     AI {aiRate}%
                   </span>
 
-                  <span className="text-slate-500 dark:text-slate-400">
+                  <span className="text-text-muted">
                     Human {humanRate}%
                   </span>
                 </div>
               </div>
             </section>
 
-            {/* Customers */}
+            {/* Customer Activity */}
 
-            <section className="overflow-hidden rounded-2xl border border-pink-100 bg-white shadow-sm shadow-pink-500/5 dark:border-surface-700 dark:bg-surface-900">
+            <section className="overflow-hidden rounded-2xl border border-border-light bg-white shadow-sm">
 
-              <div className="border-b border-pink-50 bg-gradient-to-r from-pink-50/70 to-transparent px-5 py-4 dark:border-surface-700 dark:from-pink-950/20">
+              <div className="border-b border-border-light px-5 py-4">
 
                 <div className="flex items-center gap-2">
 
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-pink-100 dark:bg-pink-900/30">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-info/10">
                     <Users
-                      size={14}
-                      className="text-pink-600 dark:text-pink-400"
+                      size={15}
+                      className="text-info"
                     />
                   </div>
 
-                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                  <h2 className="text-sm font-semibold text-text-primary">
                     Customer activity
                   </h2>
                 </div>
 
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-text-muted">
                   Customer mix during this period
                 </p>
               </div>
@@ -843,7 +957,7 @@ const Analytics = () => {
                     icon={UserRound}
                     label="Returning"
                     value={data.customers.returning}
-                    accent="violet"
+                    accent="primary"
                   />
 
                   <CustomerMetric
@@ -854,31 +968,31 @@ const Analytics = () => {
                   />
                 </div>
 
-                <div className="mt-5 rounded-xl border border-pink-100 bg-gradient-to-br from-pink-50/70 to-violet-50/60 p-4 dark:border-pink-900/30 dark:from-pink-950/10 dark:to-violet-950/10">
+                <div className="mt-5 rounded-xl border border-border-light bg-surface-muted/50 p-4">
 
                   <div className="flex items-center justify-between gap-3">
 
                     <div>
-                      <p className="text-xs font-bold text-slate-900 dark:text-white">
+                      <p className="text-xs font-semibold text-text-primary">
                         Returning customer ratio
                       </p>
 
-                      <p className="mt-1 text-[10px] text-slate-400">
+                      <p className="mt-1 text-[10px] leading-4 text-text-muted">
                         Returning customers compared with new customers
                       </p>
                     </div>
 
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-pink-100 dark:bg-pink-900/30">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
                       <ArrowUpRight
                         size={16}
-                        className="text-pink-600 dark:text-pink-400"
+                        className="text-primary"
                       />
                     </div>
                   </div>
 
                   <div className="mt-4 flex items-end gap-2">
 
-                    <p className="text-2xl font-bold text-pink-600 dark:text-pink-400">
+                    <p className="text-2xl font-bold text-primary">
                       {(
                         (data.customers.returning /
                           Math.max(
@@ -890,7 +1004,7 @@ const Analytics = () => {
                       %
                     </p>
 
-                    <span className="pb-1 text-[10px] font-medium text-slate-400">
+                    <span className="pb-1 text-[10px] font-medium text-text-muted">
                       returning / new
                     </span>
                   </div>
@@ -905,36 +1019,36 @@ const Analytics = () => {
 
           <div className="grid gap-5 xl:grid-cols-2">
 
-            {/* Handoffs */}
+            {/* Human Handoffs */}
 
-            <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm shadow-blue-500/5 dark:border-surface-700 dark:bg-surface-900">
+            <section className="overflow-hidden rounded-2xl border border-border-light bg-white shadow-sm">
 
-              <div className="flex items-center justify-between border-b border-blue-50 bg-gradient-to-r from-blue-50/70 to-transparent px-5 py-4 dark:border-surface-700 dark:from-blue-950/20">
+              <div className="flex items-center justify-between border-b border-border-light px-5 py-4">
 
                 <div>
                   <div className="flex items-center gap-2">
 
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-info/10">
                       <UserRound
-                        size={14}
-                        className="text-blue-600 dark:text-blue-400"
+                        size={15}
+                        className="text-info"
                       />
                     </div>
 
-                    <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                    <h2 className="text-sm font-semibold text-text-primary">
                       Human handoffs
                     </h2>
                   </div>
 
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="mt-1 text-xs text-text-muted">
                     Conversations requiring a human
                   </p>
                 </div>
 
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/30">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-info/10">
                   <UserRound
                     size={16}
-                    className="text-blue-600 dark:text-blue-400"
+                    className="text-info"
                   />
                 </div>
               </div>
@@ -944,16 +1058,16 @@ const Analytics = () => {
                 <div className="flex items-end justify-between gap-4">
 
                   <div>
-                    <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                    <p className="text-2xl font-bold text-text-primary">
                       {data.handoffs.toLocaleString()}
                     </p>
 
-                    <p className="mt-1 text-[10px] text-slate-400">
+                    <p className="mt-1 text-[10px] text-text-muted">
                       Total handoffs
                     </p>
                   </div>
 
-                  <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                  <span className="rounded-lg bg-info/10 px-2.5 py-1 text-[10px] font-semibold text-info">
                     {handoffRate}% of conversations
                   </span>
                 </div>
@@ -976,11 +1090,11 @@ const Analytics = () => {
                           : 0;
 
                       const barColors = [
-                        "bg-blue-500",
-                        "bg-violet-500",
-                        "bg-pink-500",
-                        "bg-orange-500",
-                        "bg-emerald-500",
+                        "bg-primary",
+                        "bg-info",
+                        "bg-warning",
+                        "bg-success",
+                        "bg-slate-400",
                       ];
 
                       return (
@@ -988,19 +1102,22 @@ const Analytics = () => {
 
                           <div className="mb-1.5 flex items-center justify-between gap-3">
 
-                            <span className="truncate text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            <span className="truncate text-xs font-semibold text-text-secondary">
                               {reason.name}
                             </span>
 
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                            <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-semibold text-text-muted">
                               {reason.value}
                             </span>
                           </div>
 
-                          <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                          <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
 
                             <div
-                              className={`h-full rounded-full ${barColors[index % barColors.length]}`}
+                              className={`
+                                h-full rounded-full
+                                ${barColors[index % barColors.length]}
+                              `}
                               style={{
                                 width: `${percentage}%`,
                               }}
@@ -1014,63 +1131,63 @@ const Analytics = () => {
               </div>
             </section>
 
-            {/* Knowledge gaps */}
+            {/* Knowledge Gaps */}
 
-            <section className="overflow-hidden rounded-2xl border border-amber-100 bg-white shadow-sm shadow-amber-500/5 dark:border-surface-700 dark:bg-surface-900">
+            <section className="overflow-hidden rounded-2xl border border-border-light bg-white shadow-sm">
 
-              <div className="flex items-center justify-between border-b border-amber-50 bg-gradient-to-r from-amber-50/70 to-transparent px-5 py-4 dark:border-surface-700 dark:from-amber-950/20">
+              <div className="flex items-center justify-between border-b border-border-light px-5 py-4">
 
                 <div>
                   <div className="flex items-center gap-2">
 
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-warning/10">
                       <Sparkles
-                        size={14}
-                        className="text-amber-600 dark:text-amber-400"
+                        size={15}
+                        className="text-warning"
                       />
                     </div>
 
-                    <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                    <h2 className="text-sm font-semibold text-text-primary">
                       AI knowledge gaps
                     </h2>
                   </div>
 
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="mt-1 text-xs text-text-muted">
                     Questions the AI could not answer confidently
                   </p>
                 </div>
 
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/30">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning/10">
                   <AlertTriangle
                     size={16}
-                    className="text-amber-600 dark:text-amber-400"
+                    className="text-warning"
                   />
                 </div>
               </div>
 
-              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              <div className="divide-y divide-border-light">
 
                 {visibleKnowledgeGaps.map(
                   (gap) => (
                     <div
                       key={gap.question}
-                      className="flex items-start gap-3 px-5 py-4 transition hover:bg-amber-50/40 dark:hover:bg-amber-950/10"
+                      className="flex items-start gap-3 px-5 py-4 transition-colors hover:bg-surface-muted/50"
                     >
 
-                      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-warning/10">
                         <MessageSquare
                           size={13}
-                          className="text-amber-600 dark:text-amber-400"
+                          className="text-warning"
                         />
                       </div>
 
                       <div className="min-w-0 flex-1">
 
-                        <p className="text-xs font-semibold leading-5 text-slate-700 dark:text-slate-300">
+                        <p className="text-xs font-semibold leading-5 text-text-secondary">
                           {gap.question}
                         </p>
 
-                        <p className="mt-1 text-[10px] text-slate-400">
+                        <p className="mt-1 text-[10px] text-text-muted">
                           Asked {gap.count}{" "}
                           {gap.count === 1
                             ? "time"
@@ -1080,7 +1197,7 @@ const Analytics = () => {
 
                       <AlertTriangle
                         size={14}
-                        className="mt-1 shrink-0 text-amber-500"
+                        className="mt-1 shrink-0 text-warning"
                       />
                     </div>
                   )
@@ -1088,7 +1205,7 @@ const Analytics = () => {
               </div>
 
               {data.knowledgeGaps.length > 3 && (
-                <div className="border-t border-amber-100 px-5 py-3 dark:border-surface-700">
+                <div className="border-t border-border-light px-5 py-3">
 
                   <button
                     type="button"
@@ -1097,7 +1214,16 @@ const Analytics = () => {
                         (value) => !value
                       )
                     }
-                    className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 transition hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-300 dark:hover:bg-amber-900/40"
+                    className="
+                      rounded-lg
+                      border border-border-light
+                      bg-white
+                      px-3 py-2
+                      text-xs font-semibold
+                      text-primary
+                      transition-colors
+                      hover:bg-primary/5
+                    "
                   >
                     {showAllGaps
                       ? "Show less"
@@ -1107,6 +1233,7 @@ const Analytics = () => {
               )}
             </section>
           </div>
+
         </div>
       </main>
     </div>
@@ -1130,49 +1257,36 @@ const MetricCard = ({
     info: {
       iconBg: "bg-info/10",
       iconColor: "text-info",
-      border: "border-info/20",
-      top: "from-info-500 to-info-600",
-      shadow: "shadow-info/10",
-    },
-
-    ai: {
-      iconBg: "bg-primary/10",
-      iconColor: "text-primary",
-      border: "border-primary/20",
-      top: "from-primary-500 to-primary-600",
-      shadow: "shadow-primary/10",
-    },
-
-    success: {
-      iconBg: "bg-success/10",
-      iconColor: "text-success",
-      border: "border-success/20",
-      top: "from-success-500 to-success-600",
-      shadow: "shadow-success/10",
-    },
-
-    warning: {
-      iconBg: "bg-warning/10",
-      iconColor: "text-warning",
-      border: "border-warning/20",
-      top: "from-warning-500 to-warning-600",
-      shadow: "shadow-warning/10",
-    },
-
-    error: {
-      iconBg: "bg-error/10",
-      iconColor: "text-error",
-      border: "border-error/20",
-      top: "from-error-500 to-error-600",
-      shadow: "shadow-error/10",
+      border: "border-border-light",
+      top: "bg-info",
     },
 
     primary: {
       iconBg: "bg-primary/10",
       iconColor: "text-primary",
-      border: "border-primary/20",
-      top: "from-primary-500 to-primary-600",
-      shadow: "shadow-primary/10",
+      border: "border-border-light",
+      top: "bg-primary",
+    },
+
+    success: {
+      iconBg: "bg-success/10",
+      iconColor: "text-success",
+      border: "border-border-light",
+      top: "bg-success",
+    },
+
+    warning: {
+      iconBg: "bg-warning/10",
+      iconColor: "text-warning",
+      border: "border-border-light",
+      top: "bg-warning",
+    },
+
+    error: {
+      iconBg: "bg-error/10",
+      iconColor: "text-error",
+      border: "border-border-light",
+      top: "bg-error",
     },
   };
 
@@ -1181,17 +1295,35 @@ const MetricCard = ({
 
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl border bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${accentStyles.border} ${accentStyles.shadow} dark:bg-surface-900 sm:p-5`}
+      className={`
+        group relative overflow-hidden
+        rounded-2xl
+        border ${accentStyles.border}
+        bg-white
+        p-4
+        shadow-sm
+        transition-all duration-200
+        hover:-translate-y-0.5
+        hover:shadow-md
+        sm:p-5
+      `}
     >
-
       <div
-        className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${accentStyles.top}`}
+        className={`
+          absolute inset-x-0 top-0 h-0.5
+          ${accentStyles.top}
+        `}
       />
 
       <div className="flex items-center justify-between gap-3">
 
         <div
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${accentStyles.iconBg}`}
+          className={`
+            flex h-10 w-10 shrink-0
+            items-center justify-center
+            rounded-xl
+            ${accentStyles.iconBg}
+          `}
         >
           <Icon
             size={18}
@@ -1202,12 +1334,13 @@ const MetricCard = ({
         <div
           className={`
             flex items-center gap-1
-            rounded-full px-2 py-1
-            text-[10px] font-bold
+            rounded-full
+            px-2 py-1
+            text-[10px] font-semibold
             ${
               positive
-                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
-                : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300"
+                ? "bg-success/10 text-success"
+                : "bg-error/10 text-error"
             }
           `}
         >
@@ -1221,15 +1354,15 @@ const MetricCard = ({
         </div>
       </div>
 
-      <p className="mt-4 text-xs font-semibold text-slate-500 dark:text-slate-400">
+      <p className="mt-4 text-xs font-medium text-text-muted">
         {title}
       </p>
 
-      <p className="mt-1 truncate text-2xl font-bold text-slate-900 dark:text-white">
+      <p className="mt-1 truncate text-2xl font-bold tracking-tight text-text-primary">
         {value}
       </p>
 
-      <p className="mt-1 text-[10px] leading-4 text-slate-400">
+      <p className="mt-1 text-[10px] leading-4 text-text-muted">
         {description}
       </p>
     </div>
@@ -1241,6 +1374,31 @@ const MetricCard = ({
 ========================================================= */
 
 const SimpleLineChart = ({ values }) => {
+  const safeValues = Array.isArray(values)
+    ? values
+    : [];
+
+  if (!safeValues.length) {
+    return (
+      <div className="flex h-[260px] items-center justify-center rounded-xl border border-dashed border-border-light bg-surface-muted/40">
+        <div className="text-center">
+          <BarChart3
+            size={22}
+            className="mx-auto text-text-muted"
+          />
+
+          <p className="mt-2 text-xs font-medium text-text-secondary">
+            No conversation trend data
+          </p>
+
+          <p className="mt-1 text-[10px] text-text-muted">
+            More activity will appear here as conversations arrive.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const width = 900;
   const height = 280;
 
@@ -1249,18 +1407,21 @@ const SimpleLineChart = ({ values }) => {
   const paddingTop = 20;
   const paddingBottom = 32;
 
-  const min = Math.min(...values);
-  const max = Math.max(...values);
+  const min = Math.min(...safeValues);
+  const max = Math.max(...safeValues);
 
-  const range =
+  const chartRange =
     max - min === 0 ? 1 : max - min;
 
-  const points = values.map(
+  const points = safeValues.map(
     (value, index) => {
       const x =
         paddingLeft +
         (index /
-          Math.max(values.length - 1, 1)) *
+          Math.max(
+            safeValues.length - 1,
+            1
+          )) *
           (width -
             paddingLeft -
             paddingRight);
@@ -1268,7 +1429,8 @@ const SimpleLineChart = ({ values }) => {
       const y =
         height -
         paddingBottom -
-        ((value - min) / range) *
+        ((value - min) /
+          chartRange) *
           (height -
             paddingTop -
             paddingBottom);
@@ -1292,48 +1454,7 @@ const SimpleLineChart = ({ values }) => {
         role="img"
         aria-label="Conversation trend chart"
       >
-
-        <defs>
-          <linearGradient
-            id="analyticsAreaGradient"
-            x1="0"
-            x2="0"
-            y1="0"
-            y2="1"
-          >
-            <stop
-              offset="0%"
-              stopColor="#8b5cf6"
-              stopOpacity="0.25"
-            />
-
-            <stop
-              offset="100%"
-              stopColor="#ec4899"
-              stopOpacity="0.02"
-            />
-          </linearGradient>
-
-          <linearGradient
-            id="analyticsLineGradient"
-            x1="0"
-            x2="1"
-            y1="0"
-            y2="0"
-          >
-            <stop
-              offset="0%"
-              stopColor="#8b5cf6"
-            />
-
-            <stop
-              offset="100%"
-              stopColor="#ec4899"
-            />
-          </linearGradient>
-        </defs>
-
-        {/* Horizontal grid */}
+        {/* Grid */}
 
         {[0, 1, 2, 3].map((line) => {
           const y =
@@ -1350,7 +1471,7 @@ const SimpleLineChart = ({ values }) => {
               x2={width - paddingRight}
               y1={y}
               y2={y}
-              stroke="#e5e7eb"
+              stroke="#E5E7EB"
               strokeWidth="1"
               strokeDasharray="4 5"
             />
@@ -1361,7 +1482,7 @@ const SimpleLineChart = ({ values }) => {
 
         <polygon
           points={areaPoints}
-          fill="url(#analyticsAreaGradient)"
+          fill="rgba(37, 99, 235, 0.07)"
         />
 
         {/* Line */}
@@ -1369,45 +1490,47 @@ const SimpleLineChart = ({ values }) => {
         <polyline
           points={points.join(" ")}
           fill="none"
-          stroke="url(#analyticsLineGradient)"
-          strokeWidth="4"
+          stroke="#2563EB"
+          strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
 
         {/* Points */}
 
-        {values.map((value, index) => {
-          const [x, y] = points[index]
-            .split(",")
-            .map(Number);
+        {safeValues.map(
+          (value, index) => {
+            const [x, y] = points[index]
+              .split(",")
+              .map(Number);
 
-          return (
-            <g key={index}>
-              <circle
-                cx={x}
-                cy={y}
-                r="6"
-                fill="white"
-                stroke="#8b5cf6"
-                strokeWidth="3"
-              />
+            return (
+              <g key={index}>
+                <circle
+                  cx={x}
+                  cy={y}
+                  r="5"
+                  fill="white"
+                  stroke="#2563EB"
+                  strokeWidth="2"
+                />
 
-              <circle
-                cx={x}
-                cy={y}
-                r="2.5"
-                fill="#ec4899"
-              />
-            </g>
-          );
-        })}
+                <circle
+                  cx={x}
+                  cy={y}
+                  r="2"
+                  fill="#2563EB"
+                />
+              </g>
+            );
+          }
+        )}
 
         <text
           x={paddingLeft}
           y={height - 8}
           fontSize="10"
-          fill="#94a3b8"
+          fill="#94A3B8"
         >
           Start
         </text>
@@ -1416,7 +1539,7 @@ const SimpleLineChart = ({ values }) => {
           x={width - paddingRight}
           y={height - 8}
           fontSize="10"
-          fill="#94a3b8"
+          fill="#94A3B8"
           textAnchor="end"
         >
           Now
@@ -1435,54 +1558,60 @@ const FunnelStep = ({
   label,
   value,
   icon: Icon,
-  accent = "violet",
+  accent = "primary",
   last = false,
 }) => {
   const accents = {
-    violet: {
-      bg: "bg-violet-100 dark:bg-violet-900/30",
-      icon: "text-violet-600 dark:text-violet-400",
-      number: "text-violet-500",
+    primary: {
+      bg: "bg-primary/10",
+      icon: "text-primary",
+      number: "text-primary",
     },
 
-    pink: {
-      bg: "bg-pink-100 dark:bg-pink-900/30",
-      icon: "text-pink-600 dark:text-pink-400",
-      number: "text-pink-500",
+    info: {
+      bg: "bg-info/10",
+      icon: "text-info",
+      number: "text-info",
     },
 
-    orange: {
-      bg: "bg-orange-100 dark:bg-orange-900/30",
-      icon: "text-orange-600 dark:text-orange-400",
-      number: "text-orange-500",
+    warning: {
+      bg: "bg-warning/10",
+      icon: "text-warning",
+      number: "text-warning",
     },
 
-    emerald: {
-      bg: "bg-emerald-100 dark:bg-emerald-900/30",
-      icon: "text-emerald-600 dark:text-emerald-400",
-      number: "text-emerald-500",
+    success: {
+      bg: "bg-success/10",
+      icon: "text-success",
+      number: "text-success",
     },
   };
 
   const style =
-    accents[accent] || accents.violet;
+    accents[accent] || accents.primary;
 
   return (
     <div
       className={`
-        flex items-center gap-4 p-5
-        transition hover:bg-slate-50 dark:hover:bg-slate-800/40
+        flex items-center gap-4
+        p-5
+        transition-colors
+        hover:bg-surface-muted/50
         md:items-start
         ${
           !last
-            ? "border-b border-slate-100 md:border-b-0 md:border-r dark:border-slate-700"
+            ? "border-b border-border-light md:border-b-0 md:border-r"
             : ""
         }
       `}
     >
-
       <div
-        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${style.bg}`}
+        className={`
+          flex h-10 w-10 shrink-0
+          items-center justify-center
+          rounded-xl
+          ${style.bg}
+        `}
       >
         <Icon
           size={17}
@@ -1491,7 +1620,6 @@ const FunnelStep = ({
       </div>
 
       <div className="min-w-0">
-
         <div className="flex items-center gap-2">
 
           <span
@@ -1500,12 +1628,12 @@ const FunnelStep = ({
             {number}
           </span>
 
-          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+          <p className="truncate text-xs font-medium text-text-muted">
             {label}
           </p>
         </div>
 
-        <p className="mt-1 text-xl font-bold text-slate-900 dark:text-white">
+        <p className="mt-1 text-xl font-bold text-text-primary">
           {value.toLocaleString()}
         </p>
       </div>
@@ -1521,45 +1649,58 @@ const MiniMetric = ({
   icon: Icon,
   label,
   value,
-  accent = "violet",
+  accent = "primary",
 }) => {
   const accents = {
-    violet: {
-      bg: "bg-violet-100 dark:bg-violet-900/30",
-      icon: "text-violet-600 dark:text-violet-400",
-      border: "border-violet-100 dark:border-violet-900/40",
+    primary: {
+      bg: "bg-primary/10",
+      icon: "text-primary",
+      border: "border-border-light",
     },
 
-    blue: {
-      bg: "bg-blue-100 dark:bg-blue-900/30",
-      icon: "text-blue-600 dark:text-blue-400",
-      border: "border-blue-100 dark:border-blue-900/40",
+    info: {
+      bg: "bg-info/10",
+      icon: "text-info",
+      border: "border-border-light",
     },
 
-    emerald: {
-      bg: "bg-emerald-100 dark:bg-emerald-900/30",
-      icon: "text-emerald-600 dark:text-emerald-400",
-      border: "border-emerald-100 dark:border-emerald-900/40",
+    success: {
+      bg: "bg-success/10",
+      icon: "text-success",
+      border: "border-border-light",
     },
 
-    orange: {
-      bg: "bg-orange-100 dark:bg-orange-900/30",
-      icon: "text-orange-600 dark:text-orange-400",
-      border: "border-orange-100 dark:border-orange-900/40",
+    warning: {
+      bg: "bg-warning/10",
+      icon: "text-warning",
+      border: "border-border-light",
     },
   };
 
   const style =
-    accents[accent] || accents.violet;
+    accents[accent] || accents.primary;
 
   return (
     <div
-      className={`rounded-xl border ${style.border} bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-md dark:bg-surface-900`}
+      className={`
+        rounded-xl
+        border ${style.border}
+        bg-white
+        p-4
+        transition
+        hover:-translate-y-0.5
+        hover:shadow-sm
+      `}
     >
       <div className="flex items-center gap-2">
 
         <div
-          className={`flex h-7 w-7 items-center justify-center rounded-lg ${style.bg}`}
+          className={`
+            flex h-7 w-7
+            items-center justify-center
+            rounded-lg
+            ${style.bg}
+          `}
         >
           <Icon
             size={14}
@@ -1567,12 +1708,12 @@ const MiniMetric = ({
           />
         </div>
 
-        <p className="text-[10px] font-semibold text-slate-400">
+        <p className="text-[10px] font-medium text-text-muted">
           {label}
         </p>
       </div>
 
-      <p className="mt-3 text-lg font-bold text-slate-900 dark:text-white">
+      <p className="mt-3 text-lg font-bold text-text-primary">
         {value}
       </p>
     </div>
@@ -1591,36 +1732,24 @@ const CustomerMetric = ({
 }) => {
   const accents = {
     blue: {
-      wrapper:
-        "bg-blue-50 dark:bg-blue-950/20",
-      iconBg:
-        "bg-blue-100 dark:bg-blue-900/30",
-      icon:
-        "text-blue-600 dark:text-blue-400",
-      value:
-        "text-blue-700 dark:text-blue-300",
+      wrapper: "bg-blue-50",
+      iconBg: "bg-blue-100",
+      icon: "text-blue-600",
+      value: "text-blue-700",
     },
 
-    violet: {
-      wrapper:
-        "bg-violet-50 dark:bg-violet-950/20",
-      iconBg:
-        "bg-violet-100 dark:bg-violet-900/30",
-      icon:
-        "text-violet-600 dark:text-violet-400",
-      value:
-        "text-violet-700 dark:text-violet-300",
+    primary: {
+      wrapper: "bg-primary/5",
+      iconBg: "bg-primary/10",
+      icon: "text-primary",
+      value: "text-primary",
     },
 
     amber: {
-      wrapper:
-        "bg-amber-50 dark:bg-amber-950/20",
-      iconBg:
-        "bg-amber-100 dark:bg-amber-900/30",
-      icon:
-        "text-amber-600 dark:text-amber-400",
-      value:
-        "text-amber-700 dark:text-amber-300",
+      wrapper: "bg-amber-50",
+      iconBg: "bg-amber-100",
+      icon: "text-amber-600",
+      value: "text-amber-700",
     },
   };
 
@@ -1629,11 +1758,23 @@ const CustomerMetric = ({
 
   return (
     <div
-      className={`rounded-xl p-4 text-center transition hover:-translate-y-0.5 hover:shadow-md ${style.wrapper}`}
+      className={`
+        rounded-xl
+        p-4
+        text-center
+        transition
+        hover:-translate-y-0.5
+        hover:shadow-sm
+        ${style.wrapper}
+      `}
     >
-
       <div
-        className={`mx-auto flex h-8 w-8 items-center justify-center rounded-lg ${style.iconBg}`}
+        className={`
+          mx-auto flex h-8 w-8
+          items-center justify-center
+          rounded-lg
+          ${style.iconBg}
+        `}
       >
         <Icon
           size={15}
@@ -1642,12 +1783,15 @@ const CustomerMetric = ({
       </div>
 
       <p
-        className={`mt-3 text-lg font-bold ${style.value}`}
+        className={`
+          mt-3 text-lg font-bold
+          ${style.value}
+        `}
       >
         {value.toLocaleString()}
       </p>
 
-      <p className="mt-1 text-[10px] font-medium text-slate-400">
+      <p className="mt-1 text-[10px] font-medium text-text-muted">
         {label}
       </p>
     </div>

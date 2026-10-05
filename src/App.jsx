@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
+ BrowserRouter,
+ Routes,
+ Route,
+ Navigate,
 } from "react-router-dom";
 
 import DashboardLayout from "./Layout/DashboardLayout";
@@ -15,50 +15,50 @@ import Products from "./Pages/Products";
 import Analytics from "./Pages/Analytics";
 import Settings from "./Pages/Settings";
 import Help from "./Components/Help";
+import Notifications from "./Pages/Notifications";
 import Login from "./Pages/Login";
 import Signup from "./Pages/Signup";
 import PublicStorefront from "./Pages/PublicStorefront";
 import PrivacyPolicy from "./Pages/PrivacyPolicy";
 import useAuthStore from "./Store/AuthStore";
-import { useAppearance } from "./hooks/useAppearance";
 
 
 const App = () => {
-  const listenToAuth = useAuthStore((state) => state.listenToAuth);
-  useAppearance();
+ const listenToAuth = useAuthStore((state) => state.listenToAuth);
 
-  useEffect(() => {
-    listenToAuth();
-  }, [listenToAuth]);
+ useEffect(() => {
+ listenToAuth();
+ }, [listenToAuth]);
 
-  return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+ return (
+ <BrowserRouter>
+ <Routes>
+ {/* Public routes */}
+ <Route path="/login" element={<Login />} />
+ <Route path="/signup" element={<Signup />} />
+ <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
-        {/* Protected routes */}
-        <Route element={<ProtectedRoute />}>
-          <Route element={<DashboardLayout />}>
-            <Route path="/" element={<Inbox />} />
-            <Route path="/customers" element={<Customers />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/help" element={<Help />} />
-          </Route>
-        </Route>
+ {/* Protected routes */}
+ <Route element={<ProtectedRoute />}>
+<Route element={<DashboardLayout />}>
+  <Route path="/" element={<Inbox />} />
+  <Route path="/customers" element={<Customers />} />
+  <Route path="/products" element={<Products />} />
+  <Route path="/analytics" element={<Analytics />} />
+  <Route path="/settings" element={<Settings />} />
+  <Route path="/help" element={<Help />} />
+  <Route path="/notifications" element={<Notifications />} />
+</Route>
+ </Route>
 
-        {/* Public storefront route - must be after protected routes */}
-        <Route path="/store/:sellerId" element={<PublicStorefront />} />
+ {/* Public storefront route - must be after protected routes */}
+ <Route path="/store/:sellerId" element={<PublicStorefront />} />
 
-        {/* Redirect any unknown routes to login */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </BrowserRouter>
-  );
+ {/* Redirect any unknown routes to login */}
+ <Route path="*" element={<Navigate to="/login" replace />} />
+ </Routes>
+ </BrowserRouter>
+ );
 };
 
 export default App;

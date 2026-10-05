@@ -43,6 +43,7 @@ export function useConversations() {
   
   const isInitialLoadComplete = useRef(false);
   const pollingIntervalRef = useRef(null);
+  const previousOnlineStatus = useRef(isOnline);
 
   const fetchConversations = useCallback(async (isPolling = false) => {
     if (!isOnline && !isPolling) {
@@ -77,6 +78,7 @@ export function useConversations() {
             const optimisticMessages = localMessages.filter(m => m._optimistic);
             const mergedMessages = [...serverMessages, ...optimisticMessages];
             
+            // CRITICAL: Always prefer server data for name/initials to prevent stale fallback names from cache
             merged.push({
               ...serverConv,
               unread,
@@ -95,9 +97,9 @@ export function useConversations() {
       isInitialLoadComplete.current = true;
     } catch (err) {
       const isNetworkError = err.message?.includes('Failed to fetch') || 
-                             err.message?.includes('NetworkError') || 
-                             err.message?.includes('Network request failed') ||
-                             !navigator.onLine;
+                           err.message?.includes('NetworkError') || 
+                           err.message?.includes('Network request failed') ||
+                           !navigator.onLine;
       if (isNetworkError && conversations.length > 0) {
         setError('Offline — showing saved data');
       } else {
@@ -119,6 +121,14 @@ export function useConversations() {
     }
     fetchConversations(false);
   }, [fetchConversations]);
+
+  // Refetch when coming back online to replace stale cached fallback names with fresh server data
+  useEffect(() => {
+    if (isOnline && !previousOnlineStatus.current) {
+      fetchConversations(false);
+    }
+    previousOnlineStatus.current = isOnline;
+  }, [isOnline, fetchConversations]);
 
   // Start polling after initial load
   useEffect(() => {
