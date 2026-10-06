@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Bell, Search, Menu, X, Bot, Circle, Wifi, WifiOff, ChevronRight, User, ShoppingBag, Package, MessageSquare, ExternalLink } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { Bell, Search, Menu, X, Bot, Circle, Wifi, WifiOff, ChevronRight, User, ShoppingBag, Package, MessageSquare, ExternalLink, CheckCheck } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
 import { Avatar, Button, Badge, Input } from "../ui";
 import useAuthStore from "../../Store/AuthStore";
 import { useOnlineStatus } from "../../hooks/useOnlineStatus";
@@ -10,15 +10,17 @@ import { api } from "../../service/api";
 const TopBar = ({ sidebarOpen, onMobileMenuOpen }) => {
  const { user, logout } = useAuthStore();
  const { isOnline, showReconnected } = useOnlineStatus();
+ const navigate = useNavigate();
 const { 
   events: notifications, 
   loading, 
   unreadCount, 
   refetch, 
+  markAllRead,
   requestNotificationPermission,
   handleNotificationClick,
   notificationSettings 
-  } = useNotifications();
+  } = useNotifications(navigate);
  const [notificationsOpen, setNotificationsOpen] = useState(false);
  const [userMenuOpen, setUserMenuOpen] = useState(false);
  const [searchQuery, setSearchQuery] = useState("");
@@ -262,7 +264,7 @@ const notificationsRef = useRef(null);
       className={`
         fixed right-4 top-16 z-50 w-full max-w-sm origin-top-right rounded-xl 
         border border-border-light bg-surface-primary shadow-xl animate-slideDown
-        lg:absolute lg:right-0 lg:top-full lg:mt-2 lg:max-w-[360px]
+        lg:absolute lg:right-0 lg:top-full lg:mt-2 lg:w-auto lg:max-w-[384px]
       `}
       style={{
         // On mobile, ensure it doesn't go off-screen
@@ -274,7 +276,22 @@ const notificationsRef = useRef(null);
         <h3 className="text-sm font-semibold text-text-primary">Notifications</h3>
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
-            <Badge variant="info" className="text-xs">{unreadCount} new</Badge>
+            <>
+              <Badge variant="info" className="text-xs">{unreadCount} new</Badge>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs py-1 px-2 flex items-center gap-1"
+                onClick={async () => {
+                  await markAllRead();
+                  setNotificationsOpen(false);
+                }}
+                disabled={loading}
+              >
+                <CheckCheck size={12} />
+                Mark all read
+              </Button>
+            </>
           )}
           {notificationSettings?.browserNotifications && 'Notification' in window && Notification.permission !== 'granted' && (
             <Button
@@ -457,7 +474,7 @@ const notificationsRef = useRef(null);
       className={`
         fixed right-4 top-16 z-50 w-full max-w-sm origin-top-right rounded-xl 
         border border-border-light bg-surface-primary shadow-xl animate-slideDown
-        lg:absolute lg:right-0 lg:top-full lg:mt-2 lg:max-w-[224px]
+        lg:absolute lg:right-0 lg:top-full lg:mt-2 lg:w-auto lg:max-w-[224px]
       `}
       style={{
         maxWidth: 'calc(100vw - 1rem)',

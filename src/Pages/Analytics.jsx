@@ -286,7 +286,7 @@ const Analytics = () => {
               </div>
             </div>
 
-            <div className="w-full shrink-0 sm:w-auto">
+            <div className="w-full shrink-0 sm:w-auto ">
               <Select
                 value={range}
                 onChange={(e) => setRange(e.target.value)}
@@ -308,7 +308,7 @@ const Analytics = () => {
                     label: "90 days",
                   },
                 ]}
-                className="w-full sm:w-[150px]"
+                className="w-full sm:w-[150px] p-2"
               />
             </div>
           </div>

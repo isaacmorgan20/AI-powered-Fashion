@@ -1,10 +1,12 @@
 import React, { useMemo, useCallback } from "react";
-import { Bell, ExternalLink, Filter, X, Bot } from "lucide-react";
+import { Bell, ExternalLink, Filter, Bot, CheckCheck } from "lucide-react";
 import { Button, Badge, Avatar, Input } from "../Components/ui";
 import { useNotifications } from "../hooks/useNotifications";
+import { useNavigate } from "react-router-dom";
 
 const Notifications = () => {
-  const { events: notifications, loading, unreadCount, markRead, handleNotificationClick } = useNotifications();
+  const navigate = useNavigate();
+  const { events: notifications, loading, unreadCount, markAllRead, handleNotificationClick } = useNotifications(navigate);
 
   const [filter, setFilter] = React.useState("all"); // all, unread
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -66,11 +68,6 @@ const Notifications = () => {
     }
   };
 
-  const handleMarkAllRead = async () => {
-    const unreadNotifications = notifications.filter(n => !n.read);
-    await Promise.all(unreadNotifications.map(n => markRead(n.id)));
-  };
-
   const getChannelBadgeVariant = (channel) => {
     const norm = String(channel || "").toLowerCase();
     if (norm.includes("whatsapp")) return "whatsapp";
@@ -78,6 +75,10 @@ const Notifications = () => {
     if (norm.includes("instagram")) return "instagram";
     if (norm.includes("facebook")) return "facebook";
     return "default";
+  };
+
+  const handleMarkAllRead = async () => {
+    await markAllRead();
   };
 
   return (
@@ -102,7 +103,7 @@ const Notifications = () => {
               onClick={handleMarkAllRead}
               className="flex items-center gap-1.5"
             >
-              <X size={14} />
+              <CheckCheck size={14} />
               Mark all as read
             </Button>
           )}

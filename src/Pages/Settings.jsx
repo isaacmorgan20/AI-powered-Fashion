@@ -1107,7 +1107,7 @@ const Settings = () => {
                         type="button"
                         onClick={handleSave}
                         disabled={saving}
-                        className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 hover:shadow-blue-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex items-center gap-2 rounded-xl bg-blue-400 text-white px-4 py-2 text-xs font-semibold shadow-sm shadow-blue-500/20 transition hover:bg-blue-500 hover:shadow-blue-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {saving ? (
                             <>

@@ -5,7 +5,7 @@ import useAuthStore from '../Store/AuthStore';
 import { db } from '../service/Firebase';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 
-export function useNotifications() {
+export function useNotifications(navigate) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -86,8 +86,18 @@ export function useNotifications() {
 
       notification.onclick = () => {
         window.focus();
+        let targetPath = null;
         if (data.conversationId) {
-          window.location.href = `/inbox?conversation=${data.conversationId}`;
+          targetPath = `/inbox?conversation=${data.conversationId}`;
+        } else if (data.orderId) {
+          targetPath = `/orders/${data.orderId}`;
+        } else if (data.productId) {
+          targetPath = `/products/${data.productId}`;
+        } else if (data.customerId) {
+          targetPath = `/customers/${data.customerId}`;
+        }
+        if (targetPath) {
+          window.location.href = targetPath;
         }
         notification.close();
       };
@@ -173,6 +183,9 @@ export function useNotifications() {
                   sendBrowserNotification(newEvent.title, newEvent.message, {
                     notificationId: newEvent.id,
                     conversationId: newEvent.metadata?.conversation_id,
+                    orderId: newEvent.metadata?.order_id,
+                    productId: newEvent.metadata?.product_id,
+                    customerId: newEvent.metadata?.customer_id,
                   });
                 }
               } else if (change.type === 'modified') {
@@ -267,16 +280,45 @@ export function useNotifications() {
     }
   }, []);
 
+  const markAllRead = useCallback(async () => {
+    try {
+      await api.notifications.markAllRead();
+      setEvents((current) =>
+        current.map((e) => ({ ...e, read: true }))
+      );
+    } catch (err) {
+      console.error('Failed to mark all notifications as read:', err);
+      throw err;
+    }
+  }, []);
+
   const handleNotificationClick = useCallback((notification) => {
     // Mark as read
     if (!notification.read) {
       markRead(notification.id);
     }
-    // Navigate to conversation if metadata contains conversation_id
-    if (notification.metadata?.conversation_id) {
-      window.location.href = `/inbox?conversation=${notification.metadata.conversation_id}`;
+    // Navigate based on notification type and metadata
+    const meta = notification.metadata || {};
+    let targetPath = null;
+    
+    if (meta.conversation_id) {
+      targetPath = `/inbox?conversation=${meta.conversation_id}`;
+    } else if (meta.order_id) {
+      targetPath = `/orders/${meta.order_id}`;
+    } else if (meta.product_id) {
+      targetPath = `/products/${meta.product_id}`;
+    } else if (meta.customer_id) {
+      targetPath = `/customers/${meta.customer_id}`;
     }
-  }, [markRead]);
+    
+    if (targetPath) {
+      if (navigate) {
+        navigate(targetPath);
+      } else {
+        window.location.href = targetPath;
+      }
+    }
+  }, [markRead, navigate]);
 
   const unreadCount = events.filter((e) => !e.read).length;
 
@@ -288,6 +330,7 @@ export function useNotifications() {
     refetch: fetchEvents,
     createEvent,
     markRead,
+    markAllRead,
     deleteEvent,
     sendBrowserNotification,
     requestNotificationPermission,

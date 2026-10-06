@@ -1569,6 +1569,7 @@
                                                                             size={
                                                                                 13
                                                                             }
+                                                                            className="text-white"
                                                                         />
                                                                         Edit
                                                                     </button>
@@ -1864,7 +1865,7 @@
                                             href={`/store/${sellerId}`}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 text-xs font-semibold text-white transition duration-150 hover:bg-blue-700 active:scale-[0.99]"
+                                            className="mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-xl bg-blue-200 text-xs font-semibold text-white transition duration-150 hover:bg-blue-100 active:scale-[0.99]"
                                         >
                                             View storefront
                                             <ExternalLink
