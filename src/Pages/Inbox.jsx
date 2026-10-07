@@ -475,7 +475,7 @@ const Inbox = () => {
                                     type="button"
                                     onClick={() => setChannelFilter(ch)}
                                     className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition cursor-pointer ${channelFilter === ch
-                                        ? "bg-blue-600 shadow-xs"
+                                        ? "bg-blue-600 text-white shadow-xs"
                                         : "hover:bg-gray-200 hover:text-[#0F172A] hover:bg-[#F8FAFC]"
                                         }`}
                                 >
@@ -538,7 +538,7 @@ const Inbox = () => {
                                     onClick={() => setActiveFilter(filter)}
                                     className={`px-3 py-1 rounded-md text-[11px] font-semibold transition cursor-pointer shrink-0 ${activeFilter === filter
                                         ? "bg-[#2563EB] text-white shadow-xs"
-                                        : "bg-[#F1F5F9] text-[#64748] hover:bg-[#E2E8F0]"
+                                        : "bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0]"
                                         }`}
                                 >
                                     {filter}

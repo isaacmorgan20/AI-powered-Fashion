@@ -1602,7 +1602,7 @@ const Help = () => {
                             <div className="flex flex-col gap-2 sm:flex-row">
                                 <button
                                     type="button"
-                                    className="flex items-center justify-center gap-2 rounded-xl bg-slate-300 px-4 py-2.5 text-xs font-semibold shadow-sm transition hover:bg-slate-200 hover:text-slate-900 hover:shadow-md"
+                                    className="flex items-center justify-center gap-2 rounded-xl bg-slate-800 text-white px-4 py-2.5 text-xs font-semibold shadow-sm transition hover:bg-slate-900 hover:text-white hover:shadow-md"
                                 >
                                     <MessageCircle size={14} />
                                     Chat with support

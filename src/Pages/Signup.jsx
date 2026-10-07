@@ -554,7 +554,7 @@ const Signup = () => {
  <button
  type="submit"
  disabled={loading}
- className="group flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-violet-500/10"
+ className="group flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-800 hover:text-white hover:shadow-md focus:outline-none focus:ring-4 focus:ring-violet-500/10"
  >
  {loading ? (
  <>
