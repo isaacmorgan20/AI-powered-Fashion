@@ -475,7 +475,7 @@ const Inbox = () => {
                                     type="button"
                                     onClick={() => setChannelFilter(ch)}
                                     className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition cursor-pointer ${channelFilter === ch
-                                        ? "bg-blue-600 text-white shadow-xs"
+                                        ? "bg-blue-700 text-white shadow-xs"
                                         : "hover:bg-gray-200 hover:text-[#0F172A] hover:bg-[#F8FAFC]"
                                         }`}
                                 >
