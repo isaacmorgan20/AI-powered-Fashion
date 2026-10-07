@@ -13,11 +13,13 @@ import {
     ShieldCheck,
     Check,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import useAuthStore from "../Store/AuthStore";
 
 const Login = () => {
     const login = useAuthStore((state) => state.login);
+    const user = useAuthStore((state) => state.user);
+    const authLoading = useAuthStore((state) => state.loading);
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
@@ -28,6 +30,11 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+
+    // Already signed in: never trap an authenticated user on the sign-in page
+    if (!authLoading && user) {
+        return <Navigate to="/" replace />;
+    }
 
     const handleChange = (event) => {
         const { name, value } = event.target;

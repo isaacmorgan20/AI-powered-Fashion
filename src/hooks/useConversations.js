@@ -32,6 +32,14 @@ function saveConversationsToCache(data) {
   }
 }
 
+// Keeps every useConversations() instance (e.g. Sidebar layout + Inbox page)
+// in sync when a conversation is marked as read.
+const conversationReadListeners = new Set();
+
+function notifyConversationRead(conversationId) {
+  conversationReadListeners.forEach((listener) => listener(conversationId));
+}
+
 export function useConversations() {
   const [conversations, setConversations] = useState(() => loadCachedConversations() || []);
   const [loading, setLoading] = useState(true);
@@ -157,6 +165,22 @@ export function useConversations() {
     };
   }, [fetchConversations]);
 
+  // Mirror "marked as read" updates into every other hook instance
+  useEffect(() => {
+    const handleConversationRead = (conversationId) => {
+      setConversations((current) =>
+        current.map((conv) =>
+          conv.id === conversationId ? { ...conv, unread: 0 } : conv
+        )
+      );
+    };
+
+    conversationReadListeners.add(handleConversationRead);
+    return () => {
+      conversationReadListeners.delete(handleConversationRead);
+    };
+  }, []);
+
   const selectConversation = useCallback((id) => {
     // Update local state immediately for responsive UI
     setConversations((current) =>
@@ -164,7 +188,10 @@ export function useConversations() {
         conv.id === id ? { ...conv, unread: 0 } : conv
       )
     );
-    
+
+    // Keep other instances (sidebar badge) in sync
+    notifyConversationRead(id);
+
     // Persist read status to backend
     api.conversations.update(id, { unread: 0 }).catch((err) => {
       console.error('Failed to mark conversation as read:', err);
@@ -296,6 +323,9 @@ export function useConversations() {
           : c
       );
     });
+
+    // Keep other instances (sidebar badge) in sync
+    notifyConversationRead(conversationId);
 
     try {
       await api.conversations.update(conversationId, {

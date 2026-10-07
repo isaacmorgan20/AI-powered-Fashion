@@ -1,4 +1,5 @@
-    import React, { useEffect, useMemo, useState } from "react";
+    import React, { useEffect, useMemo, useState, useRef } from "react";
+    import { useParams } from "react-router-dom";
     import {
         Search,
         MoreHorizontal,
@@ -367,6 +368,10 @@
         const [sortBy, setSortBy] = useState("Newest");
         const [selectedProduct, setSelectedProduct] = useState(null);
 
+        // Deep link: /products/:id (used by notification clicks)
+        const { id: routeProductId } = useParams();
+        const appliedRouteProductRef = useRef(null);
+
         /* ---------------------------------------------------------------------- */
         /* Product Form State                                                     */
         /* ---------------------------------------------------------------------- */
@@ -509,6 +514,23 @@
         /* ---------------------------------------------------------------------- */
 
         useEffect(() => {
+            // Deep linked product (/products/:id) takes priority over auto-select
+            if (
+                routeProductId &&
+                appliedRouteProductRef.current !== routeProductId
+            ) {
+                const deepLinked = products.find(
+                    (product) =>
+                        getProductId(product) === routeProductId
+                );
+
+                if (deepLinked) {
+                    appliedRouteProductRef.current = routeProductId;
+                    setSelectedProduct(deepLinked);
+                    return;
+                }
+            }
+
             if (!selectedProduct) {
                 if (filteredProducts.length > 0) {
                     setSelectedProduct(filteredProducts[0]);
@@ -534,6 +556,7 @@
             products,
             filteredProducts,
             selectedProduct,
+            routeProductId,
         ]);
 
         useEffect(() => {

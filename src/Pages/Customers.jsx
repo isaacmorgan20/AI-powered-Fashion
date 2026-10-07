@@ -1,4 +1,5 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
+import { useParams } from "react-router-dom";
 import {
   Users,
   UserRound,
@@ -125,6 +126,9 @@ const Customers = () => {
   const [selectedCustomerId, setSelectedCustomerId] =
     useState(null);
 
+  const { id: routeCustomerId } = useParams();
+  const appliedRouteCustomerRef = useRef(null);
+
   const [search, setSearch] = useState("");
 
   const [activeFilter, setActiveFilter] =
@@ -167,6 +171,32 @@ const Customers = () => {
       return () => clearTimeout(timer);
     }
   }, [customers, selectedCustomerId]);
+
+  /* =======================================================
+     DEEP LINK (?/customers/:id from notification clicks)
+  ======================================================= */
+
+  useEffect(() => {
+    if (
+      !routeCustomerId ||
+      appliedRouteCustomerRef.current === routeCustomerId
+    ) {
+      return;
+    }
+
+    if (
+      customers.some(
+        (customer) => customer.id === routeCustomerId
+      )
+    ) {
+      appliedRouteCustomerRef.current = routeCustomerId;
+      const timer = setTimeout(() => {
+        setSelectedCustomerId(routeCustomerId);
+      }, 0);
+
+      return () => clearTimeout(timer);
+    }
+  }, [routeCustomerId, customers]);
 
   /* =======================================================
      CREATE CUSTOMER

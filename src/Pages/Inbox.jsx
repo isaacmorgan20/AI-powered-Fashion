@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
     Search,
     MoreHorizontal,
@@ -151,6 +152,9 @@ const Inbox = () => {
     const sellerId = settings?.general?.sellerId || "store";
 
     const [selectedId, setSelectedId] = useState(null);
+    const [searchParams] = useSearchParams();
+    const conversationParam = searchParams.get("conversation");
+    const appliedConversationParamRef = useRef(null);
     const [search, setSearch] = useState("");
     const [message, setMessage] = useState("");
     const [showCustomerPanel, setShowCustomerPanel] = useState(true);
@@ -198,14 +202,30 @@ const Inbox = () => {
 
     const hasSelectedConversation = Boolean(selectedConversation);
 
-    // Auto-select first conversation on initial load if available
+    // Deep link: open the conversation from ?conversation= (used by notification clicks)
     useEffect(() => {
+        if (
+            conversationParam &&
+            appliedConversationParamRef.current !== conversationParam
+        ) {
+            const target = conversations.find(
+                (c) => c.id === conversationParam
+            );
+            if (target) {
+                appliedConversationParamRef.current = conversationParam;
+                setSelectedId(target.id);
+                selectConversation(target.id);
+                return;
+            }
+        }
+
+        // Auto-select first conversation on initial load if available
         if (conversations.length > 0 && !selectedId) {
             const firstId = conversations[0].id;
             setSelectedId(firstId);
             selectConversation(firstId);
         }
-    }, [conversations, selectedId, selectConversation]);
+    }, [conversations, selectedId, conversationParam, selectConversation]);
 
     // Auto-scroll to bottom of messages
     useEffect(() => {

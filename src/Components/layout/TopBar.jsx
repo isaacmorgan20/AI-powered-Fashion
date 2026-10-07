@@ -245,7 +245,7 @@ const TopBar = ({ sidebarOpen, onMobileMenuOpen }) => {
               <Bell size={20} strokeWidth={2} className="text-text-secondary" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-surface-primary bg-error px-1 text-[10px] font-bold text-error-foreground">
-                  {unreadCount > 9 ? "9+" : unreadCount}
+                  {unreadCount}
                 </span>
               )}
             </Button>

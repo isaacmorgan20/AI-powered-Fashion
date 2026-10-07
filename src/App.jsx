@@ -42,8 +42,13 @@ const App = () => {
  <Route element={<ProtectedRoute />}>
 <Route element={<DashboardLayout />}>
   <Route path="/" element={<Inbox />} />
+  <Route path="/inbox" element={<Inbox />} />
   <Route path="/customers" element={<Customers />} />
+  <Route path="/customers/:id" element={<Customers />} />
   <Route path="/products" element={<Products />} />
+  <Route path="/products/:id" element={<Products />} />
+  <Route path="/orders" element={<Navigate to="/customers" replace />} />
+  <Route path="/orders/:id" element={<Navigate to="/customers" replace />} />
   <Route path="/analytics" element={<Analytics />} />
   <Route path="/settings" element={<Settings />} />
   <Route path="/help" element={<Help />} />
