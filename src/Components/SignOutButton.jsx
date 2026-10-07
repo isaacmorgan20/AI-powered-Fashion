@@ -1,67 +1,65 @@
 import React, { useState } from "react";
 import {
- LogOut,
- Loader2,
- ChevronRight,
+    LogOut,
+    Loader2,
+    ChevronRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../Store/AuthStore";
 
 const SignOutButton = ({ sidebarOpen }) => {
- const navigate = useNavigate();
- const logout = useAuthStore((state) => state.logout);
+    const navigate = useNavigate();
+    const logout = useAuthStore((state) => state.logout);
 
- const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
 
- const handleSignOut = async () => {
- if (loading) return;
+    const handleSignOut = async () => {
+        if (loading) return;
 
- try {
- setLoading(true);
+        try {
+            setLoading(true);
 
- await logout();
+            await logout();
 
- navigate("/login");
- } catch (error) {
- console.error("Sign out failed:", error);
- setLoading(false);
- }
- };
+            navigate("/login");
+        } catch (error) {
+            console.error("Sign out failed:", error);
+            setLoading(false);
+        }
+    };
 
- return (
- <div className="relative group">
- <button
- type="button"
- onClick={handleSignOut}
- disabled={loading}
- title={sidebarOpen ? undefined : "Sign out"}
- aria-label="Sign out"
- aria-busy={loading}
- className={`
+    return (
+        <div className="relative group">
+            <button
+                type="button"
+                onClick={handleSignOut}
+                disabled={loading}
+                title={sidebarOpen ? undefined : "Sign out"}
+                aria-label="Sign out"
+                aria-busy={loading}
+                className={`
  relative flex w-full items-center overflow-hidden
  rounded-xl border
  transition-all duration-200 ease-out
  
- ${
- sidebarOpen
- ? `
+ ${sidebarOpen
+                        ? `
  min-h-[44px]
  gap-3
  px-3.5
  py-2.5
  text-left
  `
- : `
+                        : `
  h-10
  w-10
  justify-center
  px-0
  `
- }
+                    }
 
- ${
- loading
- ? `
+ ${loading
+                        ? `
  cursor-wait
  border-slate-200
  bg-slate-50
@@ -70,7 +68,7 @@ const SignOutButton = ({ sidebarOpen }) => {
  
  
  `
- : `
+                        : `
  border-transparent
  text-slate-500
  hover:border-red-100
@@ -81,7 +79,7 @@ const SignOutButton = ({ sidebarOpen }) => {
  
  
  `
- }
+                    }
 
  focus-visible:outline-none
  focus-visible:ring-2
@@ -92,22 +90,20 @@ const SignOutButton = ({ sidebarOpen }) => {
 
  disabled:pointer-events-none
  `}
- >
- {/* Icon container */}
- <span
- className={`
+            >
+                {/* Icon container */}
+                <span
+                    className={`
  flex shrink-0 items-center justify-center
  rounded-lg
  transition-all duration-200
- ${
- sidebarOpen
- ? "h-8 w-8"
- : "h-8 w-8"
- }
- ${
- loading
- ? "bg-slate-100"
- : `
+ ${sidebarOpen
+                            ? "h-8 w-8"
+                            : "h-8 w-8"
+                        }
+ ${loading
+                            ? "bg-slate-100"
+                            : `
  bg-slate-100
  text-slate-500
  group-hover:bg-red-100
@@ -117,58 +113,57 @@ const SignOutButton = ({ sidebarOpen }) => {
  
  
  `
- }
+                        }
  `}
- >
- {loading ? (
- <Loader2
- size={16}
- strokeWidth={2}
- className="animate-spin"
- />
- ) : (
- <LogOut
- size={16}
- strokeWidth={2}
- className="
+                >
+                    {loading ? (
+                        <Loader2
+                            size={16}
+                            strokeWidth={2}
+                            className="animate-spin"
+                        />
+                    ) : (
+                        <LogOut
+                            size={16}
+                            strokeWidth={2}
+                            className="
  transition-transform
  duration-200
  group-hover:-translate-x-0.5
  "
- />
- )}
- </span>
+                        />
+                    )}
+                </span>
 
- {/* Text */}
- {sidebarOpen && (
- <span className="min-w-0 flex-1">
- <span
- className={`
+                {/* Text */}
+                {sidebarOpen && (
+                    <span className="min-w-0 flex-1">
+                        <span
+                            className={`
  block text-sm font-medium
- ${
- loading
- ? "text-slate-400"
- : "text-slate-700 group-hover:text-red-600"
- }
+ ${loading
+                                    ? "text-slate-400"
+                                    : "text-slate-700 group-hover:text-red-600"
+                                }
  `}
- >
- {loading ? "Signing out..." : "Sign out"}
- </span>
+                        >
+                            {loading ? "Signing out..." : "Sign out"}
+                        </span>
 
- {!loading && (
- <span className="mt-0.5 block text-[11px] text-slate-400">
- End your current session
- </span>
- )}
- </span>
- )}
+                        {!loading && (
+                            <span className="mt-0.5 block text-[11px] text-slate-400">
+                                End your current session
+                            </span>
+                        )}
+                    </span>
+                )}
 
- {/* Arrow */}
- {sidebarOpen && !loading && (
- <ChevronRight
- size={16}
- strokeWidth={1.8}
- className="
+                {/* Arrow */}
+                {sidebarOpen && !loading && (
+                    <ChevronRight
+                        size={16}
+                        strokeWidth={1.8}
+                        className="
  shrink-0
  text-slate-300
  transition-all duration-200
@@ -177,14 +172,14 @@ const SignOutButton = ({ sidebarOpen }) => {
  
  
  "
- />
- )}
- </button>
+                    />
+                )}
+            </button>
 
- {/* Collapsed sidebar tooltip */}
- {!sidebarOpen && (
- <div
- className="
+            {/* Collapsed sidebar tooltip */}
+            {!sidebarOpen && (
+                <div
+                    className="
  pointer-events-none
  absolute
  left-full
@@ -213,12 +208,12 @@ const SignOutButton = ({ sidebarOpen }) => {
  
  
  "
- >
- Sign out
+                >
+                    Sign out
 
- {/* Tooltip arrow */}
- <span
- className="
+                    {/* Tooltip arrow */}
+                    <span
+                        className="
  absolute
  right-full
  top-1/2
@@ -234,11 +229,11 @@ const SignOutButton = ({ sidebarOpen }) => {
  
  
  "
- />
- </div>
- )}
- </div>
- );
+                    />
+                </div>
+            )}
+        </div>
+    );
 };
 
 export default SignOutButton;

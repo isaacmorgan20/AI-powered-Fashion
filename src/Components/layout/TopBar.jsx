@@ -472,9 +472,9 @@ const TopBar = ({ sidebarOpen, onMobileMenuOpen }) => {
                 {/* User Menu Panel - Responsive positioning */}
                 <div
                   className={`
-        fixed right-4 top-16 z-50 w-full max-w-sm origin-top-right rounded-xl 
+        fixed right-4 top-16 z-50 w-full max-w-sm origin-top-right rounded-md 
         border border-border-light bg-surface-primary shadow-xl animate-slideDown
-        lg:absolute lg:right-0 lg:top-full lg:mt-2 lg:w-auto lg:max-w-[224px]
+        lg:absolute lg:right-0 lg:top-full lg:mt-2 lg:w-50 lg:max-w-[224px]
       `}
                   style={{
                     maxWidth: 'calc(100vw - 1rem)',
